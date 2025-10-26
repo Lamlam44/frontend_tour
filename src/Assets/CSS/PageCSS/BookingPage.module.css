@@ -1,0 +1,62 @@
+.container {
+  padding: 2rem 5%;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.layout {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.customerInfoForm {
+  flex: 3;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.customerInfoForm input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+}
+
+.summary {
+  flex: 2;
+  background: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.summaryItem.total {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.confirmBtn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.2rem;
+  background-color: var(--secondary-color);
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}

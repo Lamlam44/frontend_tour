@@ -1,0 +1,6 @@
+.footer {
+  text-align: center; padding: 2rem; background-color: #343a40; color: var(--white);
+}
+.links a {
+  color: var(--white); margin: 0 1rem; text-decoration: none;
+}
