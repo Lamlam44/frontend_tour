@@ -40,7 +40,7 @@ function HotelDetailPage() {
                             <input type="date" />
                             <label>Ngày trả phòng:</label>
                             <input type="date" />
-                            <Link to="/booking">
+                            <Link to={`/booking/hotel/${hotelId}`}>
                                 <button className={styles.bookNowBtn}>Chọn phòng</button>
                             </Link>
                         </div>

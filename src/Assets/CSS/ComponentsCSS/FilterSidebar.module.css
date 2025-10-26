@@ -1,0 +1,51 @@
+.sidebar {
+  flex: 0 0 260px; /* Sidebar không co giãn, rộng 260px */
+  background: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  height: fit-content;
+}
+
+.sidebar h3 {
+    margin-top: 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.filterGroup {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1.5rem;
+}
+
+.filterGroup:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.filterGroup h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.filterGroup label {
+  display: block;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.applyBtn {
+    width: 100%;
+    padding: 0.8rem;
+    margin-top: 1.5rem;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}

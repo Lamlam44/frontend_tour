@@ -46,8 +46,8 @@ function TourDetailPage() {
               <input type="date" />
               <label>Số lượng khách:</label>
               <input type="number" defaultValue="1" min="1" />
-              <Link to="/booking">
-                <button className={styles.bookNowBtn}>Đặt ngay</button>
+              <Link to={`/booking/tour/${tourId}`}>
+                  <button className={styles.bookNowBtn}>Đặt ngay</button>
               </Link>
             </div>
           </aside>

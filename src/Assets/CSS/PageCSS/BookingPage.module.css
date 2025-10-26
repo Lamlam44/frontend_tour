@@ -60,3 +60,49 @@
   border-radius: var(--border-radius);
   cursor: pointer;
 }
+
+/* Dán thêm vào cuối file BookingPage.module.css */
+
+.passengerForm {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    border: 1px solid #eee;
+}
+
+.passengerForm p {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-top: 0;
+}
+
+.sectionTitle {
+    margin-top: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.addOnSection {
+    margin-top: 1rem;
+}
+
+.addOnSection label {
+    display: block;
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+/* Thêm style cho textarea (dùng cho HotelBookingPage) */
+.specialRequest {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    min-height: 100px;
+    font-family: Arial, sans-serif;
+    font-size: 1rem;
+}

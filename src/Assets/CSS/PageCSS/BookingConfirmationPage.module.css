@@ -34,3 +34,43 @@
   cursor: pointer;
   font-size: 1rem;
 }
+
+/* Dán thêm vào cuối file BookingConfirmationPage.module.css */
+
+.mainInfo {
+    display: flex;
+    justify-content: space-around;
+    background-color: #e9ecef;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+}
+
+.infoItem span {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.infoItem strong {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.nextSteps {
+    margin-top: 1.5rem;
+    text-align: left;
+    background-color: #fffbe6;
+    border: 1px solid #ffe58f;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+}
+
+.nextSteps h4 {
+    margin-top: 0;
+}
