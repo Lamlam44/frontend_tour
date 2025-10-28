@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/LoginPage.module.css';
@@ -11,6 +11,7 @@ function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const validate = () => {
     const newErrors = {};
@@ -35,7 +36,11 @@ function LoginPage() {
     // Chỉ là mô phỏng gửi form. Tích hợp API thực tế sau.
     setTimeout(() => {
       setSubmitting(false);
-      alert('Đăng nhập thành công (demo). Hãy tích hợp API thật sau!');
+      if (email === 'admin@gmail.com' && password === 'admin123') {
+        navigate('/dashboard'); // Redirect to the desired page
+      } else {
+        alert('Đăng nhập thành công (demo). Hãy tích hợp API thật sau!');
+      }
     }, 800);
   };
 

@@ -14,6 +14,7 @@ import TourBookingPage from './Pages/User/TourBookingPage';
 import HotelBookingPage from './Pages/User/HotelBookingPage';
 import LoginPage from './Pages/User/LoginPage';
 import RegisterPage from './Pages/User/RegisterPage';
+import AdminDashboard from './Pages/Admin/AdminDashboard';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/dashboard" element={<AdminDashboard />} />
       </Routes>
     </Router>
   );
