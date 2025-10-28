@@ -12,6 +12,8 @@ import FlightDetailPage from './Pages/User/FlightDetailPage';
 import FlightBookingPage from './Pages/User/FlightBookingPage';
 import TourBookingPage from './Pages/User/TourBookingPage';
 import HotelBookingPage from './Pages/User/HotelBookingPage';
+import LoginPage from './Pages/User/LoginPage';
+import RegisterPage from './Pages/User/RegisterPage';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
         <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
         <Route path="/confirmation" element={<BookingConfirmationPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </Router>
   );

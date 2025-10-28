@@ -17,8 +17,12 @@ function Header() {
         </ul>
       </nav>
       <div className={styles.actions}>
-        <button className={styles.loginBtn}>Đăng nhập</button>
-        <button className={styles.registerBtn}>Đăng ký</button>
+        <Link to="/login">
+          <button className={styles.loginBtn}>Đăng nhập</button>
+        </Link>
+        <Link to="/register">
+          <button className={styles.registerBtn}>Đăng ký</button>
+        </Link>
       </div>
     </header>
   );
