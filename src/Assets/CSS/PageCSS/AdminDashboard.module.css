@@ -1,0 +1,330 @@
+/* Main CSS Here */
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+:root {
+    --background-color1: #fafaff;
+    --background-color2: #ffffff;
+    --background-color3: #ededed;
+    --background-color4: #cad7fda4;
+    --primary-color: #4b49ac;
+    --secondary-color: #0c007d;
+    --Border-color: #3f0097;
+    --one-use-color: #3f0097;
+    --two-use-color: #5500cb;
+}
+
+.adminRoot {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--background-color4);
+}
+
+body {
+    background-color: var(--background-color4);
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+th tr td {
+    display: table-cell;
+    vertical-align: inherit;
+    font-weight: bold;
+    text-align: -internal-center;
+    unicode-bidi: isolate;
+    border: 1px solid black;
+    margin-bottom: 10px;
+}
+
+.data-table thead th {
+    position: sticky;
+    top: 80px;
+    /* height of the reportHeader */
+    z-index: 50;
+    background: #fff;
+}
+
+.recent-Articles {
+    font-size: 30px;
+    font-weight: 600;
+    color: #5500cb;
+}
+
+table {
+    border-collapse: separate;
+    text-indent: initial;
+    border-spacing: 2px;
+    width: 80%;
+    border: 1px solid black;
+    margin: 50px;
+}
+
+.report-body {
+    max-width: 1160px;
+    overflow-x: auto;
+    padding: 20px;
+}
+
+.thHead {
+    border-right: 1px solid black;
+}
+
+.thBody {
+    border-top: 1px solid black;
+    border-right: 1px solid black;
+}
+
+.sectionBody {
+    width: 100%;
+    display: flex;
+    margin-top: 20px;
+    justify-content: center;
+    position: relative;
+    top: 30px;
+}
+
+header {
+    height: 70px;
+    width: 100vw;
+    padding: 0 30px;
+    background-color: var(--background-color1);
+    position: fixed;
+    z-index: 100;
+    box-shadow: 1px 1px 15px rgba(161, 182, 253, 0.825);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 27px;
+    font-weight: 600;
+    color: rgb(47, 141, 70);
+}
+
+.menuicn {
+    cursor: pointer;
+}
+
+.message {
+    gap: 40px;
+    position: relative;
+    cursor: pointer;
+}
+
+.mainContainer {
+    display: flex;
+    width: 100vw;
+    position: relative;
+    top: 70px;
+    z-index: 1;
+}
+
+.main {
+    height: calc(100vh - 70px);
+    width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 40px 30px 30px 30px;
+}
+
+.main::-webkit-scrollbar-thumb {
+    background-image:
+        linear-gradient(to bottom, rgb(0, 0, 85), rgb(0, 0, 50));
+}
+
+.main::-webkit-scrollbar {
+    width: 5px;
+}
+
+.nav {
+    z-index: 1000;
+    min-height: 91vh;
+    width: 250px;
+    background-color: var(--background-color2);
+    position: absolute;
+    top: 0px;
+    left: 00;
+    box-shadow: 1px 1px 10px rgba(198, 189, 248, 0.825);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 30px 0 20px 10px;
+}
+
+.navContainer {
+    height: calc(100vh - 70px);
+    width: 250px;
+    position: relative;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    transition: all 0.5s ease-in-out;
+}
+
+.navContainer::-webkit-scrollbar {
+    display: none;
+}
+
+.navClose {
+    width: 0px;
+}
+
+.navOption {
+    width: 250px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 30px 0 20px;
+    gap: 20px;
+    transition: all 0.1s ease-in-out;
+}
+
+.navOption:hover {
+    border-left: 5px solid #a2a2a2;
+    background-color: #dadada;
+    cursor: pointer;
+}
+
+.navImg {
+    height: 30px;
+}
+
+.navUpperOptions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.option1 {
+    border-left: 5px solid #010058af;
+    background-color: var(--Border-color);
+    color: white;
+    cursor: pointer;
+}
+
+.option1:hover {
+    border-left: 5px solid #010058af;
+    background-color: var(--Border-color);
+}
+
+.reportContainer {
+    min-height: 15em;
+    max-width: 60em;
+    margin: 4.375em auto 0 auto;
+    background-color: #ffffff;
+    border-radius: 1.875em;
+    box-shadow: 0.1875em 0.1875em 0.625em rgb(188, 188, 188);
+    padding: 0 1.25em 1.25em 1.25em;
+}
+
+.reportHeader {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 10px 20px;
+    height: 80px;
+    border-bottom: 2px solid rgba(0, 20, 151, 0.59);
+}
+
+/* Responsive CSS Here */
+@media screen and (max-width: 950px) {
+    .navImg {
+        height: 25px;
+    }
+
+    .navOption {
+        gap: 30px;
+    }
+
+    .navOption h3 {
+        font-size: 15px;
+    }
+}
+
+@media screen and (max-width: 850px) {
+    .navImg-img {
+        height: 30px;
+    }
+
+    .nav-navOption {
+        gap: 30px;
+    }
+
+    .nav-navOption h3 {
+        font-size: 20px;
+    }
+
+    .navContainer {
+        width: 100vw;
+        position: absolute;
+        transition: all 0.6s ease-in-out;
+        top: 0;
+        left: -100vw;
+    }
+
+    .nav {
+        width: 100%;
+        position: absolute;
+    }
+
+    .navClose {
+        left: 00px;
+    }
+
+    .main {
+        padding: 40px 30px 30px 30px;
+    }
+}
+
+@media screen and (max-width: 490px) {
+    .logo {
+        font-size: 20px;
+    }
+
+    .menuIcn {
+        height: 25px;
+    }
+
+    .navImg {
+        height: 25px;
+    }
+
+    .navOption {
+        gap: 25px;
+    }
+
+    .navUpperOptions {
+        gap: 15px;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .reportHeader {
+        height: 60px;
+        padding: 10px 10px 5px 10px;
+    }
+}
+
+@media screen and (max-width: 320px) {
+    .reportHeader {
+        height: 60px;
+        padding: 10px 5px 5px 5px;
+    }
+}

@@ -1,10 +1,39 @@
 import React, { useState, useMemo } from "react";
-import styles from '../Assets/CSS/PageCSS/AdminDashboard.css';
+import styles from "../Assets/CSS/PageCSS/AdminDashboard.module.css";
 
-export default function TourTable({ compact = false }) {
-    const [tours, setTours] = useState([
+export default function ResourceTable({ compact = false }) {
+    const [resources, setResources] = useState([
         { id: 1, name: "Hạ Long Bay", price: 5000000 },
-        { id: 2, name: "Sapa Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
     ]);
 
     const [showAdd, setShowAdd] = useState(false);
@@ -12,14 +41,14 @@ export default function TourTable({ compact = false }) {
     const [q, setQ] = useState("");
 
     const filtered = useMemo(() => {
-        return tours.filter(t =>
+        return resources.filter(t =>
             t.name.toLowerCase().includes(q.toLowerCase())
         );
-    }, [q, tours]);
+    }, [q, resources]);
 
     const addTour = () => {
         if (!newTour.name.trim()) return;
-        setTours(prev => [
+        setResources(prev => [
             ...prev,
             { id: Date.now(), name: newTour.name.trim(), price: Number(newTour.price) || 0 }
         ]);
@@ -28,20 +57,24 @@ export default function TourTable({ compact = false }) {
     };
 
     const remove = (id) => {
-        setTours(prev => prev.filter(t => t.id !== id));
+        setResources(prev => prev.filter(t => t.id !== id));
     };
 
     return (
-        <section className="panel">
-            <div className="panel-header">
-                <h2>QUẢN LÍ TOUR</h2>
+        <section className={styles.panel}>
+            <div className={styles["reportHeader"]}>
+                <h2 className={styles["recent-Articles"]}>QUẢN LÍ TOUR</h2>
                 <div>
                     {!compact && (
-                        <button onClick={() => setShowAdd(s => !s)}>
+                        <button
+                            className={styles.addButton}
+                            onClick={() => setShowAdd(s => !s)}
+                        >
                             THÊM TOUR
                         </button>
                     )}
                     <input
+                        className={styles.search}
                         placeholder="Tìm kiếm..."
                         value={q}
                         onChange={e => setQ(e.target.value)}
@@ -49,46 +82,51 @@ export default function TourTable({ compact = false }) {
                 </div>
             </div>
 
-            {showAdd && (
-                <div className="add-box">
-                    <input
-                        placeholder="Tên"
-                        value={newTour.name}
-                        onChange={e => setNewTour({ ...newTour, name: e.target.value })}
-                    />
-                    <input
-                        placeholder="Giá"
-                        value={newTour.price}
-                        onChange={e => setNewTour({ ...newTour, price: e.target.value })}
-                    />
-                    <button onClick={addTour}>Thêm</button>
-                </div>
-            )}
+            <div className={styles["sectionBody"]}>
+                {showAdd && (
+                    <div className={styles["add-box"]}>
+                        <input
+                            placeholder="Tên"
+                            value={newTour.name}
+                            onChange={e => setNewTour({ ...newTour, name: e.target.value })}
+                        />
+                        <input
+                            placeholder="Giá"
+                            value={newTour.price}
+                            onChange={e => setNewTour({ ...newTour, price: e.target.value })}
+                        />
+                        <button onClick={addTour}>Thêm</button>
+                    </div>
+                )}
 
-            <table className="data-table">
-                <thead>
-                    <tr>
-                        <th>TOUR</th>
-                        <th>GIÁ</th>
-                        {!compact && <th>XÓA</th>}
-                    </tr>
-                </thead>
-                <tbody>
-                    {filtered.map(t => (
-                        <tr key={t.id}>
-                            <td>{t.name}</td>
-                            <td>{t.price.toLocaleString()}₫</td>
-                            {!compact && (
-                                <td>
-                                    <button onClick={() => remove(t.id)}>
-                                        XÓA
-                                    </button>
-                                </td>
-                            )}
+                <table className={styles["data-table"]}>
+                    <thead>
+                        <tr>
+                            <th className={styles["thHead"]}>TOUR</th>
+                            <th className={styles["thHead"]}>GIÁ</th>
+                            {!compact && <th>XÓA</th>}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {filtered.map(t => (
+                            <tr key={t.id}>
+                                <td className={styles["thBody"]}>{t.name}</td>
+                                <td className={styles["thBody"]}>{t.price.toLocaleString()}₫</td>
+                                {!compact && (
+                                    <td>
+                                        <button
+                                            className={styles.deleteBtn}
+                                            onClick={() => remove(t.id)}
+                                        >
+                                            XÓA
+                                        </button>
+                                    </td>
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </section>
     );
 }
