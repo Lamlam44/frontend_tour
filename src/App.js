@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ChakraProvider } from '@chakra-ui/react';
 import HomePage from './Pages/User/HomePage';
 import TourDetailPage from './Pages/User/TourDetailPage';
 import HotelDetailPage from './Pages/User/HotelDetailPage';
@@ -14,30 +15,35 @@ import TourBookingPage from './Pages/User/TourBookingPage';
 import HotelBookingPage from './Pages/User/HotelBookingPage';
 import LoginPage from './Pages/User/LoginPage';
 import RegisterPage from './Pages/User/RegisterPage';
-import AdminDashboard from './Pages/Admin/AdminDashboard';
+import NewAdminDashboard from './Admin/views/NewAdminDashboard';
+import AdminLayout from './Admin/layouts/AdminLayout';
+import theme from './Admin/theme';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/tours" element={<TourListPage />} />
-        <Route path="/tours/:tourId" element={<TourDetailPage />} />
-        <Route path="/hotels" element={<HotelListPage />} />
-        <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
-        <Route path="/flights" element={<FlightListPage />} />
-        <Route path="/flights/:flightId" element={<FlightDetailPage />} />
-        <Route path="/promotions" element={<PromotionListPage />} />
-        <Route path="/booking/tour/:tourId" element={<TourBookingPage />} />
-        <Route path="/booking/hotel/:hotelId" element={<HotelBookingPage />} />
-        <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
-        <Route path="/confirmation" element={<BookingConfirmationPage />} />
-        <Route path="/profile" element={<UserProfilePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/dashboard" element={<AdminDashboard />} />
-      </Routes>
-    </Router>
+    <ChakraProvider theme={theme}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/tours" element={<TourListPage />} />
+          <Route path="/tours/:tourId" element={<TourDetailPage />} />
+          <Route path="/hotels" element={<HotelListPage />} />
+          <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
+          <Route path="/flights" element={<FlightListPage />} />
+          <Route path="/flights/:flightId" element={<FlightDetailPage />} />
+          <Route path="/promotions" element={<PromotionListPage />} />
+          <Route path="/booking/tour/:tourId" element={<TourBookingPage />} />
+          <Route path="/booking/hotel/:hotelId" element={<HotelBookingPage />} />
+          <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
+          <Route path="/confirmation" element={<BookingConfirmationPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/dashboard" element={<NewAdminDashboard />} />
+          <Route path="/admin/*" element={<AdminLayout />} />
+        </Routes>
+      </Router>
+    </ChakraProvider>
   );
 }
 

@@ -243,6 +243,17 @@ header {
     border-bottom: 2px solid rgba(0, 20, 151, 0.59);
 }
 
+.add-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.data-table {
+    margin-top: 20px;
+}
+
 /* Responsive CSS Here */
 @media screen and (max-width: 950px) {
     .navImg {

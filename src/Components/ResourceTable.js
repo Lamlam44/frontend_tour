@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import styles from "../Assets/CSS/PageCSS/AdminDashboard.module.css";
+import Button from '@mui/material/Button';
 
 export default function ResourceTable({ compact = false }) {
     const [resources, setResources] = useState([
@@ -35,10 +36,13 @@ export default function ResourceTable({ compact = false }) {
         { id: 2, name: "Haha Adventure", price: 4500000 },
         { id: 2, name: "Haha Adventure", price: 4500000 },
         { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
+        { id: 2, name: "Haha Adventure", price: 4500000 },
     ]);
 
     const [showAdd, setShowAdd] = useState(false);
-    const [newTour, setNewTour] = useState({ name: "", price: "" });
+    const [newResource, setNewResource] = useState({ name: "", price: "" });
     const [q, setQ] = useState("");
 
     const filtered = useMemo(() => {
@@ -47,13 +51,13 @@ export default function ResourceTable({ compact = false }) {
         );
     }, [q, resources]);
 
-    const addTour = () => {
-        if (!newTour.name.trim()) return;
+    const addResource = () => {
+        if (!newResource.name.trim()) return;
         setResources(prev => [
             ...prev,
-            { id: Date.now(), name: newTour.name.trim(), price: Number(newTour.price) || 0 }
+            { id: Date.now(), name: newResource.name.trim(), price: Number(newResource.price) || 0 }
         ]);
-        setNewTour({ name: "", price: "" });
+        setNewResource({ name: "", price: "" });
         setShowAdd(false);
     };
 
@@ -67,12 +71,12 @@ export default function ResourceTable({ compact = false }) {
                 <h2 className={styles["recent-Articles"]}>QUẢN LÍ TÀI NGUYÊN</h2>
                 <div>
                     {!compact && (
-                        <button
+                        <Button variant="contained"
                             className={styles.addButton}
                             onClick={() => setShowAdd(s => !s)}
                         >
                             + THÊM TÀI NGUYÊN
-                        </button>
+                        </Button>
                     )}
                     <input
                         className={styles.search}
@@ -87,22 +91,23 @@ export default function ResourceTable({ compact = false }) {
                     <div className={styles["add-box"]}>
                         <input
                             placeholder="Tên tài nguyên"
-                            value={newTour.name}
-                            onChange={e => setNewTour({ ...newTour, name: e.target.value })}
+                            value={newResource.name}
+                            onChange={e => setNewResource({ ...newResource, name: e.target.value })}
                         />
                         <input
                             placeholder="Giá"
-                            value={newTour.price}
-                            onChange={e => setNewTour({ ...newTour, price: e.target.value })}
+                            value={newResource.price}
+                            onChange={e => setNewResource({ ...newResource, price: e.target.value })}
                         />
-                        <button onClick={addTour}>Thêm</button>
+                        <button onClick={addResource}>Thêm</button>
                     </div>
                 )}
-
+            </div>
+            <div className={styles["sectionBody"]}>
                 <table className={styles["data-table"]}>
                     <thead>
                         <tr>
-                            <th className={styles["thHead"]}>TOUR</th>
+                            <th className={styles["thHead"]}>RESOURCE</th>
                             <th className={styles["thHead"]}>GIÁ</th>
                             {!compact && <th>XÓA</th>}
                         </tr>
