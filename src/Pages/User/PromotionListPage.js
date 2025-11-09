@@ -8,6 +8,9 @@ const mockPromotions = [
   { id: 1, title: 'Giảm 30% tour Đà Nẵng', description: 'Áp dụng cho các booking trong tháng 10.', tourId: 2, img: 'https://via.placeholder.com/400x250?text=Sale+Da+Nang' },
   { id: 2, title: 'Mua 1 tặng 1 vé VinWonders', description: 'Khi đặt tour Phú Quốc trọn gói.', tourId: 1, img: 'https://via.placeholder.com/400x250?text=VinWonders+Promo' },
   { id: 3, title: 'Ưu đãi đặt phòng sớm', description: 'Giảm 20% cho tất cả khách sạn tại Hà Nội.', hotelId: 103, img: 'https://via.placeholder.com/400x250?text=Early+Bird+Hanoi' },
+  { id: 4, title: 'Giảm 30% tour Đà Nẵng', description: 'Áp dụng cho các booking trong tháng 10.', tourId: 2, img: 'https://via.placeholder.com/400x250?text=Sale+Da+Nang' },
+  { id: 5, title: 'Mua 1 tặng 1 vé VinWonders', description: 'Khi đặt tour Phú Quốc trọn gói.', tourId: 1, img: 'https://via.placeholder.com/400x250?text=VinWonders+Promo' },
+  { id: 6, title: 'Ưu đãi đặt phòng sớm', description: 'Giảm 20% cho tất cả khách sạn tại Hà Nội.', hotelId: 103, img: 'https://via.placeholder.com/400x250?text=Early+Bird+Hanoi' },
 ];
 
 function PromotionListPage() {
