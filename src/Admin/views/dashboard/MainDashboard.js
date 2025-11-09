@@ -10,12 +10,44 @@ import {
     useColorModeValue,
 } from "@chakra-ui/react";
 import Card from "../../components/card/Card";
+import ReactApexChart from "react-apexcharts";
 import React from "react";
 
 export default function MainDashboard() {
     const brandColor = useColorModeValue("brand.500", "white");
     const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
-    const textColor = useColorModeValue("secondaryGray.900", "white");
+    const textColor = "white";
+    // Ngay trong MainDashboard component
+    const chartOptions = {
+    chart: {
+        type: "area",
+        toolbar: { show: false },
+        zoom: { enabled: false },
+    },
+    dataLabels: { enabled: false },
+    stroke: { curve: "smooth", width: 2 },
+    colors: ["#4b49ac"],
+    xaxis: {
+        categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"],
+        labels: { style: { colors: "#888", fontSize: "12px" } },
+    },
+    yaxis: {
+        labels: { style: { colors: "#888", fontSize: "12px" } },
+    },
+    grid: { borderColor: "#f1f1f1" },
+    tooltip: {
+        y: {
+        formatter: (val) => `₫${val}M`,
+        },
+    },
+    };
+
+    const chartSeries = [
+    {
+        name: "Revenue",
+        data: [85, 92, 100, 125, 110, 130, 145, 160],
+    },
+    ];
 
     return (
         <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
@@ -67,6 +99,17 @@ export default function MainDashboard() {
                     </Stat>
                 </Card>
             </SimpleGrid>
+            <Card p='30px' mb='20px'>
+                <Text fontSize='xl' fontWeight='bold' color={textColor} mb='20px'>
+                    Revenue Overview
+                </Text>
+                <ReactApexChart
+                    options={chartOptions}
+                    series={chartSeries}
+                    type='area'
+                    height={300}
+                />
+            </Card>
 
             <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap='20px' mb='20px'>
                 <Card p='30px'>
