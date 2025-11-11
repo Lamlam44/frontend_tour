@@ -19,6 +19,7 @@ import NewAdminDashboard from './Admin/views/NewAdminDashboard';
 import AdminLayout from './Admin/layouts/AdminLayout';
 import theme from './Admin/theme';
 
+
 function App() {
   return (
     <ChakraProvider theme={theme}>
@@ -41,6 +42,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<NewAdminDashboard />} />
           <Route path="/admin/*" element={<AdminLayout />} />
+
         </Routes>
       </Router>
     </ChakraProvider>
