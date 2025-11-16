@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"
 import {
   Box,
   Heading,
@@ -22,62 +22,130 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 
+import axios from "axios";
+
+const API = "http://localhost:8080/api/promotions";
+
 const PromotionSettingPage = () => {
-  const [promotions, setPromotions] = useState([
-    {
-      id: "P001",
-      name: "Giảm 10% Tour Phú Quốc",
-      discount: "10%",
-      description: "Áp dụng cho tour Phú Quốc",
-      startDate: "2025-01-01",
-      endDate: "2025-01-31",
-    },
-    {
-      id: "P002",
-      name: "Ưu đãi Noel 2025",
-      discount: "15%",
-      description: "Giảm giá dịp lễ Noel",
-      startDate: "2025-12-20",
-      endDate: "2025-12-31",
-    },
-  ]);
+  const [promotions, setPromotions] = useState([]);
+  const [isEdit, setIsEdit] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const [newPromo, setNewPromo] = useState({
-    id: "",
-    name: "",
-    discount: "",
+  const [formData, setFormData] = useState({
+    promotionName: "",
+    discountPercentage: "",
     description: "",
     startDate: "",
     endDate: "",
+    tourIds: [], // backend yêu cầu
   });
 
-  const handleSave = () => {
-    if (
-      !newPromo.id ||
-      !newPromo.name ||
-      !newPromo.discount ||
-      !newPromo.description ||
-      !newPromo.startDate ||
-      !newPromo.endDate
-    )
-      return alert("Vui lòng nhập đầy đủ thông tin!");
-    setPromotions([...promotions, newPromo]);
-    setNewPromo({
-      id: "",
-      name: "",
-      discount: "",
-      description: "",
-      startDate: "",
-      endDate: "",
-    });
-    onClose();
+  const [editId, setEditId] = useState(null);
+
+  // ========================
+  // 🔥 LOAD DATA FROM API
+  // ========================
+  const loadPromotions = async () => {
+    try {
+      const res = await axios.get(API);
+      setPromotions(res.data);
+    } catch (err) {
+      console.error("Lỗi load promotions", err);
+    }
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa khuyến mãi này không?")) {
-      setPromotions(promotions.filter((p) => p.id !== id));
+  useEffect(() => {
+    loadPromotions();
+  }, []);
+
+  // ========================
+  // 🔥 HANDLE INPUT CHANGE
+  // ========================
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  // ========================
+  // 🔥 ADD NEW PROMOTION
+  // ========================
+  const handleAdd = async () => {
+    try {
+      await axios.post(API, formData);
+
+      onClose();
+      loadPromotions();
+
+      setFormData({
+        promotionName: "",
+        discountPercentage: "",
+        description: "",
+        startDate: "",
+        endDate: "",
+        tourIds: [],
+      });
+    } catch (err) {
+      console.error("Lỗi thêm promotion", err);
+      alert("Lỗi khi thêm khuyến mãi!");
+    }
+  };
+
+  // ========================
+  // 🔥 OPEN EDIT FORM
+  // ========================
+  const openEdit = (promo) => {
+    setIsEdit(true);
+    setEditId(promo.promotionId);
+
+    setFormData({
+      promotionName: promo.promotionName,
+      discountPercentage: promo.discountPercentage,
+      description: promo.description,
+      startDate: promo.startDate,
+      endDate: promo.endDate,
+      tourIds: [], // không load tourIds
+    });
+
+    onOpen();
+  };
+
+  // ========================
+  // 🔥 UPDATE PROMOTION
+  // ========================
+  const handleUpdate = async () => {
+    try {
+      await axios.put(`${API}/${editId}`, formData);
+
+      onClose();
+      loadPromotions();
+      setIsEdit(false);
+
+      setFormData({
+        promotionName: "",
+        discountPercentage: "",
+        description: "",
+        startDate: "",
+        endDate: "",
+        tourIds: [],
+      });
+    } catch (err) {
+      console.error("Lỗi update promotion", err);
+      alert("Lỗi khi cập nhật khuyến mãi!");
+    }
+  };
+
+  // ========================
+  // 🔥 DELETE PROMOTION
+  // ========================
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có muốn xóa khuyến mãi này?")) return;
+
+    try {
+      await axios.delete(`${API}/${id}`);
+      loadPromotions();
+    } catch (err) {
+      console.error("Lỗi xóa promotion", err);
+      alert("Không thể xóa!");
     }
   };
 
@@ -90,7 +158,21 @@ const PromotionSettingPage = () => {
       <Box bg="navy.800" p={6} borderRadius="2xl">
         <Box display="flex" justifyContent="space-between" mb={4}>
           <Heading size="sm">Promotion List</Heading>
-          <Button colorScheme="blue" onClick={onOpen}>
+          <Button
+            colorScheme="blue"
+            onClick={() => {
+              setIsEdit(false);
+              setFormData({
+                promotionName: "",
+                discountPercentage: "",
+                description: "",
+                startDate: "",
+                endDate: "",
+                tourIds: [],
+              });
+              onOpen();
+            }}
+          >
             Add New Promotion
           </Button>
         </Box>
@@ -102,29 +184,36 @@ const PromotionSettingPage = () => {
               <Th color="white">NAME</Th>
               <Th color="white">DISCOUNT</Th>
               <Th color="white">DESCRIPTION</Th>
-              <Th color="white">START DATE</Th>
-              <Th color="white">END DATE</Th>
+              <Th color="white">START</Th>
+              <Th color="white">END</Th>
               <Th color="white">ACTIONS</Th>
             </Tr>
           </Thead>
+
           <Tbody>
             {promotions.map((promo) => (
-              <Tr key={promo.id}>
-                <Td>{promo.id}</Td>
-                <Td>{promo.name}</Td>
-                <Td>{promo.discount}</Td>
+              <Tr key={promo.promotionId}>
+                <Td>{promo.promotionId}</Td>
+                <Td>{promo.promotionName}</Td>
+                <Td>{promo.discountPercentage}%</Td>
                 <Td>{promo.description}</Td>
                 <Td>{promo.startDate}</Td>
                 <Td>{promo.endDate}</Td>
+
                 <Td>
                   <HStack>
-                    <Button colorScheme="yellow" size="sm">
+                    <Button
+                      colorScheme="yellow"
+                      size="sm"
+                      onClick={() => openEdit(promo)}
+                    >
                       Edit
                     </Button>
+
                     <Button
                       colorScheme="red"
                       size="sm"
-                      onClick={() => handleDelete(promo.id)}
+                      onClick={() => handleDelete(promo.promotionId)}
                     >
                       Delete
                     </Button>
@@ -136,66 +225,61 @@ const PromotionSettingPage = () => {
         </Table>
       </Box>
 
-      {/* Modal form thêm khuyến mãi */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      {/* Modal thêm / sửa */}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New Promotion</ModalHeader>
+          <ModalHeader>{isEdit ? "Edit Promotion" : "Add New Promotion"}</ModalHeader>
           <ModalCloseButton />
-            <ModalBody>
-                <Input
-                    placeholder="ID"
-                    mb={3}
-                    value={newPromo.id}
-                    onChange={(e) => setNewPromo({ ...newPromo, id: e.target.value })}
-                />
-                <Input
-                    placeholder="Name"
-                    mb={3}
-                    value={newPromo.name}
-                    onChange={(e) =>
-                    setNewPromo({ ...newPromo, name: e.target.value })
-                    }
-                />
-                <Input
-                    placeholder="Discount"
-                    mb={3}
-                    value={newPromo.discount}
-                    onChange={(e) =>
-                    setNewPromo({ ...newPromo, discount: e.target.value })
-                    }
-                />
-                {/* Dùng Textarea cho Description */}
-                <Textarea
-                    placeholder="Description"
-                    mb={3}
-                    size="sm"
-                    value={newPromo.description}
-                    onChange={(e) =>
-                    setNewPromo({ ...newPromo, description: e.target.value })
-                    }
-                    rows={3} // số dòng hiển thị ban đầu
-                />
-                <Input
-                    type="date"
-                    mb={3}
-                    value={newPromo.startDate}
-                    onChange={(e) =>
-                    setNewPromo({ ...newPromo, startDate: e.target.value })
-                    }
-                />
-                <Input
-                    type="date"
-                    mb={3}
-                    value={newPromo.endDate}
-                    onChange={(e) =>
-                    setNewPromo({ ...newPromo, endDate: e.target.value })
-                    }
-                />
-            </ModalBody>
+
+          <ModalBody>
+            <Input
+              placeholder="Promotion Name"
+              mb={3}
+              value={formData.promotionName}
+              onChange={(e) => handleChange("promotionName", e.target.value)}
+            />
+
+            <Input
+              placeholder="Discount Percentage"
+              type="number"
+              mb={3}
+              value={formData.discountPercentage}
+              onChange={(e) =>
+                handleChange("discountPercentage", e.target.value)
+              }
+            />
+
+            <Textarea
+              placeholder="Description"
+              mb={3}
+              rows={5}
+              value={formData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+            />
+
+            <Input
+              type="date"
+              mb={3}
+              value={formData.startDate}
+              onChange={(e) => handleChange("startDate", e.target.value)}
+            />
+
+            <Input
+              type="date"
+              mb={3}
+              value={formData.endDate}
+              onChange={(e) => handleChange("endDate", e.target.value)}
+            />
+          </ModalBody>
+
           <ModalFooter>
-            <Button colorScheme="green" mr={3} onClick={handleSave}>
-              Save
+            <Button
+              colorScheme="green"
+              mr={3}
+              onClick={isEdit ? handleUpdate : handleAdd}
+            >
+              {isEdit ? "Update" : "Save"}
             </Button>
             <Button variant="ghost" onClick={onClose}>
               Cancel
