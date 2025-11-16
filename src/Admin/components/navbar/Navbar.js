@@ -4,7 +4,9 @@ import {
     Flex,
     Text,
     useColorModeValue,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"
+import { SidebarResponsive } from '../../components/sidebar/AdminSidebar';
+import routes from '../../routes.js';
 
 export default function Navbar(props) {
     const { brandText } = props;
@@ -72,6 +74,10 @@ export default function Navbar(props) {
                         {brandText}
                     </Text>
                 </Box>
+                <SidebarResponsive routes={routes.map((route) => ({
+                    ...route,
+                    icon: route.icon || null, // Ensure icon is valid
+                }))} />
             </Flex>
         </Box>
     );
