@@ -11,11 +11,11 @@ const tourFilterGroups = [
     { title: 'Đánh giá', type: 'radio', name: 'rating', options: ['Từ 5 sao', 'Từ 4 sao', 'Từ 3 sao'] }
 ];
 
-const mockTours = [
-  { id: 1, title: 'Tour Phú Quốc 3N2Đ', price: '2,990,000đ', img: 'https://via.placeholder.com/300x200?text=Phu+Quoc', duration: '3 ngày 2 đêm' },
-  { id: 2, title: 'Khám phá Đà Nẵng - Hội An', price: '3,500,000đ', img: 'https://via.placeholder.com/300x200?text=Da+Nang', duration: '4 ngày 3 đêm' },
-  { id: 3, title: 'Hà Giang - Mùa hoa tam giác mạch', price: '4,200,000đ', img: 'https://via.placeholder.com/300x200?text=Ha+Giang', duration: '3 ngày 2 đêm' },
-  { id: 4, title: 'Về Miền Tây Sông Nước', price: '2,500,000đ', img: 'https://via.placeholder.com/300x200?text=Mien+Tay', duration: '2 ngày 1 đêm' },
+const tours = [
+  { id: 1, title: 'Tour Phú Quốc 3N2Đ', price: '2,990,000đ', img: 'https://placehold.co/300x200/1e88e5/ffffff?text=Phu+Quoc', duration: '3 ngày 2 đêm' },
+  { id: 2, title: 'Khám phá Đà Nẵng - Hội An', price: '3,500,000đ', img: 'https://placehold.co/300x200/43a047/ffffff?text=Da+Nang', duration: '4 ngày 3 đêm' },
+  { id: 3, title: 'Hà Giang - Mùa hoa tam giác mạch', price: '4,200,000đ', img: 'https://placehold.co/300x200/e53935/ffffff?text=Ha+Giang', duration: '3 ngày 2 đêm' },
+  { id: 4, title: 'Về Miền Tây Sông Nước', price: '2,500,000đ', img: 'https://placehold.co/300x200/fb8c00/ffffff?text=Mien+Tay', duration: '2 ngày 1 đêm' },
 ];
 
 function TourListPage() {

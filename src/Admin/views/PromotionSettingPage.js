@@ -48,8 +48,10 @@ const PromotionSettingPage = () => {
   // ========================
   const loadPromotions = async () => {
     try {
-      const res = await axios.get(API);
-      setPromotions(res.data);
+      // TODO: Tạo PromotionController ở backend
+      // const res = await axios.get(API);
+      // setPromotions(res.data);
+      setPromotions([]); // Tạm thời set empty array
     } catch (err) {
       console.error("Lỗi load promotions", err);
     }

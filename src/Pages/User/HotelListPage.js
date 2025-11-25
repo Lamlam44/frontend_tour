@@ -12,10 +12,10 @@ const hotelFilterGroups = [
 ];
 
 const mockHotels = [
-    { id: 101, name: 'Vinpearl Resort & Spa Phú Quốc', price: '2,100,000đ', img: 'https://via.placeholder.com/300x200?text=Vinpearl', rating: '4.9' },
-    { id: 102, name: 'InterContinental Danang Sun Peninsula', price: '7,500,000đ', img: 'https://via.placeholder.com/300x200?text=InterContinental', rating: '5.0' },
-    { id: 103, name: 'Hotel de l\'Opera Hanoi - MGallery', price: '3,200,000đ', img: 'https://via.placeholder.com/300x200?text=Hanoi+Opera', rating: '4.8' },
-    { id: 104, name: 'The Reverie Saigon', price: '8,900,000đ', img: 'https://via.placeholder.com/300x200?text=Reverie+Saigon', rating: '5.0' },
+    { id: 101, name: 'Vinpearl Resort & Spa Phú Quốc', price: '2,100,000đ', img: 'https://placehold.co/300x200/1e88e5/ffffff?text=Vinpearl', rating: '4.9' },
+    { id: 102, name: 'InterContinental Danang Sun Peninsula', price: '7,500,000đ', img: 'https://placehold.co/300x200/43a047/ffffff?text=InterContinental', rating: '5.0' },
+    { id: 103, name: 'Hotel de l\'Opera Hanoi - MGallery', price: '3,200,000đ', img: 'https://placehold.co/300x200/e53935/ffffff?text=Hanoi+Opera', rating: '4.8' },
+    { id: 104, name: 'The Reverie Saigon', price: '8,900,000đ', img: 'https://placehold.co/300x200/fb8c00/ffffff?text=Reverie+Saigon', rating: '5.0' },
 ];
 
 function HotelListPage() {
