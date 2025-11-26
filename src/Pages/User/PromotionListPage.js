@@ -1,19 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/ListPage.module.css';
-
-const mockPromotions = [
-  { id: 1, title: 'Giảm 30% tour Đà Nẵng', description: 'Áp dụng cho các booking trong tháng 10.', tourId: 2, img: 'https://placehold.co/400x250/43a047/ffffff?text=Sale+Da+Nang' },
-  { id: 2, title: 'Mua 1 tặng 1 vé VinWonders', description: 'Khi đặt tour Phú Quốc trọn gói.', tourId: 1, img: 'https://placehold.co/400x250/1e88e5/ffffff?text=VinWonders+Promo' },
-  { id: 3, title: 'Ưu đãi đặt phòng sớm', description: 'Giảm 20% cho tất cả khách sạn tại Hà Nội.', hotelId: 103, img: 'https://placehold.co/400x250/e53935/ffffff?text=Early+Bird+Hanoi' },
-  { id: 4, title: 'Giảm 30% tour Đà Nẵng', description: 'Áp dụng cho các booking trong tháng 10.', tourId: 2, img: 'https://placehold.co/400x250/43a047/ffffff?text=Sale+Da+Nang' },
-  { id: 5, title: 'Mua 1 tặng 1 vé VinWonders', description: 'Khi đặt tour Phú Quốc trọn gói.', tourId: 1, img: 'https://placehold.co/400x250/1e88e5/ffffff?text=VinWonders+Promo' },
-  { id: 6, title: 'Ưu đãi đặt phòng sớm', description: 'Giảm 20% cho tất cả khách sạn tại Hà Nội.', hotelId: 103, img: 'https://placehold.co/400x250/e53935/ffffff?text=Early+Bird+Hanoi' },
-];
+import { getPromotions } from '../../services/api';
 
 function PromotionListPage() {
+  const [promotions, setPromotions] = useState([]);
+
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      try {
+        const data = await getPromotions();
+        setPromotions(data);
+      } catch (error) {
+        console.error('Error fetching promotions:', error);
+      }
+    };
+
+    fetchPromotions();
+  }, []);
+
   return (
     <div>
       <Header />
@@ -23,7 +30,7 @@ function PromotionListPage() {
           <p>Đừng bỏ lỡ những ưu đãi hấp dẫn nhất từ chúng tôi</p>
         </div>
         <div className={styles.grid}>
-          {mockPromotions.map(promo => (
+          {promotions.map(promo => (
             <Link to={promo.tourId ? `/tours/${promo.tourId}` : `/hotels/${promo.hotelId}`} key={promo.id} className={styles.card}>
               <img src={promo.img} alt={promo.title} />
               <div className={styles.cardContent}>

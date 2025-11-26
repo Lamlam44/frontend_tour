@@ -1,23 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/TourDetailPage.module.css';
-
-const tourData = {
-  title: 'Khám phá Đà Nẵng - Hội An - Bà Nà Hills 4N3Đ',
-  rating: 4.7, reviews: 250, price: '5,200,000đ',
-  images: [ 'https://images.unsplash.com/photo-1569509831962-d7b385a4a4e5?q=80&w=1964' ],
-  itinerary: [
-    { day: 1, title: 'Đón sân bay - Khám phá Hội An', details: 'Xe và HDV đón quý khách tại sân bay Đà Nẵng...' },
-    { day: 2, title: 'Bà Nà Hills - Cầu Vàng', details: 'Trải nghiệm cáp treo đạt 4 kỷ lục thế giới...' },
-    { day: 3, title: 'Tắm biển Mỹ Khê - Mua sắm', details: 'Tự do tắm biển tại bãi biển Mỹ Khê...' },
-    { day: 4, title: 'Tiễn sân bay', details: 'Ăn sáng tại khách sạn, xe đưa quý khách ra sân bay...' },
-  ],
-};
+import { getTourById } from '../../services/api';
 
 function TourDetailPage() {
   const { tourId } = useParams();
+  const [tourData, setTourData] = useState(null);
+
+  useEffect(() => {
+    const fetchTour = async () => {
+      try {
+        const data = await getTourById(tourId);
+        setTourData(data);
+      } catch (error) {
+        console.error(`Error fetching tour with id ${tourId}:`, error);
+      }
+    };
+
+    fetchTour();
+  }, [tourId]);
+
+  if (!tourData) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div>
       <Header />
@@ -46,7 +54,7 @@ function TourDetailPage() {
               <input type="date" />
               <label>Số lượng khách:</label>
               <input type="number" defaultValue="1" min="1" />
-              <Link to={`/booking/tour/${tourId}`}>
+              <Link to={`/booking/${tourId}`} state={{ tourDetails: { id: tourId, name: tourData.title, price: tourData.price } }}>
                   <button className={styles.bookNowBtn}>Đặt ngay</button>
               </Link>
             </div>

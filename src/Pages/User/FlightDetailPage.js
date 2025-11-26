@@ -87,7 +87,19 @@ function FlightDetailPage() {
                                 <ul>
                                     {fare.details.map(detail => <li key={detail}>✅ {detail}</li>)}
                                 </ul>
-                                <Link to="/booking">
+                                <Link to={`/booking/flight/${flight.id}`} state={{ 
+                                    flightDetails: { 
+                                        id: flight.id, 
+                                        airline: flight.airline,
+                                        from: flight.from.code,
+                                        to: flight.to.code,
+                                        departureTime: flight.departure.time,
+                                    },
+                                    fareDetails: {
+                                        class: fare.class,
+                                        price: fare.price
+                                    }
+                                }}>
                                     <button className={styles.selectFareBtn}>Chọn vé</button>
                                 </Link>
                             </div>

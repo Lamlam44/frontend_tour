@@ -20,30 +20,53 @@ import NewAdminDashboard from './Admin/views/NewAdminDashboard';
 import AdminLayout from './Admin/layouts/AdminLayout';
 import theme from './Admin/theme';
 
+// Import new pages for booking flows
+import PaymentMethodPage from './Pages/User/PaymentMethodPage'; 
+import HotelPaymentPage from './Pages/User/HotelPaymentPage';
+import FlightAddonsPage from './Pages/User/FlightAddonsPage';
+import FlightPaymentPage from './Pages/User/FlightPaymentPage';
+
 
 function App() {
   return (
     <ChakraProvider theme={theme}>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/tours" element={<TourListPage />} />
-            <Route path="/tours/:tourId" element={<TourDetailPage />} />
-            <Route path="/hotels" element={<HotelListPage />} />
-            <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
-            <Route path="/flights" element={<FlightListPage />} />
-            <Route path="/flights/:flightId" element={<FlightDetailPage />} />
-            <Route path="/promotions" element={<PromotionListPage />} />
-            <Route path="/booking/tour/:tourId" element={<TourBookingPage />} />
-            <Route path="/booking/hotel/:hotelId" element={<HotelBookingPage />} />
-            <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
-            <Route path="/confirmation" element={<BookingConfirmationPage />} />
-            <Route path="/profile" element={<UserProfilePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/dashboard/*" element={<NewAdminDashboard />} />
-            <Route path="/admin/*" element={<AdminLayout />} />
+      <Router>
+        <Routes>
+          {/* Main User Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/tours" element={<TourListPage />} />
+          <Route path="/tours/:tourId" element={<TourDetailPage />} />
+          <Route path="/hotels" element={<HotelListPage />} />
+          <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
+          <Route path="/flights" element={<FlightListPage />} />
+          <Route path="/flights/:flightId" element={<FlightDetailPage />} />
+          <Route path="/promotions" element={<PromotionListPage />} />
+          
+          {/* --- Booking and Payment Flows --- */}
+          {/* Tour Flow */}
+          <Route path="/booking/:tourId" element={<TourBookingPage />} />
+          <Route path="/payment" element={<PaymentMethodPage />} />
+
+          {/* Hotel Flow */}
+          <Route path="/booking/hotel/:hotelId" element={<HotelBookingPage />} />
+          <Route path="/payment/hotel" element={<HotelPaymentPage />} />
+
+          {/* Flight Flow */}
+          <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
+          <Route path="/booking/flight/addons" element={<FlightAddonsPage />} />
+          <Route path="/payment/flight" element={<FlightPaymentPage />} />
+          
+          {/* Universal Confirmation Page */}
+          <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
+          
+          {/* User Account */}
+          <Route path="/profile" element={<UserProfilePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          {/* Admin Routes */}
+          <Route path="/dashboard" element={<NewAdminDashboard />} />
+          <Route path="/admin/*" element={<AdminLayout />} />
 
           </Routes>
         </Router>
