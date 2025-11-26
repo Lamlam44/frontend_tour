@@ -22,6 +22,7 @@ import CustomerManagementPage from "./views/CustomerManagementPage";
 import TourGuideManagementPage from "./views/TourGuideManagementPage";
 import TouristDestinationManagementPage from "./views/TouristDestinationManagementPage";
 import TravelVehicleManagementPage from "./views/TravelVehicleManagementPage";
+import InvoiceSettingPage from "./views/InvoiceSettingPage";
 
 const routes = [
   {
