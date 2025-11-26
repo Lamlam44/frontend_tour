@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Heading,
@@ -21,10 +21,12 @@ import {
   useDisclosure,
   Textarea,
 } from "@chakra-ui/react";
-
-import axios from "axios";
-
-const API = "http://localhost:8080/api/promotions";
+import {
+  getPromotions,
+  addPromotion,
+  updatePromotion,
+  deletePromotion,
+} from "../../services/api";
 
 const PromotionSettingPage = () => {
   const [promotions, setPromotions] = useState([]);
@@ -44,12 +46,12 @@ const PromotionSettingPage = () => {
   const [editId, setEditId] = useState(null);
 
   // ========================
-  // 🔥 LOAD DATA FROM API
+  // LOAD DATA FROM API
   // ========================
   const loadPromotions = async () => {
     try {
-      const res = await axios.get(API);
-      setPromotions(res.data);
+      const data = await getPromotions();
+      setPromotions(data);
     } catch (err) {
       console.error("Lỗi load promotions", err);
     }
@@ -60,7 +62,7 @@ const PromotionSettingPage = () => {
   }, []);
 
   // ========================
-  // 🔥 HANDLE INPUT CHANGE
+  // HANDLE INPUT CHANGE
   // ========================
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -71,7 +73,7 @@ const PromotionSettingPage = () => {
   // ========================
   const handleAdd = async () => {
     try {
-      await axios.post(API, formData);
+      await addPromotion(formData);
 
       onClose();
       loadPromotions();
@@ -114,7 +116,7 @@ const PromotionSettingPage = () => {
   // ========================
   const handleUpdate = async () => {
     try {
-      await axios.put(`${API}/${editId}`, formData);
+      await updatePromotion(editId, formData);
 
       onClose();
       loadPromotions();
@@ -141,7 +143,7 @@ const PromotionSettingPage = () => {
     if (!window.confirm("Bạn có muốn xóa khuyến mãi này?")) return;
 
     try {
-      await axios.delete(`${API}/${id}`);
+      await deletePromotion(id);
       loadPromotions();
     } catch (err) {
       console.error("Lỗi xóa promotion", err);

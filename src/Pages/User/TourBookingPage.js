@@ -1,57 +1,106 @@
-import React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
-import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css'; // Dùng chung CSS nhưng nội dung khác
+import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
+import { isLoggedIn, getCurrentUser } from '../../services/auth';
+import { getUserProfile } from '../../services/api';
+
 
 function TourBookingPage() {
     const { tourId } = useParams();
-    // Dựa vào tourId, bạn có thể fetch thông tin tour để hiển thị trong tóm tắt
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { tourDetails } = location.state || {}; // Nhận thông tin tour từ trang chi tiết
+
+    const [customerInfo, setCustomerInfo] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        address: ''
+    });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (isLoggedIn()) {
+                const response = await getUserProfile();
+                if (response.success) {
+                    setCustomerInfo(response.data);
+                }
+            }
+            setIsLoading(false);
+        };
+        fetchUserData();
+    }, []);
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setCustomerInfo(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // Chuyển đến trang chọn phương thức thanh toán, mang theo thông tin khách hàng và tour
+        navigate('/payment', { 
+            state: { 
+                bookingDetails: customerInfo, 
+                tourDetails: tourDetails || { id: tourId, name: `Tour #${tourId}`, price: 'N/A' } 
+            } 
+        });
+    };
+
+    if (!tourDetails) {
+         // Fallback in case state is not passed, though in a real app you might fetch it again
+        return (
+            <div>
+                <Header />
+                <div className={styles.container}>
+                    <h1>Không tìm thấy thông tin tour</h1>
+                    <p>Vui lòng quay lại trang chi tiết và chọn lại tour.</p>
+                </div>
+                <Footer/>
+            </div>
+        );
+    }
+    
+    if (isLoading) {
+        return <div><Header /><div className={styles.container}><p>Đang tải...</p></div><Footer/></div>;
+    }
 
     return (
         <div>
             <Header />
             <div className={styles.container}>
-                <h1>Hoàn tất đặt Tour</h1>
-                <div className={styles.layout}>
-                    <div className={styles.customerInfoForm}>
-                        <h3>Thông tin người liên hệ</h3>
-                        <div className={styles.formGrid}>
-                            <input type="text" placeholder="Họ và tên*" required />
-                            <input type="email" placeholder="Email*" required />
-                            <input type="tel" placeholder="Số điện thoại*" required />
-                            <input type="text" placeholder="Địa chỉ" />
-                        </div>
-                        <h3>Thông tin hành khách</h3>
-                        <div className={styles.passengerForm}>
-                            <p>Hành khách 1 (Người lớn)</p>
+                <h1>Hoàn tất thông tin đặt Tour</h1>
+                <p>Vui lòng cung cấp thông tin người liên hệ để chúng tôi hỗ trợ bạn tốt nhất.</p>
+                <form onSubmit={handleSubmit}>
+                    <div className={styles.layout}>
+                        <div className={styles.customerInfoForm}>
+                            <h3>Thông tin người liên hệ</h3>
                             <div className={styles.formGrid}>
-                                <input type="text" placeholder="Họ và tên*" required />
-                                <input type="text" placeholder="Giới tính" />
+                                <input name="name" type="text" placeholder="Họ và tên*" value={customerInfo.name} onChange={handleInputChange} required />
+                                <input name="email" type="email" placeholder="Email*" value={customerInfo.email} onChange={handleInputChange} required />
+                                <input name="phone" type="tel" placeholder="Số điện thoại*" value={customerInfo.phone} onChange={handleInputChange} required />
+                                <input name="address" type="text" placeholder="Địa chỉ" value={customerInfo.address} onChange={handleInputChange} />
                             </div>
                         </div>
-                        {/* Có thể thêm nút "Thêm hành khách" ở đây */}
+
+                        <aside className={styles.summary}>
+                            <h3>Tóm tắt chuyến đi</h3>
+                            <div className={styles.summaryItem}>
+                                <p>{tourDetails.name}</p>
+                                <span>{tourDetails.price}</span>
+                            </div>
+                            <hr/>
+                            <div className={`${styles.summaryItem} ${styles.total}`}>
+                                <p>Tổng cộng</p>
+                                <span>{tourDetails.price}</span>
+                            </div>
+                            <button type="submit" className={styles.confirmBtn}>Tiếp tục đến thanh toán</button>
+                        </aside>
                     </div>
-                    <aside className={styles.summary}>
-                        <h3>Tóm tắt chuyến đi</h3>
-                        <div className={styles.summaryItem}>
-                            <p>Tour khám phá Đà Nẵng (ID: {tourId})</p>
-                            <span>5,200,000đ</span>
-                        </div>
-                        <div className={styles.summaryItem}>
-                            <p>Hành khách</p>
-                            <span>1 người lớn</span>
-                        </div>
-                        <hr/>
-                        <div className={`${styles.summaryItem} ${styles.total}`}>
-                            <p>Tổng cộng</p>
-                            <span>5,200,000đ</span>
-                        </div>
-                        <Link to="/confirmation?type=tour">
-                            <button className={styles.confirmBtn}>Thanh toán & Hoàn tất</button>
-                        </Link>
-                    </aside>
-                </div>
+                </form>
             </div>
             <Footer />
         </div>

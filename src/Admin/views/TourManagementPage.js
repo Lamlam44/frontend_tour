@@ -20,10 +20,6 @@ import {
   ModalCloseButton,
   useDisclosure,
   Textarea,
-  useColorModeValue,
-  Flex,
-  Text,
-  Badge,
 } from "@chakra-ui/react";
 import {
   getTours,
@@ -31,9 +27,8 @@ import {
   updateTour,
   deleteTour,
 } from "../../services/api";
-import Card from '../../Admin/components/card/Card';
 
-const TourManagement = () => {
+const TourManagementPage = () => {
   const [tours, setTours] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
 
@@ -52,8 +47,6 @@ const TourManagement = () => {
   });
 
   const [editId, setEditId] = useState(null);
-
-  const textColor = useColorModeValue('white');
 
   const loadTours = async () => {
     try {
@@ -148,13 +141,17 @@ const TourManagement = () => {
   };
 
   return (
-    <Box marginTop={100}>
-      <Card>
-        <Flex justify='space-between' align='center' mb='20px'>
-          <Text fontSize='xl' fontWeight='bold' color={textColor}>
-            Tour Management
-          </Text>
-          <Button colorScheme='blue' onClick={() => {
+    <Box p={6} bg="navy.900" color="white" borderRadius="2xl">
+      <Heading size="md" mb={6} color="white">
+        Tour Management
+      </Heading>
+
+      <Box bg="navy.800" p={6} borderRadius="2xl">
+        <Box display="flex" justifyContent="space-between" mb={4}>
+          <Heading size="sm">Tour List</Heading>
+          <Button
+            colorScheme="blue"
+            onClick={() => {
               setIsEdit(false);
               setFormData({
                 tourName: "",
@@ -168,57 +165,59 @@ const TourManagement = () => {
                 departureDate: "",
               });
               onOpen();
-            }}>Add New Tour</Button>
-        </Flex>
-        <Box mt='20px'>
-          <Table variant='simple'>
-            <Thead>
-              <Tr>
-                <Th color={textColor}>ID</Th>
-                <Th color={textColor}>Name</Th>
-                <Th color={textColor}>Price</Th>
-                <Th color={textColor}>Status</Th>
-                <Th color={textColor}>Bookings</Th>
-                <Th color={textColor}>Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {tours.map((tour) => (
-                <Tr key={tour.id}>
-                  <Td color={textColor}>{tour.id}</Td>
-                  <Td color={textColor}>{tour.tourName}</Td>
-                  <Td color={textColor}>{tour.tourPrice}</Td>
-                  <Td color={textColor}>
-                    <Badge colorScheme={tour.tourStatus === 'Available' ? 'green' : 'red'}>
-                      {tour.tourStatus}
-                    </Badge>
-                  </Td>
-                  <Td color={textColor}>{tour.tourRemainingSlots}</Td>
-                  <Td>
-                    <HStack>
-                      <Button
-                        colorScheme="yellow"
-                        size="sm"
-                        onClick={() => openEdit(tour)}
-                      >
-                        Edit
-                      </Button>
-
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        onClick={() => handleDelete(tour.id)}
-                      >
-                        Delete
-                      </Button>
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+            }}
+          >
+            Add New Tour
+          </Button>
         </Box>
-      </Card>
+
+        <Table variant="simple" colorScheme="whiteAlpha">
+          <Thead>
+            <Tr>
+              <Th color="white">ID</Th>
+              <Th color="white">NAME</Th>
+              <Th color="white">PRICE</Th>
+              <Th color="white">STATUS</Th>
+              <Th color="white">SLOTS</Th>
+              <Th color="white">DESTINATION</Th>
+              <Th color="white">ACTIONS</Th>
+            </Tr>
+          </Thead>
+
+          <Tbody>
+            {tours.map((tour) => (
+              <Tr key={tour.id}>
+                <Td>{tour.id}</Td>
+                <Td>{tour.tourName}</Td>
+                <Td>{tour.tourPrice}</Td>
+                <Td>{tour.tourStatus}</Td>
+                <Td>{tour.tourRemainingSlots}</Td>
+                <Td>{tour.destination}</Td>
+
+                <Td>
+                  <HStack>
+                    <Button
+                      colorScheme="yellow"
+                      size="sm"
+                      onClick={() => openEdit(tour)}
+                    >
+                      Edit
+                    </Button>
+
+                    <Button
+                      colorScheme="red"
+                      size="sm"
+                      onClick={() => handleDelete(tour.id)}
+                    >
+                      Delete
+                    </Button>
+                  </HStack>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Box>
 
       <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalOverlay />
@@ -301,4 +300,5 @@ const TourManagement = () => {
     </Box>
   );
 };
-export default TourManagement;
+
+export default TourManagementPage;

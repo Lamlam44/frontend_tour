@@ -1,18 +1,11 @@
-/* Thêm vào đầu file */
-.layout {
-  display: flex;
-  gap: 2rem;
-}
+/* FileName: ListPage.module.css (HOÀN CHỈNH) */
 
-.mainContent {
-  flex: 1; /* Phần nội dung chính sẽ chiếm hết không gian còn lại */
-}
 
-/* Các style cũ .container, .pageHeader, .grid, .card giữ nguyên */
+/* --- LAYOUT CHUNG CHO TRANG DANH SÁCH (LIST PAGE) --- */
 .container {
   padding: 2rem 5%;
-  max-width: 1400px; /* Tăng max-width để chứa sidebar */
-  margin: auto;
+  max-width: 1400px; 
+  margin: 2rem auto;
 }
 
 .pageHeader {
@@ -23,12 +16,223 @@
 .pageHeader h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  color: var(--primary-color);
 }
 
 .pageHeader p {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-color-light);
 }
+
+.layout {
+  display: flex;
+  gap: 2rem;
+}
+
+.mainContent {
+  flex: 1; 
+}
+
+
+/* ------------------------------------------------------------------- */
+/* --- 1. SIDEBAR CHO CÁC TRANG (TOUR, HOTEL, FLIGHT) --- */
+/* ------------------------------------------------------------------- */
+
+/* Base style cho TẤT CẢ các sidebar (Nền trắng) */
+.sidebar {
+    flex: 0 0 280px; 
+    background: var(--white); 
+    padding: 1.5rem; 
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    height: fit-content;
+    border: 1px solid var(--border-color); 
+}
+
+/* Style RIÊNG cho Tour Sidebar (Nền xám nhạt) */
+.tourSidebar {
+    background: #f0f0f0; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar h3 {
+    font-size: 1.2rem; 
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.filterGroup {
+    margin-bottom: 1.5rem; 
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color-light);
+}
+.filterGroup:last-child {
+    border-bottom: none; 
+    padding-bottom: 0;
+}
+
+.filterGroup h4 {
+    font-size: 1rem; 
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+/* --- 2. STYLES CHO BUTTON (Ngân sách, Dòng Tour, Phương tiện) --- */
+.optionButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.optionButton {
+    /* Base button style (2 nút/hàng) */
+    flex: 1 1 calc(50% - 0.25rem); 
+    padding: 0.75rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--white);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+/* Trạng thái ACTIVE */
+.optionButton.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Hiệu ứng hover */
+.optionButton:hover:not(.active) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Nút xóa */
+.clearButton {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 500;
+    margin-left: auto;
+    width: auto;
+    padding: 0;
+}
+.clearButton:hover {
+    text-decoration: underline;
+}
+
+/* --- 3. STYLES CHO DROPDOWN/INPUT GIẢ (Điểm khởi hành, Ngày đi) --- */
+.dropdownFilter {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+    background-color: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.8rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* Dùng cho thẻ <select> */
+.dropdownFilter select {
+    appearance: none; 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    border: none;
+    width: 100%;
+    font-size: 1rem;
+    cursor: inherit;
+    color: inherit;
+    outline: none;
+}
+
+/* Icon mũi tên tùy chỉnh cho dropdown */
+.dropdownFilter:after {
+    content: '';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: solid var(--text-color-light);
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg) translateY(-50%);
+}
+
+/* Ẩn icon mũi tên nếu dùng <input type="date"> */
+.dropdownFilter input[type="date"] {
+    opacity: 0; 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    top: 0; 
+    left: 0; 
+    cursor: pointer;
+}
+.dropdownFilter input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+}
+
+
+/* Trạng thái Active */
+.dropdownFilter.active {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+/* --- 4. NÚT ÁP DỤNG --- */
+.applyButton {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--primary-color); 
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 2rem; 
+}
+
+.applyButton:hover {
+    background-color: var(--secondary-color);
+}
+
+
+/* ------------------------------------------------------------------- */
+/* --- 5. STYLES CHO LIST VÀ CARD (DÙNG CHUNG) --- */
+/* ------------------------------------------------------------------- */
 
 .grid {
   display: grid;
@@ -39,7 +243,7 @@
 .card {
   background: var(--white);
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--box-shadow);
   overflow: hidden;
   text-decoration: none;
   color: var(--text-color);
@@ -48,7 +252,7 @@
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+  box-shadow: var(--box-shadow-hover);
 }
 
 .card img {
@@ -58,20 +262,28 @@
 }
 
 .cardContent {
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .cardContent h3 {
   margin-top: 0;
+  font-size: 1.3rem;
+  color: var(--text-color);
+}
+
+.description {
+  color: var(--text-color-light);
+  font-size: 0.9rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.cardContent .price {
+  font-weight: 700;
+  color: var(--secondary-color);
   font-size: 1.2rem;
 }
 
-.cardContent .price, .cardContent .rating, .cardContent .duration {
-  font-weight: bold;
-  color: var(--primary-color);
-}
-
-/* === BỔ SUNG: Styles MỚI cho Flight List Page === */
+/* --- Styles cho Flight List --- */
 .list {
     display: flex;
     flex-direction: column;
@@ -84,7 +296,11 @@
     padding: 1.5rem;
     background: var(--white);
     border-radius: var(--border-radius);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: var(--box-shadow);
+    transition: box-shadow 0.3s;
+}
+.flightCard:hover {
+    box-shadow: var(--box-shadow-hover);
 }
 
 .airlineInfo {
@@ -98,6 +314,9 @@
     width: 40px;
     height: 40px;
 }
+.airlineInfo span {
+    font-weight: 500;
+}
 
 .flightDetails {
     flex: 1;
@@ -110,7 +329,12 @@
 
 .flightDetails .time {
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 700;
+    color: var(--text-color);
+}
+.flightDetails .time + p {
+    font-size: 1rem;
+    color: var(--text-color-light);
 }
 
 .flightPath {
@@ -124,7 +348,7 @@
 
 .flightPrice p {
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--secondary-color);
     margin: 0 0 0.5rem 0;
 }
@@ -137,5 +361,9 @@
     border: none;
     border-radius: var(--border-radius);
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 700;
+    transition: background-color 0.3s;
+}
+.flightPrice button:hover {
+    background-color: var(--secondary-color-dark);
 }

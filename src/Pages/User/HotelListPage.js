@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import FilterSidebar from '../../Components/FilterSidebar';
 import styles from '../../Assets/CSS/PageCSS/ListPage.module.css';
+import { getAccommodations } from '../../services/api';
 
 const hotelFilterGroups = [
     { title: 'Hạng sao', type: 'checkbox', name: 'stars', options: ['5 sao', '4 sao', '3 sao', 'Khác'] },
@@ -11,14 +12,22 @@ const hotelFilterGroups = [
     { title: 'Đánh giá', type: 'radio', name: 'rating', options: ['Tuyệt vời 9+', 'Rất tốt 8+', 'Tốt 7+'] }
 ];
 
-const mockHotels = [
-    { id: 101, name: 'Vinpearl Resort & Spa Phú Quốc', price: '2,100,000đ', img: 'https://via.placeholder.com/300x200?text=Vinpearl', rating: '4.9' },
-    { id: 102, name: 'InterContinental Danang Sun Peninsula', price: '7,500,000đ', img: 'https://via.placeholder.com/300x200?text=InterContinental', rating: '5.0' },
-    { id: 103, name: 'Hotel de l\'Opera Hanoi - MGallery', price: '3,200,000đ', img: 'https://via.placeholder.com/300x200?text=Hanoi+Opera', rating: '4.8' },
-    { id: 104, name: 'The Reverie Saigon', price: '8,900,000đ', img: 'https://via.placeholder.com/300x200?text=Reverie+Saigon', rating: '5.0' },
-];
-
 function HotelListPage() {
+  const [hotels, setHotels] = useState([]);
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const data = await getAccommodations();
+        setHotels(data);
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+      }
+    };
+
+    fetchHotels();
+  }, []);
+
   return (
     <div>
       <Header />
@@ -31,7 +40,7 @@ function HotelListPage() {
             <FilterSidebar filterGroups={hotelFilterGroups} />
             <main className={styles.mainContent}>
                 <div className={styles.grid}>
-                {mockHotels.map(hotel => (
+                {hotels.map(hotel => (
                     <Link to={`/hotels/${hotel.id}`} key={hotel.id} className={styles.card}>
                     <img src={hotel.img} alt={hotel.name} />
                     <div className={styles.cardContent}>

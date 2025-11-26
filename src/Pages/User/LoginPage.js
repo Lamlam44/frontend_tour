@@ -33,15 +33,13 @@ function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
     setSubmitting(true);
-    // Chỉ là mô phỏng gửi form. Tích hợp API thực tế sau.
-    setTimeout(() => {
-      setSubmitting(false);
-      if (email === 'admin@gmail.com' && password === 'admin123') {
-        navigate('/dashboard'); // Redirect to the desired page
-      } else {
-        alert('Đăng nhập thành công (demo). Hãy tích hợp API thật sau!');
-      }
-    }, 800);
+    try {
+      const response = 
+      navigate('/dashboard');
+    } catch (error) {
+      setErrors({ form: 'Đăng nhập thất bại. Vui lòng thử lại.' });
+    }
+    
   };
 
   return (
