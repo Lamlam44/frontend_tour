@@ -1,5 +1,5 @@
 import React from "react";
-import { Icon } from "@chakra-ui/react";
+import { Icon, layout } from "@chakra-ui/react";
 import {
   MdHome,
   MdTableChart,
@@ -22,6 +22,7 @@ import CustomerManagementPage from "./views/CustomerManagementPage";
 import TourGuideManagementPage from "./views/TourGuideManagementPage";
 import TouristDestinationManagementPage from "./views/TouristDestinationManagementPage";
 import TravelVehicleManagementPage from "./views/TravelVehicleManagementPage";
+import InvoiceSettingPage from "./views/InvoiceSettingPage";
 
 const routes = [
   {
@@ -86,6 +87,13 @@ const routes = [
     path: "/promotion-settings",
     icon: <Icon as={MdLocalOffer} width="20px" height="20px" color="inherit" />,
     component: <PromotionSettingPage />,
+  },
+  {
+    name: "Invoice Settings",
+    layout: "/admin",
+    path: "/invoice-settings",
+    icon: <Icon as={MdEventNote} width="20px" height="20px" color="inherit" />,
+    component: <InvoiceSettingPage />,
   },
 ];
 

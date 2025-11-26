@@ -40,7 +40,7 @@ const PromotionSettingPage = () => {
     description: "",
     startDate: "",
     endDate: "",
-    tourIds: [], // backend yêu cầu
+    tourIds: [],
   });
 
   const [editId, setEditId] = useState(null);
