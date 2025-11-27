@@ -68,56 +68,123 @@ export const login = async (credentials) => {
   }
 };
 
-// Hàm đăng ký (Nếu cần luôn)
-export const register = async (userData) => {
+// Hàm đăng ký người dùng
+export const registerUser = async (userData) => {
   try {
-    const response = await apiClient.post('/api/accounts', userData);
+    // Endpoint để tạo tài khoản khách hàng mới
+    const response = await apiClient.post('/customers/register', userData);
     return response.data;
   } catch (error) {
-    console.error('Registration failed:', error);
-    throw error;
+    console.error('Lỗi khi đăng ký:', error.response?.data || error.message);
+    // Ném lỗi cụ thể từ backend nếu có
+    throw new Error(error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
   }
 };
 
+// Lấy thông tin cá nhân của người dùng đã đăng nhập
 export const getUserProfile = async () => {
   try {
-    const response = await apiClient.get('/user/profile');
+    // Endpoint này cần được bảo vệ và trả về thông tin của user hiện tại
+    const response = await apiClient.get('/customers/me');
     return response.data;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    console.error('Lỗi khi lấy thông tin người dùng:', error);
     throw error;
   }
 };
 
+// Cập nhật thông tin cá nhân
 export const updateUserProfile = async (userData) => {
   try {
-    const response = await apiClient.put('/user/profile', userData);
+    const response = await apiClient.put('/customers/me', userData);
     return response.data;
   } catch (error) {
-    console.error('Error updating user profile:', error);
+    console.error('Lỗi khi cập nhật thông tin người dùng:', error);
     throw error;
   }
 };
 
+// Tạo một booking mới
 export const createBooking = async (bookingData) => {
   try {
     const response = await apiClient.post('/bookings', bookingData);
     return response.data;
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('Lỗi khi tạo booking:', error);
     throw error;
   }
 };
 
-export const processVnPayPayment = async (paymentData) => {
-    try {
-        const response = await apiClient.post('/payment/vnpay', paymentData);
-        return response.data;
-    } catch (error) {
-        console.error('Error processing VNPAY payment:', error);
-        throw error;
-    }
+// Lấy danh sách booking của người dùng hiện tại
+export const getBookingsByCurrentUser = async () => {
+  try {
+    // Endpoint này cần được bảo vệ và trả về booking của user đã xác thực
+    const response = await apiClient.get('/bookings/my-bookings');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách booking:', error);
+    throw error;
+  }
+};
+
+// --- CÁC HÀM API CHO THANH TOÁN ---
+
+// 1. Lấy chi tiết booking theo ID (dùng cho trang thanh toán)
+export const getBookingById = async (bookingId) => {
+  try {
+    const response = await apiClient.get(`/bookings/${bookingId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi lấy booking ID ${bookingId}:`, error);
+    throw error;
+  }
+};
+
+// Function to create an Invoice
+export const createInvoice = async (invoiceData) => {
+  try {
+    const response = await apiClient.post('/invoices', invoiceData);
+    return response.data; // This should contain the InvoiceResponseDTO with invoiceId
+  } catch (error) {
+    console.error('Lỗi khi tạo hóa đơn:', error);
+    throw new Error(error.response?.data?.message || 'Không thể tạo hóa đơn.');
+  }
+};
+
+
+// 2. Tạo URL thanh toán VNPAY
+export const createVnPayPaymentUrl = async (paymentData) => {
+  try {
+    const response = await apiClient.post('/payments/vnpay/create-url', paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tạo URL thanh toán VNPAY:', error);
+    throw new Error(error.response?.data?.message || 'Không thể tạo yêu cầu thanh toán VNPAY.');
+  }
+};
+
+// 3. Xử lý các phương thức thanh toán khác (ví dụ: tại quầy, chuyển khoản)
+export const processPayment = async (paymentData) => {
+  try {
+    const response = await apiClient.post('/payment/process', paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xử lý thanh toán:', error);
+    throw error;
+  }
 }
+
+// 4. Xác thực lại giao dịch VNPAY trả về
+export const verifyVnPayPayment = async (params) => {
+  try {
+    // Gửi tất cả các query params từ VNPAY về backend
+    const response = await apiClient.get('/payments/vnpay-return', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xác thực thanh toán VNPAY:', error);
+    throw error;
+  }
+};
 
 export const createHotelBooking = async (bookingData) => {
     try {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Heading,
   Button,
   Table,
   Thead,
@@ -19,7 +18,6 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  Textarea,
   useColorModeValue,
   Flex,
   Text,

@@ -26,13 +26,16 @@ function UserProfilePage() {
 
         const fetchUser = async () => {
             setIsLoading(true);
-            const response = await getUserProfile();
-            if (response.success) {
-                setUser(response.data);
-            } else {
+            try {
+                // SỬA LỖI: Gọi API và gán dữ liệu trực tiếp
+                const userData = await getUserProfile();
+                setUser(userData);
+            } catch (error) {
                 setMessage('Không thể tải thông tin người dùng.');
+                console.error('Failed to fetch user profile:', error);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
         fetchUser();
@@ -49,15 +52,18 @@ function UserProfilePage() {
     const handleSaveChanges = async (e) => {
         e.preventDefault();
         setMessage('Đang lưu...');
-        const response = await updateUserProfile({
-            name: user.name,
-            phone: user.phone,
-            address: user.address,
-        });
-        if (response.success) {
+        try {
+            // SỬA LỖI: Gọi API và xử lý kết quả trong try...catch
+            const updatedUser = await updateUserProfile({
+                name: user.name,
+                phone: user.phone,
+                address: user.address,
+            });
+            setUser(updatedUser); // Cập nhật lại state với dữ liệu mới nhất từ server
             setMessage('Lưu thay đổi thành công!');
-        } else {
+        } catch (error) {
             setMessage('Lưu thất bại. Vui lòng thử lại.');
+            console.error('Failed to update profile:', error);
         }
     };
     
@@ -78,19 +84,19 @@ function UserProfilePage() {
                         <h2>Thông tin cá nhân</h2>
                         <div className={styles.formGroup}>
                             <label htmlFor="name">Họ và tên</label>
-                            <input type="text" id="name" value={user.name} onChange={handleInputChange} />
+                            <input type="text" id="name" value={user.name || ''} onChange={handleInputChange} />
                         </div>
                         <div className={styles.formGroup}>
                             <label htmlFor="email">Email</label>
-                            <input type="email" id="email" value={user.email} readOnly />
+                            <input type="email" id="email" value={user.email || ''} readOnly />
                         </div>
                          <div className={styles.formGroup}>
                             <label htmlFor="phone">Số điện thoại</label>
-                            <input type="tel" id="phone" value={user.phone} onChange={handleInputChange} />
+                            <input type="tel" id="phone" value={user.phone || ''} onChange={handleInputChange} />
                         </div>
                         <div className={styles.formGroup}>
                             <label htmlFor="address">Địa chỉ</label>
-                            <input type="text" id="address" value={user.address} onChange={handleInputChange} />
+                            <input type="text" id="address" value={user.address || ''} onChange={handleInputChange} />
                         </div>
                         <button type="submit" className={styles.saveBtn}>Lưu thay đổi</button>
                         {message && <p className={styles.message}>{message}</p>}

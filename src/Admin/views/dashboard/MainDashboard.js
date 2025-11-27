@@ -14,8 +14,8 @@ import ReactApexChart from "react-apexcharts";
 import React from "react";
 
 export default function MainDashboard() {
-    const brandColor = useColorModeValue("brand.500", "white");
-    const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
+    
+    
     const textColor = "white";
     // Ngay trong MainDashboard component
     const chartOptions = {

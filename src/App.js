@@ -24,6 +24,8 @@ import PaymentMethodPage from './Pages/User/PaymentMethodPage';
 import HotelPaymentPage from './Pages/User/HotelPaymentPage';
 import FlightAddonsPage from './Pages/User/FlightAddonsPage';
 import FlightPaymentPage from './Pages/User/FlightPaymentPage';
+import PaymentReturnPage from './Pages/User/PaymentReturnPage';
+
 
 
 function App() {
@@ -54,6 +56,7 @@ function App() {
           <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
           <Route path="/booking/flight/addons" element={<FlightAddonsPage />} />
           <Route path="/payment/flight" element={<FlightPaymentPage />} />
+          <Route path="/payment-return" element={<PaymentReturnPage />} />
           
           {/* Universal Confirmation Page */}
           <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />

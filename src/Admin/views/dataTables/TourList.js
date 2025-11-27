@@ -1,4 +1,3 @@
-/* eslint-disable */
 
 import {
     Box,
@@ -8,13 +7,15 @@ import {
     VStack,
     HStack,
     useColorModeValue,
+    IconButton,
 } from '@chakra-ui/react';
+import { FaTrash } from 'react-icons/fa';
 import * as React from 'react';
 import Card from '../../components/card/Card';
 import Menu from '../../components/menu/MainMenu';
 
 export default function TourList(props) {
-    const { tourData, onTourSelect, selectedTour } = props;
+    const { tourData, onTourSelect, selectedTour, onDelete } = props;
     const textColor = useColorModeValue('white');
     const textColorSecondary = useColorModeValue('white');
     const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -30,6 +31,13 @@ export default function TourList(props) {
             style: 'currency',
             currency: 'VND'
         }).format(price);
+    };
+
+    const handleDeleteClick = (e, tourId) => {
+        e.stopPropagation(); // Ngăn việc trigger onClick của box ngoài
+        if (window.confirm('Bạn có chắc chắn muốn xóa tour này không?')) {
+            onDelete(tourId);
+        }
     };
 
     return (
@@ -81,13 +89,13 @@ export default function TourList(props) {
                                 onClick={() => onTourSelect && onTourSelect(tour)}
                             >
                                 <HStack spacing="15px" align="center">
-                                    {/* Minimal Tour Image (1/8 of original size) */}
+                                    {/* Minimal Tour Image */}
                                     <Box
                                         flexShrink={0}
                                         borderRadius="8px"
                                         overflow="hidden"
-                                        w="75px" // 1/8 of 600px (approximate original width)
-                                        h="50px" // 1/8 of 400px (approximate original height)
+                                        w="75px"
+                                        h="50px"
                                     >
                                         <Image
                                             src={tour.tourImage || tour.img}
@@ -116,15 +124,15 @@ export default function TourList(props) {
                                         </Text>
                                     </VStack>
 
-                                    {/* Optional: Tour ID for reference */}
-                                    <Text
-                                        color={textColorSecondary}
-                                        fontSize="xs"
-                                        fontWeight="500"
-                                        flexShrink={0}
-                                    >
-                                        {tour.tourId}
-                                    </Text>
+                                    {/* Delete Button */}
+                                    <IconButton
+                                        aria-label="Delete tour"
+                                        icon={<FaTrash />}
+                                        colorScheme="red"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleDeleteClick(e, tour.tourId)}
+                                    />
                                 </HStack>
                             </Box>
                         );

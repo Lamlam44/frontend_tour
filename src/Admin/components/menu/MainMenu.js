@@ -1,4 +1,4 @@
-import React from "react";
+
 
 // Chakra imports
 import {
@@ -6,7 +6,6 @@ import {
   Flex,
   Text,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   useDisclosure,
@@ -14,7 +13,6 @@ import {
 } from "@chakra-ui/react";
 // Assets
 import {
-  MdOutlineMoreHoriz,
   MdOutlinePerson,
   MdOutlineCardTravel,
   MdOutlineLightbulb,
@@ -22,7 +20,7 @@ import {
 } from "react-icons/md";
 
 export default function Banner(props) {
-  const { ...rest } = props;
+  
 
   const textColor = useColorModeValue("secondaryGray.500", "white");
   const textHover = useColorModeValue(
@@ -39,7 +37,6 @@ export default function Banner(props) {
   // Ellipsis modals
   const {
     isOpen: isOpen1,
-    onOpen: onOpen1,
     onClose: onClose1,
   } = useDisclosure();
 

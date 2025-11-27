@@ -1,304 +1,125 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Box,
-  Heading,
-  Button,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Input,
-  HStack,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
-  Textarea,
-} from "@chakra-ui/react";
-import {
-  getTours,
-  addTour,
-  updateTour,
-  deleteTour,
-} from "../../services/api";
+    Box,
+    Flex,
+    Heading,
+    Button,
+    Spinner,
+    Text,
+    useColorModeValue,
+    Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
+} from '@chakra-ui/react';
+import { AddIcon } from '@chakra-ui/icons';
 
-const TourManagementPage = () => {
-  const [tours, setTours] = useState([]);
-  const [isEdit, setIsEdit] = useState(false);
+// Import các hàm API và component con
+import { getTours, deleteTour } from '../../../../services/api';
+import TourList from './dataTables/TourList'; // Component đã được sửa đổi
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+export default function TourManagementPage() {
+    const [tours, setTours] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  const [formData, setFormData] = useState({
-    tourName: "",
-    tourPrice: "",
-    tourStatus: "",
-    tourRemainingSlots: "",
-    destination: "",
-    vehicle: "",
-    tourType: "",
-    tourImage: "",
-    departureDate: "",
-  });
+    const textColor = useColorModeValue("gray.700", "white");
+    const boxBg = useColorModeValue("white", "navy.800");
 
-  const [editId, setEditId] = useState(null);
+    // Hàm để lấy dữ liệu tour từ API
+    const fetchTours = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getTours();
+            setTours(data);
+        } catch (err) {
+            setError('Không thể tải danh sách tour. Vui lòng thử lại.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-  const loadTours = async () => {
-    try {
-      const data = await getTours();
-      setTours(data);
-    } catch (err) {
-      console.error("Lỗi load tours", err);
-    }
-  };
+    // Sử dụng useEffect để gọi API khi component được mount
+    useEffect(() => {
+        fetchTours();
+    }, [fetchTours]);
 
-  useEffect(() => {
-    loadTours();
-  }, []);
+    // Hàm xử lý xóa tour
+    const handleDeleteTour = async (tourId) => {
+        try {
+            await deleteTour(tourId);
+            // Sau khi xóa thành công, tải lại danh sách tour
+            await fetchTours();
+        } catch (err) {
+            setError(`Lỗi khi xóa tour: ${err.message}`);
+            console.error(err);
+        }
+    };
 
-  const handleChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
+    // Hàm xử lý khi nhấn nút "Thêm Tour" (sẽ được phát triển sau)
+    const handleAddTour = () => {
+        // TODO: Mở Modal hoặc điều hướng đến trang tạo tour mới
+        alert('Chức năng "Thêm Tour" sẽ được triển khai!');
+    };
 
-  const handleAdd = async () => {
-    try {
-      await addTour(formData);
-      onClose();
-      loadTours();
-      setFormData({
-        tourName: "",
-        tourPrice: "",
-        tourStatus: "",
-        tourRemainingSlots: "",
-        destination: "",
-        vehicle: "",
-        tourType: "",
-        tourImage: "",
-        departureDate: "",
-      });
-    } catch (err) {
-      console.error("Lỗi thêm tour", err);
-      alert("Lỗi khi thêm tour!");
-    }
-  };
+    return (
+        <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
+            <Flex direction="column" w="100%">
+                {/* Header */}
+                <Flex
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb="20px"
+                    p="4"
+                    bg={boxBg}
+                    borderRadius="20px"
+                    boxShadow="lg"
+                >
+                    <Heading as="h1" size="lg" color={textColor}>
+                        Quản Lý Tour
+                    </Heading>
+                    <Button
+                        leftIcon={<AddIcon />}
+                        colorScheme="teal"
+                        onClick={handleAddTour}
+                    >
+                        Thêm Tour Mới
+                    </Button>
+                </Flex>
 
-  const openEdit = (tour) => {
-    setIsEdit(true);
-    setEditId(tour.id);
+                {/* Hiển thị lỗi nếu có */}
+                {error && (
+                    <Alert status="error" mb="20px" borderRadius="lg">
+                        <AlertIcon />
+                        <AlertTitle mr={2}>Lỗi!</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
 
-    setFormData({
-        tourName: tour.tourName,
-        tourPrice: tour.tourPrice,
-        tourStatus: tour.tourStatus,
-        tourRemainingSlots: tour.tourRemainingSlots,
-        destination: tour.destination,
-        vehicle: tour.vehicle,
-        tourType: tour.tourType,
-        tourImage: tour.tourImage,
-        departureDate: tour.departureDate,
-    });
-
-    onOpen();
-  };
-
-  const handleUpdate = async () => {
-    try {
-      await updateTour(editId, formData);
-      onClose();
-      loadTours();
-      setIsEdit(false);
-      setFormData({
-        tourName: "",
-        tourPrice: "",
-        tourStatus: "",
-        tourRemainingSlots: "",
-        destination: "",
-        vehicle: "",
-        tourType: "",
-        tourImage: "",
-        departureDate: "",
-      });
-    } catch (err) {
-      console.error("Lỗi update tour", err);
-      alert("Lỗi khi cập nhật tour!");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có muốn xóa tour này?")) return;
-    try {
-      await deleteTour(id);
-      loadTours();
-    } catch (err) {
-      console.error("Lỗi xóa tour", err);
-      alert("Không thể xóa!");
-    }
-  };
-
-  return (
-    <Box p={6} bg="navy.900" color="white" borderRadius="2xl">
-      <Heading size="md" mb={6} color="white">
-        Tour Management
-      </Heading>
-
-      <Box bg="navy.800" p={6} borderRadius="2xl">
-        <Box display="flex" justifyContent="space-between" mb={4}>
-          <Heading size="sm">Tour List</Heading>
-          <Button
-            colorScheme="blue"
-            onClick={() => {
-              setIsEdit(false);
-              setFormData({
-                tourName: "",
-                tourPrice: "",
-                tourStatus: "",
-                tourRemainingSlots: "",
-                destination: "",
-                vehicle: "",
-                tourType: "",
-                tourImage: "",
-                departureDate: "",
-              });
-              onOpen();
-            }}
-          >
-            Add New Tour
-          </Button>
+                {/* Content */}
+                <Box
+                    p="4"
+                    bg={boxBg}
+                    borderRadius="20px"
+                    boxShadow="lg"
+                >
+                    {loading ? (
+                        <Flex justifyContent="center" alignItems="center" minH="200px">
+                            <Spinner size="xl" />
+                            <Text ml="4">Đang tải dữ liệu...</Text>
+                        </Flex>
+                    ) : (
+                        // Sử dụng TourList để hiển thị danh sách
+                        // Bỏ prop onTourSelect và selectedTour vì không dùng ở đây
+                        <TourList
+                            tourData={tours}
+                            onDelete={handleDeleteTour}
+                        />
+                    )}
+                </Box>
+            </Flex>
         </Box>
-
-        <Table variant="simple" colorScheme="whiteAlpha">
-          <Thead>
-            <Tr>
-              <Th color="white">ID</Th>
-              <Th color="white">NAME</Th>
-              <Th color="white">PRICE</Th>
-              <Th color="white">STATUS</Th>
-              <Th color="white">SLOTS</Th>
-              <Th color="white">DESTINATION</Th>
-              <Th color="white">ACTIONS</Th>
-            </Tr>
-          </Thead>
-
-          <Tbody>
-            {tours.map((tour) => (
-              <Tr key={tour.id}>
-                <Td>{tour.id}</Td>
-                <Td>{tour.tourName}</Td>
-                <Td>{tour.tourPrice}</Td>
-                <Td>{tour.tourStatus}</Td>
-                <Td>{tour.tourRemainingSlots}</Td>
-                <Td>{tour.destination}</Td>
-
-                <Td>
-                  <HStack>
-                    <Button
-                      colorScheme="yellow"
-                      size="sm"
-                      onClick={() => openEdit(tour)}
-                    >
-                      Edit
-                    </Button>
-
-                    <Button
-                      colorScheme="red"
-                      size="sm"
-                      onClick={() => handleDelete(tour.id)}
-                    >
-                      Delete
-                    </Button>
-                  </HStack>
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </Box>
-
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{isEdit ? "Edit Tour" : "Add New Tour"}</ModalHeader>
-          <ModalCloseButton />
-
-          <ModalBody>
-            <Input
-              placeholder="Tour Name"
-              mb={3}
-              value={formData.tourName}
-              onChange={(e) => handleChange("tourName", e.target.value)}
-            />
-            <Input
-              placeholder="Price"
-              mb={3}
-              value={formData.tourPrice}
-              onChange={(e) => handleChange("tourPrice", e.target.value)}
-            />
-            <Input
-              placeholder="Status"
-              mb={3}
-              value={formData.tourStatus}
-              onChange={(e) => handleChange("tourStatus", e.target.value)}
-            />
-            <Input
-              placeholder="Remaining Slots"
-              mb={3}
-              value={formData.tourRemainingSlots}
-              onChange={(e) => handleChange("tourRemainingSlots", e.target.value)}
-            />
-            <Input
-              placeholder="Destination"
-              mb={3}
-              value={formData.destination}
-              onChange={(e) => handleChange("destination", e.target.value)}
-            />
-            <Input
-              placeholder="Vehicle"
-              mb={3}
-              value={formData.vehicle}
-              onChange={(e) => handleChange("vehicle", e.target.value)}
-            />
-            <Input
-              placeholder="Tour Type"
-              mb={3}
-              value={formData.tourType}
-              onChange={(e) => handleChange("tourType", e.target.value)}
-            />
-            <Input
-              placeholder="Tour Image"
-              mb={3}
-              value={formData.tourImage}
-              onChange={(e) => handleChange("tourImage", e.target.value)}
-            />
-            <Input
-              placeholder="Departure Date"
-              mb={3}
-              type="date"
-              value={formData.departureDate}
-              onChange={(e) => handleChange("departureDate", e.target.value)}
-            />
-          </ModalBody>
-
-          <ModalFooter>
-            <Button
-              colorScheme="green"
-              mr={3}
-              onClick={isEdit ? handleUpdate : handleAdd}
-            >
-              {isEdit ? "Update" : "Save"}
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </Box>
-  );
-};
-
-export default TourManagementPage;
+    );
+}

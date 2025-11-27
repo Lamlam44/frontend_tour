@@ -1,4 +1,4 @@
-import React from "react";
+
 import {
     Box,
     Flex,
@@ -16,7 +16,7 @@ function Sidebar(props) {
     let sidebarMargins = "0px";
 
     const activeColor = useColorModeValue("gray.700");
-    const inactiveColor = useColorModeValue("secondaryGray.600", "secondaryGray.600");
+    
     const activeIcon = useColorModeValue("brand.500");
     const textColor = useColorModeValue("secondaryGray.500");
     const brandColor = useColorModeValue("brand.500", "brand.400");

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
-import { createHotelBooking, processVnPayPayment } from '../../services/api';
+import { createHotelBooking, createVnPayPaymentUrl } from '../../services/api';
 
 function HotelPaymentPage() {
     const navigate = useNavigate();
@@ -36,7 +36,7 @@ function HotelPaymentPage() {
         };
 
         if (paymentMethod === 'vnpay') {
-            const response = await processVnPayPayment({
+            const response = await createVnPayPaymentUrl({
                 amount: hotelDetails.price.replace(/[^0-9]/g, ''),
                 orderInfo: `Thanh toan cho khach san ${hotelDetails.id}`
             });

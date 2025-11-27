@@ -1,15 +1,15 @@
-import { Portal, Box, useDisclosure } from '@chakra-ui/react';
+import { Portal, Box } from '@chakra-ui/react';
 import Navbar from '../components/navbar/Navbar.js';
 import Sidebar from '../components/sidebar/AdminSidebar';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import routes from '../routes.js';
 
 export default function AdminLayout(props) {
-    const { ...rest } = props;
+    
     const location = useLocation();
-    const [fixed] = useState(false);
-    const [toggleSidebar, setToggleSidebar] = useState(false);
+    
+    
 
     const getRoute = () => {
         return window.location.pathname !== '/admin/full-screen-maps';

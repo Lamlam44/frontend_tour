@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Heading,
   Button,
   Table,
   Thead,
@@ -23,7 +22,6 @@ import {
   useColorModeValue,
   Flex,
   Text,
-  Badge,
 } from "@chakra-ui/react";
 import {
   getTouristDestinations,

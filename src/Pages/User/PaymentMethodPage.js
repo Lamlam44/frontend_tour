@@ -3,24 +3,24 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css'; // Reuse styles
-import { createBooking, processVnPayPayment } from '../../services/api';
+import { createInvoice, createVnPayPaymentUrl } from '../../services/api';
 
 function PaymentMethodPage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { bookingDetails, tourDetails } = location.state || {};
+    const { bookingDetails, itemDetails: tourDetails, totalAmount } = location.state || {}; // Also get totalAmount
     
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
     // If data is not passed correctly, render an error state
-    if (!bookingDetails || !tourDetails) {
+    if (!bookingDetails || !tourDetails || !totalAmount) { // Added totalAmount check
         return (
             <div>
                 <Header />
                 <div className={styles.container}>
                     <h1>Lỗi</h1>
-                    <p>Không tìm thấy thông tin đặt tour. Vui lòng thử lại từ đầu.</p>
+                    <p>Không tìm thấy thông tin đặt tour hoặc tổng tiền. Vui lòng thử lại từ đầu.</p>
                 </div>
                 <Footer />
             </div>
@@ -31,46 +31,58 @@ function PaymentMethodPage() {
         setIsLoading(true);
         setErrorMessage('');
 
-        const finalBookingData = {
-            ...bookingDetails,
+        // Construct invoice data for backend (InvoiceRequestDTO)
+        const invoiceData = {
+            customerName: bookingDetails.name,
+            customerEmail: bookingDetails.email,
+            customerPhone: bookingDetails.phone,
+            
+            // Required fields from InvoiceRequestDTO
+            discountAmount: 0.0, // Default to 0.0 for now, as not provided
+            taxAmount: 0.0,      // Default to 0.0 for now, as not provided
+            totalAmount: totalAmount,
+            numberOfPeople: bookingDetails.guestCount || 1, // From bookingDetails
             tourId: tourDetails.id,
-            tourName: tourDetails.name,
-            totalPrice: tourDetails.price,
-            paymentMethod: paymentMethod,
+
+            // Optional fields already in DTO
+            paymentMethod: paymentMethod, // Will be "CASH" or "VNPAY"
+            // accountId: // If available from logged in user (not handled here)
+            // promotionIds: // If applicable (not handled here)
         };
+        
+        let invoiceResult;
+        // First, create the invoice to get an ID
+        const invoiceResponse = await createInvoice(invoiceData);
+        
+        if (invoiceResponse.success) { // Assuming backend returns { success: true, data: invoiceObject }
+            invoiceResult = invoiceResponse.data; // This should contain the InvoiceResponseDTO with id
+            const invoiceId = invoiceResult.id; // Assuming the created invoice object has an 'id' field
 
-        if (paymentMethod === 'cash') {
-            const response = await createBooking(finalBookingData);
-            if (response.success) {
-                // Navigate to confirmation page with booking details
-                navigate('/booking-confirmation', { state: { bookingResult: response.data } });
-            } else {
-                setErrorMessage('Không thể tạo đơn đặt tour. Vui lòng thử lại.');
-                setIsLoading(false);
-            }
-        } else if (paymentMethod === 'vnpay') {
-            const response = await processVnPayPayment({
-                amount: tourDetails.price.replace(/[^0-9]/g, ''), // Send amount as a number
-                orderInfo: `Thanh toan cho tour ${tourDetails.id}`
-            });
-            if (response.success && response.data.paymentUrl) {
-                // Redirect to VNPAY's payment gateway
-                // In a real app, backend provides a full URL to redirect to
-                // a page that handles the VNPAY logic.
-                // After payment, VNPAY will redirect back to a `returnUrl` specified
-                // by the backend, which could be our confirmation page.
-                // For this simulation, we'll just navigate there directly.
-                console.log('Redirecting to VNPAY URL:', response.data.paymentUrl);
+            if (paymentMethod === 'cash') {
+                // For cash, invoice is already considered created
+                navigate('/booking-confirmation', { state: { invoiceResult: invoiceResult } });
+            } else if (paymentMethod === 'vnpay') {
+                const amountToSend = String(invoiceResult.totalAmount).replace(/[^0-9]/g, ''); // Ensure amount is clean number string
                 
-                // Giả lập redirect và quay về
-                setTimeout(() => {
-                     navigate('/booking-confirmation', { state: { bookingResult: finalBookingData, fromVnPay: true } });
-                }, 1500);
+                const vnpayResponse = await createVnPayPaymentUrl({
+                    invoiceId: invoiceId, // Use the ID from the created invoice
+                    amount: amountToSend,
+                    orderInfo: `Thanh toan cho hoa don ${invoiceId}`
+                });
 
-            } else {
-                setErrorMessage('Không thể xử lý thanh toán VNPAY. Vui lòng thử lại.');
-                setIsLoading(false);
+                if (vnpayResponse.success && vnpayResponse.data.paymentUrl) {
+                    console.log('Redirecting to VNPAY URL:', vnpayResponse.data.paymentUrl);
+                    window.location.href = vnpayResponse.data.paymentUrl; // Redirect to VNPAY
+                } else {
+                    setErrorMessage('Không thể tạo liên kết thanh toán VNPAY. Vui lòng thử lại.');
+                    setIsLoading(false);
+                    // Optionally, delete the created invoice if VNPAY link creation fails
+                    // await deleteInvoice(invoiceId); // Need a deleteInvoice API and service for this
+                }
             }
+        } else {
+            setErrorMessage(invoiceResponse.error || 'Không thể tạo hóa đơn. Vui lòng thử lại.');
+            setIsLoading(false);
         }
     };
 
@@ -85,14 +97,14 @@ function PaymentMethodPage() {
                         <p>Lựa chọn hình thức thanh toán phù hợp với bạn.</p>
                         <div className={styles.paymentMethods}>
                             <button 
-                                onClick={() => handlePayment('cash')} 
+                                onClick={() => handlePayment('CASH')} 
                                 disabled={isLoading}
                                 className={styles.paymentButton}
                             >
                                 {isLoading ? 'Đang xử lý...' : 'Thanh toán bằng Tiền mặt'}
                             </button>
                             <button 
-                                onClick={() => handlePayment('vnpay')} 
+                                onClick={() => handlePayment('VNPAY')} 
                                 disabled={isLoading}
                                 className={styles.paymentButton}
                             >

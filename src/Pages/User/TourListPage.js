@@ -5,8 +5,7 @@ import { Link } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/ListPage.module.css';
-import { getTours } from '../../services/api';
-// Loại bỏ import FilterSidebar không còn dùng đến
+import { getTours, getTouristDestinations, getTravelVehicles } from '../../services/api';
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -18,8 +17,26 @@ const formatDateForDisplay = (dateString) => {
     return new Intl.DateTimeFormat('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 };
 
+// Helper function to render destinations
+const renderDestinations = (destinations) => {
+    if (!destinations || destinations.length === 0) {
+        return 'N/A';
+    }
+    return destinations.map(d => d.destinationName).join(', ');
+};
+
+// Helper function to render vehicles
+const renderVehicles = (vehicles) => {
+    if (!vehicles || vehicles.length === 0) {
+        return 'N/A';
+    }
+    return vehicles.map(v => v.vehicleType).join(', ');
+};
+
+
 function TourListPage() {
     const [allTours, setAllTours] = useState([]);
+    const [allTouristDestinations, setAllTouristDestinations] = useState([]);
     const [filteredTours, setFilteredTours] = useState([]);
     const [selectedDeparture, setSelectedDeparture] = useState('Tất cả'); 
     const [selectedDestination, setSelectedDestination] = useState('Tất cả'); 
@@ -30,7 +47,6 @@ function TourListPage() {
 
     const departureDateInputRef = useRef(null);
 
-    const departureOptions = ['Tất cả', 'TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ'];
     const tourTypeOptions = ['Cao cấp', 'Tiêu chuẩn', 'Tiết kiệm', 'Giá tốt'];
     const vehicleOptions = ['Xe', 'Máy bay', 'Tàu']; 
 
@@ -56,33 +72,47 @@ function TourListPage() {
     }, []);
 
     useEffect(() => {
+        const fetchTourDestinations = async () => {
+            try {
+                const destinations = await getTouristDestinations();
+                setAllTouristDestinations(destinations);
+            } catch (error) {
+                console.error('Error fetching tour destinations:', error);
+            }
+        };
+        fetchTourDestinations();
+    }, []);
+
+    useEffect(() => {
         let tours = [...allTours];
 
-        // 1. Lọc theo Điểm đến
+        // 1. Lọc theo Điểm đến (touristDestinations là danh sách)
         if (selectedDestination !== 'Tất cả' && selectedDestination) {
-            tours = tours.filter(tour => tour.destination === selectedDestination);
+            tours = tours.filter(tour => 
+                tour.touristDestinations && 
+                tour.touristDestinations.some(dest => dest.destinationId === selectedDestination)
+            );
         }
 
-        // 2. Lọc theo Ngày đi
+        // 2. Lọc theo Ngày đi (tourStartDate)
         if (selectedDepartureDate) {
-            tours = tours.filter(tour => tour.departureDate === selectedDepartureDate);
-        }
-
-        // 3. Lọc theo Dòng tour
-        if (selectedTourType.length > 0) {
-            tours = tours.filter(tour => selectedTourType.includes(tour.tourType));
+            tours = tours.filter(tour => 
+                tour.tourStartDate && tour.tourStartDate.toString().startsWith(selectedDepartureDate)
+            );
         }
 
         // 4. Lọc theo Phương tiện
         if (selectedVehicle.length > 0) {
-            const actualVehicles = selectedVehicle.map(v => {
-                if (v === 'Xe') return 'Ô tô'; 
-                return v;
+            tours = tours.filter(tour => {
+                if (!tour.travelVehicles || tour.travelVehicles.length === 0) return false;
+                return tour.travelVehicles.some(veh => {
+                    const dbName = veh.vehicleType.toLowerCase();
+                    return selectedVehicle.some(keyword => dbName.includes(keyword.toLowerCase()));
+                });
             });
-            tours = tours.filter(tour => actualVehicles.includes(tour.vehicle));
         }
 
-        // 5. Lọc theo Ngân sách
+        // 5. Lọc theo Ngân sách (tourPrice)
         if (selectedBudget) {
             const budgetRange = budgetOptions.find(b => b.value === selectedBudget);
             if (budgetRange) {
@@ -90,16 +120,12 @@ function TourListPage() {
             }
         }
         
-        // Mặc định vẫn lọc bỏ tour đã hủy
-        tours = tours.filter(t => t.tourStatus !== 'Canceled');
-
-        // Bỏ qua logic Sắp xếp (sort) cho đơn giản, chỉ tập trung vào Lọc
+        tours = tours.filter(t => t.tourStatus !== 'CANCELLED' && t.tourStatus !== 'Canceled');
         
         setFilteredTours(tours);
 
-    }, [allTours, selectedDestination, selectedDepartureDate, selectedTourType, selectedVehicle, selectedBudget, budgetOptions]);
-
-    // --- Handlers cho các bộ lọc ---
+    }, [allTours, selectedDestination, selectedDepartureDate, selectedVehicle, selectedBudget, budgetOptions]);
+    
     const handleToggleSelection = (state, setState, value) => {
         if (state.includes(value)) {
             setState(state.filter(item => item !== value));
@@ -109,10 +135,9 @@ function TourListPage() {
     };
 
     const handleBudgetSelect = (value) => {
-        setSelectedBudget(value === selectedBudget ? '' : value); // Toggle chọn
+        setSelectedBudget(value === selectedBudget ? '' : value);
     };
 
-    const handleClearTourType = () => setSelectedTourType([]);
     const handleClearVehicle = () => setSelectedVehicle([]);
 
     const handleDateDropdownClick = () => {
@@ -121,10 +146,8 @@ function TourListPage() {
         }
     };
 
-    // Hàm áp dụng tất cả các bộ lọc (giữ lại để khớp với nút Áp dụng)
     const handleApplyFilters = () => {
-        // Mọi logic đã nằm trong useEffect, nút này chỉ đơn thuần kích hoạt lại useEffect (nếu có state khác)
-        // hoặc gọi API trong thực tế.
+        // Logic is in useEffect
     };
 
     return (
@@ -137,11 +160,9 @@ function TourListPage() {
                 </div>
                 <div className={styles.layout}>
                     
-                    {/* SỬ DỤNG CẢ HAI CLASS: styles.sidebar (layout chung) + styles.tourSidebar (màu nền xám) */}
                     <aside className={`${styles.sidebar} ${styles.tourSidebar}`}> 
                         <h3>Bộ lọc tìm kiếm</h3>
 
-                        {/* NGÂN SÁCH (BUTTONS) */}
                         <div className={styles.filterGroup}>
                              <h4>Ngân sách</h4>
                             <div className={styles.priceRangeButtons}>
@@ -157,20 +178,6 @@ function TourListPage() {
                             </div>
                         </div>
 
-                        {/* ĐIỂM KHỞI HÀNH (DROPDOWN GIẢ) */}
-                        <div className={styles.filterGroup}>
-                            <h4>Điểm khởi hành</h4>
-                            {/* Dùng select HTML để đơn giản hóa logic, nhưng vẫn style như dropdown */}
-                            <select 
-                                className={styles.dropdownFilter} 
-                                value={selectedDeparture} 
-                                onChange={(e) => setSelectedDeparture(e.target.value)}
-                            >
-                                {departureOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                            </select>
-                        </div>
-
-                        {/* ĐIỂM ĐẾN (DROPDOWN GIẢ) */}
                         <div className={styles.filterGroup}>
                             <h4>Điểm đến</h4>
                             <select 
@@ -178,50 +185,33 @@ function TourListPage() {
                                 value={selectedDestination} 
                                 onChange={(e) => setSelectedDestination(e.target.value)}
                             >
-                                {['Tất cả', ...new Set(allTours.map(t => t.destination))].map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
+                                <option value="Tất cả">Tất cả</option>
+                                {allTouristDestinations.map((destination) => (
+                                    <option 
+                                        key={destination.destinationId} 
+                                        value={destination.destinationId}
+                                    >
+                                        {destination.destinationName}
+                                    </option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* NGÀY ĐI (DROPDOWN GIẢ + INPUT DATE HIDDEN) */}
                         <div className={styles.filterGroup}>
                             <h4>Ngày đi</h4>
                             <div className={`${styles.dropdownFilter} ${selectedDepartureDate ? styles.active : ''}`} onClick={handleDateDropdownClick}>
                                 <span>{formatDateForDisplay(selectedDepartureDate)}</span>
-                                <i className="fas fa-calendar-alt"></i> {/* Sử dụng icon lịch */}
+                                <i className="fas fa-calendar-alt"></i>
                                 <input
                                     type="date"
                                     ref={departureDateInputRef}
                                     value={selectedDepartureDate}
                                     onChange={(e) => setSelectedDepartureDate(e.target.value)}
-                                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '100%' }} // Ẩn input
+                                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '100%' }}
                                 />
                             </div>
                         </div>
 
-                        {/* DÒNG TOUR (BUTTONS) */}
-                        <div className={styles.filterGroup}>
-                            <h4>
-                                Dòng tour
-                                {selectedTourType.length > 0 && (
-                                    <button className={styles.clearButton} onClick={handleClearTourType}>Xóa ({selectedTourType.length})</button>
-                                )}
-                            </h4>
-                            <div className={styles.optionButtons}>
-                                {tourTypeOptions.map(type => (
-                                    <button
-                                        key={type}
-                                        className={`${styles.optionButton} ${selectedTourType.includes(type) ? styles.active : ''}`}
-                                        onClick={() => handleToggleSelection(selectedTourType, setSelectedTourType, type)}
-                                    >
-                                        {type}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* PHƯƠNG TIỆN (BUTTONS) */}
                         <div className={styles.filterGroup}>
                             <h4>
                                 Phương tiện
@@ -242,7 +232,6 @@ function TourListPage() {
                             </div>
                         </div>
 
-                        {/* NÚT ÁP DỤNG */}
                         <button className={styles.applyButton} onClick={handleApplyFilters}>
                             Áp dụng bộ lọc
                         </button>
@@ -253,15 +242,18 @@ function TourListPage() {
                         <div className={styles.grid}>
                             {filteredTours.length > 0 ? (
                                 filteredTours.map(tour => (
-                                    <Link to={`/tours/${tour.id}`} key={tour.id} className={styles.card}>
+                                    <Link to={`/tours/${tour.tourId}`} key={tour.tourId} className={styles.card}>
                                         <img src={tour.tourImage} alt={tour.tourName} />
                                         <div className={styles.cardContent}>
                                             <h3>{tour.tourName}</h3>
                                             <p className={styles.description}>
-                                                **Điểm đến:** {tour.destination} | **Phương tiện:** {tour.vehicle}
+                                                <strong>Điểm đến:</strong> {renderDestinations(tour.touristDestinations)}
                                             </p>
                                             <p className={styles.description}>
-                                                Trạng thái: {tour.tourStatus} (Còn {tour.tourRemainingSlots} chỗ)
+                                                <strong>Phương tiện:</strong> {renderVehicles(tour.travelVehicles)}
+                                            </p>
+                                            <p className={styles.description}>
+                                                Còn {tour.tourRemainingSlots} chỗ
                                             </p>
                                             <p className={styles.price}>Từ {formatPrice(tour.tourPrice)}</p>
                                         </div>

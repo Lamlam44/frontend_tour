@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
-import { createFlightBooking, processVnPayPayment } from '../../services/api';
+import { createFlightBooking, createVnPayPaymentUrl } from '../../services/api';
 
 function FlightPaymentPage() {
     const navigate = useNavigate();
@@ -38,7 +38,7 @@ function FlightPaymentPage() {
         };
 
         if (paymentMethod === 'vnpay') {
-            const response = await processVnPayPayment({
+            const response = await createVnPayPaymentUrl({
                 amount: totalPrice.replace(/[^0-9]/g, ''),
                 orderInfo: `Thanh toan cho chuyen bay ${flightDetails.id}`
             });

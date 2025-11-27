@@ -1,4 +1,4 @@
-/* eslint-disable */
+
 
 import {
     Box,
@@ -20,7 +20,7 @@ export default function TourDetail(props) {
     const { tourData } = props;
     const textColor = useColorModeValue('white');
     const textColorSecondary = useColorModeValue('white');
-    const boxBg = useColorModeValue('secondaryGray.300', 'whiteAlpha.100');
+    
 
     // Use all tours from the data
     const tours = tourData && tourData.length > 0 ? tourData : [];
