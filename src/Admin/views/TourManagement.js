@@ -94,7 +94,7 @@ const TourManagement = () => {
 
   const openEdit = (tour) => {
     setIsEdit(true);
-    setEditId(tour.id);
+    setEditId(tour.tourId);
 
     setFormData({
         tourName: tour.tourName,
@@ -182,8 +182,8 @@ const TourManagement = () => {
             </Thead>
             <Tbody>
               {tours.map((tour) => (
-                <Tr key={tour.id}>
-                  <Td color={textColor}>{tour.id}</Td>
+                <Tr key={tour.tourId}>
+                  <Td color={textColor}>{tour.tourId}</Td>
                   <Td color={textColor}>{tour.tourName}</Td>
                   <Td color={textColor}>{tour.tourPrice}</Td>
                   <Td color={textColor}>
@@ -205,7 +205,7 @@ const TourManagement = () => {
                       <Button
                         colorScheme="red"
                         size="sm"
-                        onClick={() => handleDelete(tour.id)}
+                        onClick={() => handleDelete(tour.tourId)}
                       >
                         Delete
                       </Button>

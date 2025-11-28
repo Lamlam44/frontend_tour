@@ -127,22 +127,29 @@ function LoginPage() {
         // Trường hợp chưa có account, backend trả về message
         setErrors({ submit: loginData?.message || 'Đăng nhập Google thất bại' });
       }
+    // src/Pages/User/LoginPage.js
+
     } catch (error) {
-      console.error('Google login error:', error);
-      
-      // Lấy message từ backend
-      let errorMessage = 'Lỗi kết nối với Google';
-      
-      if (error.response?.status === 202) {
-        // HTTP 202 ACCEPTED - Cần verify email
-        errorMessage = error.response.data?.message || 'Vui lòng kiểm tra email để xác thực tài khoản';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setErrors({ submit: errorMessage });
+        console.error('Google login error:', error);
+        
+        let errorMessage = 'Lỗi kết nối với Google';
+        
+        // Vì auth.js đã throw error.response.data, nên biến 'error' ở đây chính là data từ backend
+        if (error?.message) {
+            // Trường hợp backend trả về { message: "..." }
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            // Trường hợp auth.js throw error.message (chuỗi text)
+            errorMessage = error;
+        } else if (error?.error) {
+            // Trường hợp backend trả về { error: "..." }
+            errorMessage = error.error;
+        }
+        
+        // Xử lý riêng trường hợp verify email (Backend trả về message hướng dẫn)
+        // Lúc này 'error' chính là object { message: "Vui lòng kiểm tra email..." }
+        
+        setErrors({ submit: errorMessage });
     }
   };
 
