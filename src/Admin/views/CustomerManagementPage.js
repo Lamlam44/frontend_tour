@@ -40,10 +40,12 @@ const CustomerManagementPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    customerAddress: "",
+    customerDateOfBirth: "",
+    accountId: "",
   });
 
   const [editId, setEditId] = useState(null);
@@ -73,10 +75,12 @@ const CustomerManagementPage = () => {
       onClose();
       loadCustomers();
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
+        customerName: "",
+        customerEmail: "",
+        customerPhone: "",
+        customerAddress: "",
+        customerDateOfBirth: "",
+        accountId: "",
       });
     } catch (err) {
       console.error("Lỗi thêm customer", err);
@@ -86,13 +90,15 @@ const CustomerManagementPage = () => {
 
   const openEdit = (customer) => {
     setIsEdit(true);
-    setEditId(customer.id);
+    setEditId(customer.customerId);
 
     setFormData({
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
+        customerName: customer.customerName,
+        customerEmail: customer.customerEmail,
+        customerPhone: customer.customerPhone,
+        customerAddress: customer.customerAddress,
+        customerDateOfBirth: customer.customerDateOfBirth || "",
+        accountId: customer.account?.accountId || "",
     });
 
     onOpen();
@@ -105,10 +111,12 @@ const CustomerManagementPage = () => {
       loadCustomers();
       setIsEdit(false);
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
+        customerName: "",
+        customerEmail: "",
+        customerPhone: "",
+        customerAddress: "",
+        customerDateOfBirth: "",
+        accountId: "",
       });
     } catch (err) {
       console.error("Lỗi update customer", err);
@@ -137,10 +145,12 @@ const CustomerManagementPage = () => {
           <Button colorScheme='blue' onClick={() => {
               setIsEdit(false);
               setFormData({
-                name: "",
-                email: "",
-                phone: "",
-                address: "",
+                customerName: "",
+                customerEmail: "",
+                customerPhone: "",
+                customerAddress: "",
+                customerDateOfBirth: "",
+                accountId: "",
               });
               onOpen();
             }}>Add New Customer</Button>
@@ -154,17 +164,27 @@ const CustomerManagementPage = () => {
                 <Th color={textColor}>Email</Th>
                 <Th color={textColor}>Phone</Th>
                 <Th color={textColor}>Address</Th>
+                <Th color={textColor}>Date of Birth</Th>
+                <Th color={textColor}>Account</Th>
                 <Th color={textColor}>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {customers.map((customer) => (
-                <Tr key={customer.id}>
-                  <Td color={textColor}>{customer.id}</Td>
-                  <Td color={textColor}>{customer.name}</Td>
-                  <Td color={textColor}>{customer.email}</Td>
-                  <Td color={textColor}>{customer.phone}</Td>
-                  <Td color={textColor}>{customer.address}</Td>
+                <Tr key={customer.customerId}>
+                  <Td color={textColor}>{customer.customerId}</Td>
+                  <Td color={textColor}>{customer.customerName}</Td>
+                  <Td color={textColor}>{customer.customerEmail}</Td>
+                  <Td color={textColor}>{customer.customerPhone}</Td>
+                  <Td color={textColor}>{customer.customerAddress}</Td>
+                  <Td color={textColor}>{customer.customerDateOfBirth || "N/A"}</Td>
+                  <Td color={textColor}>
+                    {customer.account ? (
+                      <Badge colorScheme="green">{customer.account.username}</Badge>
+                    ) : (
+                      <Badge colorScheme="gray">No Account</Badge>
+                    )}
+                  </Td>
                   <Td>
                     <HStack>
                       <Button
@@ -178,7 +198,7 @@ const CustomerManagementPage = () => {
                       <Button
                         colorScheme="red"
                         size="sm"
-                        onClick={() => handleDelete(customer.id)}
+                        onClick={() => handleDelete(customer.customerId)}
                       >
                         Delete
                       </Button>
@@ -201,26 +221,40 @@ const CustomerManagementPage = () => {
             <Input
               placeholder="Customer Name"
               mb={3}
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              value={formData.customerName}
+              onChange={(e) => handleChange("customerName", e.target.value)}
             />
             <Input
               placeholder="Email"
+              type="email"
               mb={3}
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
+              value={formData.customerEmail}
+              onChange={(e) => handleChange("customerEmail", e.target.value)}
             />
             <Input
               placeholder="Phone"
               mb={3}
-              value={formData.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              value={formData.customerPhone}
+              onChange={(e) => handleChange("customerPhone", e.target.value)}
             />
             <Input
               placeholder="Address"
               mb={3}
-              value={formData.address}
-              onChange={(e) => handleChange("address", e.target.value)}
+              value={formData.customerAddress}
+              onChange={(e) => handleChange("customerAddress", e.target.value)}
+            />
+            <Input
+              placeholder="Date of Birth"
+              type="date"
+              mb={3}
+              value={formData.customerDateOfBirth}
+              onChange={(e) => handleChange("customerDateOfBirth", e.target.value)}
+            />
+            <Input
+              placeholder="Account ID (optional)"
+              mb={3}
+              value={formData.accountId}
+              onChange={(e) => handleChange("accountId", e.target.value)}
             />
           </ModalBody>
 
