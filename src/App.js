@@ -19,6 +19,7 @@ import RegisterPage from './Pages/User/RegisterPage';
 import NewAdminDashboard from './Admin/views/NewAdminDashboard';
 import AdminLayout from './Admin/layouts/AdminLayout';
 import theme from './Admin/theme';
+import ProtectedRoute from './Components/ProtectedRoute';
 
 // Import new pages for booking flows
 import PaymentMethodPage from './Pages/User/PaymentMethodPage'; 
@@ -66,8 +67,16 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Admin Routes */}
-            <Route path="/dashboard" element={<NewAdminDashboard />} />
-            <Route path="/admin/*" element={<AdminLayout />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute requiredRole="admin">
+                <NewAdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/*" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            } />
 
           </Routes>
         </Router>

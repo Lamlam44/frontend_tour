@@ -25,7 +25,7 @@ import {
     FormControl,
     FormLabel,
 } from "@chakra-ui/react";
-import axios from "axios";
+import axiosInstance from "../../api/axiosConfig";
 
 const API_ACCOUNTS = "http://localhost:8080/api/accounts";
 const API_ROLES = "http://localhost:8080/api/account-roles";
@@ -49,7 +49,7 @@ const AccountManagementPage = () => {
     // Load accounts và roles
     const loadAccounts = async () => {
         try {
-            const res = await axios.get(API_ACCOUNTS);
+            const res = await axiosInstance.get(API_ACCOUNTS);
             setAccounts(res.data);
         } catch (err) {
             console.error("Lỗi load accounts", err);
@@ -64,7 +64,7 @@ const AccountManagementPage = () => {
 
     const loadRoles = async () => {
         try {
-            const res = await axios.get(API_ROLES);
+            const res = await axiosInstance.get(API_ROLES);
             console.log("Loaded roles:", res.data);
             setRoles(res.data);
         } catch (err) {
@@ -104,7 +104,7 @@ const AccountManagementPage = () => {
 
         try {
             if (isEdit) {
-                await axios.put(`${API_ACCOUNTS}/${editId}`, formData);
+                await axiosInstance.put(`${API_ACCOUNTS}/${editId}`, formData);
                 toast({
                     title: "Thành công",
                     description: "Cập nhật tài khoản thành công",
@@ -112,7 +112,7 @@ const AccountManagementPage = () => {
                     duration: 3000,
                 });
             } else {
-                await axios.post(API_ACCOUNTS, formData);
+                await axiosInstance.post(API_ACCOUNTS, formData);
                 toast({
                     title: "Thành công",
                     description: "Tạo tài khoản mới thành công",
@@ -153,7 +153,7 @@ const AccountManagementPage = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Bạn có chắc muốn xóa tài khoản này?")) return;
         try {
-            await axios.delete(`${API_ACCOUNTS}/${id}`);
+            await axiosInstance.delete(`${API_ACCOUNTS}/${id}`);
             toast({
                 title: "Thành công",
                 description: "Xóa tài khoản thành công",

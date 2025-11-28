@@ -14,6 +14,7 @@ axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
+            // Thêm "Bearer " prefix cho JWT token
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;

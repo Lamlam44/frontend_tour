@@ -22,8 +22,8 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         return <Navigate to="/login" replace />;
     }
 
-    // Kiểm tra role nếu cần
-    if (requiredRole && user?.role !== requiredRole) {
+    // Kiểm tra role - chỉ cho phép ROLE_ADMIN hoặc admin vào admin routes
+    if (requiredRole && user?.role !== requiredRole && user?.role !== 'ROLE_ADMIN') {
         return <Navigate to="/" replace />;
     }
 
