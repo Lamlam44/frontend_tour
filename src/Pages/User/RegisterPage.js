@@ -111,16 +111,17 @@ function RegisterPage() {
       const accountData = {
         username: formData.username,
         password: formData.password,
-        roleId: "ROL-94C8E4AC" // mặc định là ROLE_USER
+        roleId: "ROL-94C8E4AC", // mặc định là ROLE_USER
+        status: true // Active by default
       };
 
       const accountResponse = await axiosInstance.post('/accounts', accountData);
       
-      if (!accountResponse.data || !accountResponse.data.data) {
-        throw new Error(accountResponse.data?.message || 'Tạo tài khoản thất bại');
+      if (!accountResponse.data) {
+        throw new Error('Tạo tài khoản thất bại');
       }
 
-      const accountId = accountResponse.data.data.accountId;
+      const accountId = accountResponse.data.accountId;
 
       // Bước 2: Tạo Customer với accountId vừa tạo
       const customerData = {
@@ -135,8 +136,7 @@ function RegisterPage() {
       const customerResponse = await axiosInstance.post('/customers', customerData);
       
       if (customerResponse.data) {
-        const message = customerResponse.data.message || 'Đăng ký thành công! Vui lòng đăng nhập.';
-        alert(message);
+        alert('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
         navigate('/login');
       }
     } catch (error) {

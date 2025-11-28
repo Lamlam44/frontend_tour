@@ -24,8 +24,10 @@ import {
     useToast,
     FormControl,
     FormLabel,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import axiosInstance from "../../api/axiosConfig";
+import Card from '../../Admin/components/card/Card';
 
 const API_ACCOUNTS = "http://localhost:8080/api/accounts";
 const API_ROLES = "http://localhost:8080/api/account-roles";
@@ -35,6 +37,8 @@ const AccountManagementPage = () => {
     const [roles, setRoles] = useState([]);
     const [isEdit, setIsEdit] = useState(false);
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    const [deleteId, setDeleteId] = useState(null);
     const toast = useToast();
 
     const [formData, setFormData] = useState({
@@ -46,16 +50,16 @@ const AccountManagementPage = () => {
 
     const [editId, setEditId] = useState(null);
 
-    // Load accounts và roles
+    // Load accounts and roles
     const loadAccounts = async () => {
         try {
             const res = await axiosInstance.get(API_ACCOUNTS);
             setAccounts(res.data);
         } catch (err) {
-            console.error("Lỗi load accounts", err);
+            console.error("Error loading accounts", err);
             toast({
-                title: "Lỗi",
-                description: "Không thể tải danh sách tài khoản",
+                title: "Error",
+                description: "Unable to load account list",
                 status: "error",
                 duration: 3000,
             });
@@ -68,7 +72,7 @@ const AccountManagementPage = () => {
             console.log("Loaded roles:", res.data);
             setRoles(res.data);
         } catch (err) {
-            console.error("Lỗi load roles", err);
+            console.error("Error loading roles", err);
         }
     };
 
@@ -77,13 +81,13 @@ const AccountManagementPage = () => {
         loadRoles();
     }, []);
 
-    // Tạo mới hoặc cập nhật
+    // Create new or update
     const handleSubmit = async () => {
         // Validation
         if (!formData.username || !formData.roleId) {
             toast({
-                title: "Lỗi",
-                description: "Vui lòng điền đầy đủ thông tin (Username và Role)",
+                title: "Error",
+                description: "Please fill in all required information (Username and Role)",
                 status: "error",
                 duration: 3000,
             });
@@ -92,8 +96,8 @@ const AccountManagementPage = () => {
 
         if (!isEdit && !formData.password) {
             toast({
-                title: "Lỗi",
-                description: "Vui lòng nhập mật khẩu",
+                title: "Error",
+                description: "Please enter password",
                 status: "error",
                 duration: 3000,
             });
@@ -106,16 +110,16 @@ const AccountManagementPage = () => {
             if (isEdit) {
                 await axiosInstance.put(`${API_ACCOUNTS}/${editId}`, formData);
                 toast({
-                    title: "Thành công",
-                    description: "Cập nhật tài khoản thành công",
+                    title: "Success",
+                    description: "Account updated successfully",
                     status: "success",
                     duration: 3000,
                 });
             } else {
                 await axiosInstance.post(API_ACCOUNTS, formData);
                 toast({
-                    title: "Thành công",
-                    description: "Tạo tài khoản mới thành công",
+                    title: "Success",
+                    description: "Account created successfully",
                     status: "success",
                     duration: 3000,
                 });
@@ -124,14 +128,14 @@ const AccountManagementPage = () => {
             onClose();
             resetForm();
         } catch (err) {
-            console.error("Lỗi submit", err);
+            console.error("Error submitting", err);
             console.error("Response data:", err.response?.data);
             
-            // Xử lý lỗi validation từ backend
-            let errorMessage = "Có lỗi xảy ra";
+            // Handle validation errors from backend
+            let errorMessage = "An error occurred";
             
             if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
-                // Lấy tất cả các lỗi validation
+                // Get all validation errors
                 const validationErrors = err.response.data.errors
                     .map(error => error.defaultMessage)
                     .join(", ");
@@ -141,7 +145,7 @@ const AccountManagementPage = () => {
             }
             
             toast({
-                title: "Lỗi",
+                title: "Error",
                 description: errorMessage,
                 status: "error",
                 duration: 5000,
@@ -149,36 +153,59 @@ const AccountManagementPage = () => {
         }
     };
 
-    // Xóa tài khoản
-    const handleDelete = async (id) => {
-        if (!window.confirm("Bạn có chắc muốn xóa tài khoản này?")) return;
+    // Open delete confirmation
+    const openDeleteConfirm = (id) => {
+        setDeleteId(id);
+        onDeleteOpen();
+    };
+
+    // Delete account
+    const handleDelete = async () => {
         try {
-            await axiosInstance.delete(`${API_ACCOUNTS}/${id}`);
+            // First, try to find and delete associated customer
+            try {
+                const customersRes = await axiosInstance.get("http://localhost:8080/api/customers");
+                const associatedCustomer = customersRes.data.find(
+                    customer => customer.account?.accountId === deleteId
+                );
+                
+                if (associatedCustomer) {
+                    await axiosInstance.delete(`http://localhost:8080/api/customers/${associatedCustomer.customerId}`);
+                    console.log("Associated customer deleted");
+                }
+            } catch (customerErr) {
+                console.error("Error checking/deleting customer", customerErr);
+                // Continue to delete account even if customer deletion fails
+            }
+
+            // Then delete the account
+            await axiosInstance.delete(`${API_ACCOUNTS}/${deleteId}`);
             toast({
-                title: "Thành công",
-                description: "Xóa tài khoản thành công",
+                title: "Success",
+                description: "Account deleted successfully",
                 status: "success",
                 duration: 3000,
             });
             loadAccounts();
+            onDeleteClose();
         } catch (err) {
-            console.error("Lỗi delete", err);
+            console.error("Error deleting", err);
             toast({
-                title: "Lỗi",
-                description: "Không thể xóa tài khoản",
+                title: "Error",
+                description: "Unable to delete account",
                 status: "error",
                 duration: 3000,
             });
         }
     };
 
-    // Mở form edit
+    // Open edit form
     const openEdit = (account) => {
         setIsEdit(true);
         setEditId(account.accountId);
         setFormData({
             username: account.username,
-            password: "", // Để trống, user sẽ nhập mật khẩu mới
+            password: "", // Leave empty, user will enter new password
             roleId: account.role?.accountRoleId || "",
             status: account.status,
         });
@@ -200,12 +227,12 @@ const AccountManagementPage = () => {
     return (
         <Box p={6} bg="navy.900" color="white" borderRadius="2xl">
             <Heading size="md" mb={6} color="white">
-                Quản Lý Tài Khoản
+                Account Management
             </Heading>
 
             <Box bg="navy.800" p={6} borderRadius="2xl">
                 <Box display="flex" justifyContent="space-between" mb={4}>
-                    <Heading size="sm">Danh Sách Tài Khoản</Heading>
+                    <Heading size="sm">Account List</Heading>
                     <Button
                         colorScheme="blue"
                         onClick={() => {
@@ -213,7 +240,7 @@ const AccountManagementPage = () => {
                             onOpen();
                         }}
                     >
-                        Thêm Tài Khoản Mới
+                        Add New Account
                     </Button>
                 </Box>
 
@@ -244,7 +271,7 @@ const AccountManagementPage = () => {
                                         {account.status ? "Active" : "Inactive"}
                                     </Badge>
                                 </Td>
-                                <Td>{new Date(account.accountCreatedAt).toLocaleDateString('vi-VN')}</Td>
+                                <Td>{new Date(account.accountCreatedAt).toLocaleDateString('en-US')}</Td>
                                 <Td>
                                     <HStack>
                                         <Button
@@ -252,15 +279,15 @@ const AccountManagementPage = () => {
                                             size="sm"
                                             onClick={() => openEdit(account)}
                                         >
-                                            Sửa
+                                            Edit
                                         </Button>
 
                                         <Button
                                             colorScheme="red"
                                             size="sm"
-                                            onClick={() => handleDelete(account.accountId)}
+                                            onClick={() => openDeleteConfirm(account.accountId)}
                                         >
-                                            Xóa
+                                            Delete
                                         </Button>
                                     </HStack>
                                 </Td>
@@ -273,52 +300,46 @@ const AccountManagementPage = () => {
             {/* MODAL FORM */}
             <Modal isOpen={isOpen} onClose={onClose} size="lg">
                 <ModalOverlay />
-                <ModalContent bg="navy.800" color="white">
+                <ModalContent>
                     <ModalHeader>
-                        {isEdit ? "Chỉnh Sửa Tài Khoản" : "Thêm Tài Khoản Mới"}
+                        {isEdit ? "Edit Account" : "Add New Account"}
                     </ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <FormControl mb={4}>
                             <FormLabel>Username</FormLabel>
                             <Input
-                                placeholder="Nhập username"
+                                placeholder="Enter username"
                                 value={formData.username}
                                 onChange={(e) =>
                                     setFormData({ ...formData, username: e.target.value })
                                 }
-                                bg="navy.700"
-                                border="none"
                             />
                         </FormControl>
 
                         <FormControl mb={4}>
-                            <FormLabel>Password {isEdit && "(Để trống nếu không đổi)"}</FormLabel>
+                            <FormLabel>Password {isEdit && "(Leave empty if not changing)"}</FormLabel>
                             <Input
                                 type="password"
-                                placeholder="Nhập password (tối thiểu 6 ký tự)"
+                                placeholder="Enter password (minimum 6 characters)"
                                 value={formData.password}
                                 onChange={(e) =>
                                     setFormData({ ...formData, password: e.target.value })
                                 }
-                                bg="navy.700"
-                                border="none"
                             />
                         </FormControl>
 
                         <FormControl mb={4}>
                             <FormLabel>Role</FormLabel>
                             <Select
-                                placeholder="Chọn role"
+                                placeholder="Select role"
                                 value={formData.roleId}
                                 onChange={(e) =>
                                     setFormData({ ...formData, roleId: e.target.value })
                                 }
-                                bg="navy.700"
-                                border="none"
                             >
                                 {roles.map((role) => (
-                                    <option key={role.accountRoleId} value={role.accountRoleId} style={{ background: '#1a365d' }}>
+                                    <option key={role.accountRoleId} value={role.accountRoleId}>
                                         {role.roleName}
                                     </option>
                                 ))}
@@ -328,25 +349,47 @@ const AccountManagementPage = () => {
                         <FormControl mb={4}>
                             <FormLabel>Status</FormLabel>
                             <Select
-                                value={formData.status ? "true" : "false"}
+                                value={formData.status.toString()}
                                 onChange={(e) =>
                                     setFormData({ ...formData, status: e.target.value === "true" })
                                 }
-                                bg="navy.700"
-                                border="none"
                             >
-                                <option value="true" style={{ background: '#1a365d' }}>Active</option>
-                                <option value="false" style={{ background: '#1a365d' }}>Inactive</option>
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
                             </Select>
                         </FormControl>
                     </ModalBody>
 
                     <ModalFooter>
-                        <Button colorScheme="gray" mr={3} onClick={onClose}>
-                            Hủy
+                        <Button
+                            colorScheme="green"
+                            mr={3}
+                            onClick={handleSubmit}
+                        >
+                            {isEdit ? "Update" : "Save"}
                         </Button>
-                        <Button colorScheme="blue" onClick={handleSubmit}>
-                            {isEdit ? "Cập Nhật" : "Tạo Mới"}
+                        <Button variant="ghost" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+            {/* DELETE CONFIRMATION MODAL */}
+            <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Confirm Delete</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        Are you sure you want to delete this account? This action cannot be undone.
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="red" mr={3} onClick={handleDelete}>
+                            Delete
+                        </Button>
+                        <Button variant="ghost" onClick={onDeleteClose}>
+                            Cancel
                         </Button>
                     </ModalFooter>
                 </ModalContent>
