@@ -6,7 +6,6 @@ import styles from '../../Assets/CSS/PageCSS/SearchResultsPage.module.css';
 
 const mockResults = [
   { id: 1, type: 'tour', title: 'Tour trọn gói Phú Quốc 3N2Đ - Khách sạn 5 sao', price: '4,500,000đ', rating: 4.8, reviews: 120, img: 'https://images.unsplash.com/photo-1589882553933-5c8a141ab64a?q=80&w=2070' },
-  { id: 2, type: 'hotel', title: 'Vinpearl Resort & Spa Phú Quốc', price: '2,100,000đ / đêm', rating: 4.9, reviews: 850, img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070' },
   { id: 3, type: 'tour', title: 'Khám phá Đà Nẵng - Hội An - Bà Nà Hills 4N3Đ', price: '5,200,000đ', rating: 4.7, reviews: 250, img: 'https://images.unsplash.com/photo-1569509831962-d7b385a4a4e5?q=80&w=1964' },
 ];
 
@@ -20,7 +19,6 @@ function SearchResultsPage() {
           <div className={styles.filterGroup}>
             <h4>Loại hình</h4>
             <label><input type="checkbox" /> Tour du lịch</label>
-            <label><input type="checkbox" /> Khách sạn</label>
           </div>
           <div className={styles.filterGroup}>
             <h4>Khoảng giá</h4>
@@ -42,7 +40,7 @@ function SearchResultsPage() {
                 <h3>{item.title}</h3>
                 <p>⭐ {item.rating} ({item.reviews} đánh giá)</p>
                 <p className={styles.resultPrice}>Giá chỉ từ: <strong>{item.price}</strong></p>
-                <Link to={item.type === 'tour' ? `/tours/${item.id}` : `/hotels/${item.id}`}>
+                <Link to={`/tours/${item.id}`}>
                   <button className={styles.viewDetailsBtn}>Xem chi tiết</button>
                 </Link>
               </div>

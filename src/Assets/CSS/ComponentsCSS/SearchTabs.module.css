@@ -13,7 +13,15 @@
 .form {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;
 }
-.form input, .form button {
+.form input, .form select {
+  color: #888;
+}
+
+.form input::placeholder {
+  color: #888;
+}
+
+.form input, .form select, .form button {
   padding: 0.8rem; border: 1px solid #ccc; border-radius: var(--border-radius); font-size: 1rem;
 }
 .form button {

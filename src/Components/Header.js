@@ -11,9 +11,8 @@ function Header() {
       <nav className={styles.nav}>
         <ul>
           <li><Link to="/tours">Du lịch</Link></li>
-          <li><Link to="/hotels">Khách sạn</Link></li>
-          <li><Link to="/flights">Vé máy bay</Link></li>
           <li><Link to="/promotions">Khuyến mãi</Link></li>
+          <li><Link to="/contact">Liên hệ</Link></li>
         </ul>
       </nav>
       <div className={styles.actions}>

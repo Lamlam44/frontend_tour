@@ -4,9 +4,7 @@ import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
 import { isLoggedIn } from '../../services/auth';
-import { getUserProfile } from '../../services/api';
-import { getTourById } from '../../services/api';
-
+import { getUserProfile, getTourById, applyPromotion } from '../../services/api';
 
 const formatPrice = (price) => {
     if (typeof price !== 'number') return 'N/A';
@@ -18,27 +16,31 @@ function TourBookingPage() {
     const navigate = useNavigate();
     const location = useLocation();
     
-    const [fetchedTourDetails, setFetchedTourDetails] = useState(null); // State for fetched tour data
-    const [currentGuestCount, setCurrentGuestCount] = useState(location.state?.guestCount || 1); // State for guest count
+    const [fetchedTourDetails, setFetchedTourDetails] = useState(null);
+    const [currentGuestCount, setCurrentGuestCount] = useState(location.state?.guestCount || 1);
     const [customerInfo, setCustomerInfo] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
+        name: '', email: '', phone: '', address: ''
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(''); // State for error messages
+    const [error, setError] = useState('');
+    
+    // State cho khuyến mãi
+    const [promotionCode, setPromotionCode] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [discountError, setDiscountError] = useState('');
+    
+    // State lưu ID khuyến mãi để gửi đi thanh toán (QUAN TRỌNG)
+    const [appliedPromotionId, setAppliedPromotionId] = useState(null);
 
     useEffect(() => {
         const loadTourAndUserData = async () => {
             let tourDataFromState = location.state?.tourDetails;
             let fetchedData = null;
 
-            if (!tourDataFromState && tourId) { // If tourDetails not in state, fetch it
+            if (!tourDataFromState && tourId) {
                 try {
                     fetchedData = await getTourById(tourId);
                     setFetchedTourDetails(fetchedData);
-                    tourDataFromState = fetchedData; // Use fetched data
                 } catch (err) {
                     console.error("Failed to fetch tour details:", err);
                     setError('Không thể tải thông tin tour. Vui lòng thử lại.');
@@ -46,25 +48,22 @@ function TourBookingPage() {
                     return;
                 }
             } else {
-                setFetchedTourDetails(tourDataFromState); // Use data from state
+                setFetchedTourDetails(tourDataFromState);
             }
             
-            // Fetch user profile if logged in
             if (isLoggedIn()) {
                 try {
                     const userData = await getUserProfile();
                     setCustomerInfo(userData);
                 } catch (error) {
                     console.error("Failed to fetch user profile:", error);
-                    // Continue without user data, let user fill form
                 }
             }
             setIsLoading(false);
         };
         loadTourAndUserData();
-    }, [tourId, location.state]); // Re-run effect if tourId or location.state changes
+    }, [tourId, location.state]);
 
-    // Reference to the actual tour details and guest count to be used in the component
     const tourDetails = fetchedTourDetails; 
     const guestCount = currentGuestCount;
 
@@ -73,17 +72,64 @@ function TourBookingPage() {
         setCustomerInfo(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleApplyPromotion = async () => {
+        if (!promotionCode) {
+            setDiscountError('Vui lòng nhập mã giảm giá.');
+            return;
+        }
+        try {
+            // Lấy ID của tour để gửi kèm mã giảm giá (Để backend check xem mã này có áp dụng cho tour này ko)
+            const currentTourId = tourDetails.tourId || tourDetails.id;
+            
+            // Gọi API: POST /api/promotions/apply?code=...&tourId=...
+            const response = await applyPromotion(promotionCode, currentTourId);
+            
+            // 1. Tính toán hiển thị (Display Only)
+            const percentage = response.discountPercentage || 0;
+            const totalBeforeDiscount = (tourDetails.price || 0) * (guestCount || 1);
+            const discountValue = (totalBeforeDiscount * percentage) / 100;
+            
+            // 2. Cập nhật UI
+            setDiscountAmount(discountValue);
+            setDiscountError(''); 
+            
+            // 3. LƯU ID KHUYẾN MÃI (Để gửi sang trang thanh toán)
+            setAppliedPromotionId(response.promotionId); 
+
+        } catch (err) {
+            setDiscountAmount(0);
+            setAppliedPromotionId(null); // Reset ID nếu lỗi
+            // Hiển thị lỗi từ Backend trả về (VD: "Mã không áp dụng cho tour này")
+            setDiscountError(err.response?.data?.message || 'Mã giảm giá không hợp lệ.');
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Chuyển đến trang chọn phương thức thanh toán, mang theo thông tin khách hàng và tour
+        
+        // Tính toán hiển thị (Frontend tính)
+        const totalAmount = (tourDetails?.price || 0) * (guestCount || 1);
+        const finalPrice = totalAmount - discountAmount;
+
         navigate('/payment', { 
             state: { 
                 bookingDetails: {
                     ...customerInfo,
-                    guestCount: guestCount || 1, // Đảm bảo guestCount được truyền đi
+                    guestCount: guestCount || 1,
                 }, 
-                itemDetails: tourDetails, // Đổi tên cho nhất quán
-                totalAmount: (tourDetails?.price || 0) * (guestCount || 1) // Tính và truyền tổng tiền
+                itemDetails: tourDetails,
+                
+                // Dữ liệu hiển thị (Chỉ để xem)
+                displayTotalAmount: finalPrice, 
+                displayDiscountAmount: discountAmount,
+
+                // DỮ LIỆU GIAO DỊCH (Quan trọng)
+                transactionData: {
+                    tourId: tourDetails.tourId || tourDetails.id,
+                    quantity: guestCount || 1,
+                    // Gửi danh sách ID khuyến mãi (dạng mảng vì DTO backend nhận Set<String>)
+                    promotionIds: appliedPromotionId ? [appliedPromotionId] : [] 
+                }
             } 
         });
     };
@@ -92,35 +138,22 @@ function TourBookingPage() {
         return <div><Header /><div className={styles.container}><p>Đang tải...</p></div><Footer/></div>;
     }
 
-    if (error) {
+    if (error || !tourDetails) {
         return (
             <div>
                 <Header />
                 <div className={styles.container}>
                     <h1>Lỗi</h1>
-                    <p>{error}</p>
+                    <p>{error || 'Không tìm thấy thông tin tour'}</p>
                 </div>
                 <Footer/>
             </div>
         );
     }
-
-    if (!tourDetails) {
-        return (
-            <div>
-                <Header />
-                <div className={styles.container}>
-                    <h1>Không tìm thấy thông tin tour</h1>
-                    <p>Vui lòng quay lại trang chi tiết và chọn lại tour.</p>
-                </div>
-                <Footer/>
-            </div>
-        );
-    }
-
 
     const numberOfGuests = guestCount || 1;
     const totalPrice = (tourDetails.price || 0) * numberOfGuests;
+    const finalPrice = totalPrice - discountAmount;
 
     return (
         <div>
@@ -146,15 +179,44 @@ function TourBookingPage() {
                                 <p>{tourDetails.name}</p>
                                 <span>{formatPrice(tourDetails.price)}</span>
                             </div>
-                             <div className={styles.summaryItem}>
+                            <div className={styles.summaryItem}>
                                 <p>Số lượng khách</p>
                                 <span>x {numberOfGuests}</span>
                             </div>
+                             <div className={styles.summaryItem}>
+                                <p>Tạm tính</p>
+                                <span>{formatPrice(totalPrice)}</span>
+                            </div>
+
                             <hr/>
+                            
+                            {/* Khu vực nhập mã giảm giá */}
+                            <div className={styles.promotionSection}>
+                                <h4>Áp dụng mã giảm giá</h4>
+                                <div className={styles.promotionInput}>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Nhập mã giảm giá" 
+                                        value={promotionCode}
+                                        onChange={(e) => setPromotionCode(e.target.value)}
+                                    />
+                                    <button type="button" onClick={handleApplyPromotion}>Xác nhận</button>
+                                </div>
+                                {discountError && <p className={styles.errorMessage}>{discountError}</p>}
+                            </div>
+                            
+                            {discountAmount > 0 && (
+                                <div className={`${styles.summaryItem} ${styles.discount}`}>
+                                    <p>Số tiền giảm (Dự kiến)</p>
+                                    <span>- {formatPrice(discountAmount)}</span>
+                                </div>
+                            )}
+
+                            <hr/>
+
                             <div className={`${styles.summaryItem} ${styles.total}`}>
                                 <p>Tổng cộng</p>
-                                {/* SỬA LỖI 2: Hiển thị tổng tiền đã tính */}
-                                <span>{formatPrice(totalPrice)}</span>
+                                <span>{formatPrice(finalPrice)}</span>
                             </div>
                             <button type="submit" className={styles.confirmBtn}>Tiếp tục đến thanh toán</button>
                         </aside>

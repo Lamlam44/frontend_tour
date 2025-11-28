@@ -1,108 +1,194 @@
-.container {
-  padding: 2rem 5%;
-  max-width: 1200px;
-  margin: auto;
-}
-
-.layout {
-  display: flex;
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.customerInfoForm {
-  flex: 3;
-}
-
-.formGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.customerInfoForm input {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: var(--border-radius);
-}
-
-.summary {
-  flex: 2;
-  background: var(--white);
-  padding: 1.5rem;
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
-}
-
-.summaryItem {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.summaryItem.total {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.confirmBtn {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1.2rem;
-  background-color: var(--secondary-color);
-  color: var(--white);
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-}
-
-/* Dán thêm vào cuối file BookingPage.module.css */
-
-.passengerForm {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
+.container h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+  
+  .container p {
+    color: #666;
     margin-bottom: 2rem;
-    border: 1px solid #eee;
-}
-
-.passengerForm p {
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-top: 0;
-}
-
-.sectionTitle {
-    margin-top: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
-}
-
-.addOnSection {
-    margin-top: 1rem;
-}
-
-.addOnSection label {
-    display: block;
+  }
+  
+  .layout {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  
+  .customerInfoForm {
+    flex-grow: 1; /* Takes up remaining space */
+  }
+  
+  .customerInfoForm h3 {
+    font-size: 1.5rem;
+    color: #444;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+  }
+  
+  .formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 1.5rem;
+  }
+  
+  .formGrid input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+  
+  .formGrid input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+  }
+  
+  /* --- Summary Section --- */
+  
+  .summary {
+    width: 350px; /* Fixed width for the summary */
+    flex-shrink: 0; /* Prevents shrinking */
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+  
+  .summary h3 {
+    font-size: 1.5rem;
+    color: #333;
     margin-bottom: 1rem;
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-}
-
-/* Thêm style cho textarea (dùng cho HotelBookingPage) */
-.specialRequest {
+    text-align: center;
+  }
+  
+  .summaryItem {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  
+  .summaryItem p {
+    color: #555;
+    margin: 0;
+  }
+  
+  .summaryItem span {
+    color: #333;
+    font-weight: 500;
+  }
+  
+  .summary hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 1.5rem 0;
+  }
+  
+  .total {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  .total p {
+    color: #222;
+  }
+  
+  .total span {
+    color: #d9534f; /* A reddish color for emphasis */
+  }
+  
+  .confirmBtn {
     width: 100%;
     padding: 0.8rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .confirmBtn:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Responsive adjustments could be added here */
+  @media (max-width: 992px) {
+    .layout {
+      flex-direction: column;
+    }
+  
+    .summary {
+      width: 100%; /* Full width on smaller screens */
+      margin-top: 2rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .formGrid {
+      grid-template-columns: 1fr; /* Single column on even smaller screens */
+    }
+  }
+
+  /* Promotion Code Section Styles */
+.promotionSection {
+    margin-top: 1rem;
+  }
+  
+  .promotionSection h4 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+  
+  .promotionInput {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .promotionInput input {
+    flex-grow: 1;
+    padding: 0.5rem;
     border: 1px solid #ccc;
-    border-radius: var(--border-radius);
-    min-height: 100px;
-    font-family: Arial, sans-serif;
-    font-size: 1rem;
-}
+    border-radius: 4px;
+  }
+  
+  .promotionInput button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: #fff;
+    background-color: #28a745; /* Green color for apply button */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .promotionInput button:hover {
+    background-color: #218838;
+  }
+  
+  .errorMessage {
+    color: #dc3545; /* Red for error messages */
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  
+  .discount {
+    color: #28a745; /* Green for discount amount */
+  }
+  
+  .discount p {
+    color: #28a745;
+  }
+  
+  .discount span {
+    font-weight: bold;
+  }
+  

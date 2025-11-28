@@ -186,26 +186,6 @@ export const verifyVnPayPayment = async (params) => {
   }
 };
 
-export const createHotelBooking = async (bookingData) => {
-    try {
-        const response = await apiClient.post('/hotel-bookings', bookingData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating hotel booking:', error);
-        throw error;
-    }
-};
-
-export const createFlightBooking = async (bookingData) => {
-    try {
-        const response = await apiClient.post('/flight-bookings', bookingData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating flight booking:', error);
-        throw error;
-    }
-};
-
 export const getPromotions = async () => {
   try {
     const response = await apiClient.get('/promotions');
@@ -245,47 +225,6 @@ export const deletePromotion = async (id) => {
     throw error;
   }
 };
-
-export const getTravelVehicles = async () => {
-  try {
-    const response = await apiClient.get('/travel-vehicles');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching travel vehicles:', error);
-    throw error;
-  }
-};
-
-export const addTravelVehicle = async (travelVehicleData) => {
-  try {
-    const response = await apiClient.post('/travel-vehicles', travelVehicleData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding travel vehicle:', error);
-    throw error;
-  }
-};
-
-export const updateTravelVehicle = async (id, travelVehicleData) => {
-  try {
-    const response = await apiClient.put(`/travel-vehicles/${id}`, travelVehicleData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating travel vehicle:', error);
-    throw error;
-  }
-};
-
-export const deleteTravelVehicle = async (id) => {
-  try {
-    const response = await apiClient.delete(`/travel-vehicles/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting travel vehicle:', error);
-    throw error;
-  }
-};
-
 
 export const getTours = async () => {
   try {
@@ -333,56 +272,6 @@ export const deleteTour = async (id) => {
     return response.data;
   } catch (error) {
     console.error('Error deleting tour:', error);
-    throw error;
-  }
-};
-
-export const getAccommodations = async () => {
-  try {
-    const response = await apiClient.get('/accommodations');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching accommodations:', error);
-    throw error;
-  }
-};
-
-export const getAccommodationById = async (id) => {
-  try {
-    const response = await apiClient.get(`/accommodations/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching accommodation with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const addAccommodation = async (accommodationData) => {
-  try {
-    const response = await apiClient.post('/accommodations', accommodationData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding accommodation:', error);
-    throw error;
-  }
-};
-
-export const updateAccommodation = async (id, accommodationData) => {
-  try {
-    const response = await apiClient.put(`/accommodations/${id}`, accommodationData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating accommodation:', error);
-    throw error;
-  }
-};
-
-export const deleteAccommodation = async (id) => {
-  try {
-    const response = await apiClient.delete(`/accommodations/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting accommodation:', error);
     throw error;
   }
 };
@@ -504,5 +393,24 @@ export const deleteTouristDestination = async (id) => {
   } catch (error) {
     console.error('Error deleting tourist destination:', error);
     throw error;
+  }
+};
+
+// src/services/api.js
+
+export const applyPromotion = async (promotionCode, tourId) => {
+  try {
+    // Backend yêu cầu: POST /api/promotions/apply?code=...&tourId=...
+    // Axios: tham số thứ 2 là Body (để null), tham số thứ 3 là Config (chứa params)
+    const response = await apiClient.post('/promotions/apply', null, {
+      params: {
+        code: promotionCode, // Backend @RequestParam String code
+        tourId: tourId       // Backend @RequestParam String tourId
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error applying promotion:', error);
+    throw error.response || error;
   }
 };
