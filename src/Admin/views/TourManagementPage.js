@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Box,
   Heading,
@@ -20,8 +20,14 @@ import {
   ModalCloseButton,
   useDisclosure,
   Textarea,
-  Select,
+  Select as ChakraSelect,
+  InputGroup,
+  InputRightElement,
+  FormControl,
+  FormLabel,
 } from "@chakra-ui/react";
+// Import thư viện multi-select mới
+import { Select } from "chakra-react-select";
 import {
   getTours,
   addTour,
@@ -33,38 +39,52 @@ import {
   getTouristDestinations,
 } from "../../services/api";
 
+// --- BẮT BUỘC: Hướng dẫn cài đặt ---
+// Do tôi không thể chạy lệnh, bạn cần tự cài đặt thư viện còn thiếu.
+// Mở terminal trong thư mục 'frontend_tour' và chạy lệnh sau:
+// npm install chakra-react-select
+// --- KẾT THÚC HƯỚNG DẪN ---
+
 const TourManagementPage = () => {
   const [tours, setTours] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
-
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const imageFileRef = useRef(null);
 
-  // Dropdown options
+  // State cho các dropdown
   const [tourGuides, setTourGuides] = useState([]);
   const [accommodations, setAccommodations] = useState([]);
   const [travelVehicles, setTravelVehicles] = useState([]);
   const [touristDestinations, setTouristDestinations] = useState([]);
 
-  // Selected IDs for multi-select
-  const [selectedVehicleIds, setSelectedVehicleIds] = useState([]);
-  const [selectedDestinationIds, setSelectedDestinationIds] = useState([]);
+  // State cho các lựa chọn trong form (sử dụng định dạng {value, label} cho multi-select)
+  const [selectedVehicles, setSelectedVehicles] = useState([]);
+  const [selectedDestinations, setSelectedDestinations] = useState([]);
 
   const [formData, setFormData] = useState({
     tourName: "",
     tourDescription: "",
     tourPrice: "",
-    tourStatus: "",
+    tourStatus: "Available",
     tourRemainingSlots: "",
-    tourImage: "",
+    tourImage: "", // Sẽ lưu tên file hoặc URL
     tourStartDate: "",
     tourEndDate: "",
     tourGuideId: "",
     accommodationId: "",
-    travelVehicleIds: "",
-    touristDestinationIds: "",
   });
 
   const [editId, setEditId] = useState(null);
+
+  // Tối ưu hóa việc tạo options cho các dropdown
+  const vehicleOptions = useMemo(() => 
+    travelVehicles.map(v => ({ value: v.vehicleId, label: `${v.vehicleType} - Capacity: ${v.capacity}` })),
+    [travelVehicles]
+  );
+  const destinationOptions = useMemo(() => 
+    touristDestinations.map(d => ({ value: d.destinationId, label: `${d.destinationName} - ${d.location}` })),
+    [touristDestinations]
+  );
 
   const loadTours = async () => {
     try {
@@ -100,67 +120,63 @@ const TourManagementPage = () => {
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
-
-  // Format datetime-local to ISO 8601 format for backend
-  const formatDateTimeForBackend = (dateTimeLocal) => {
-    if (!dateTimeLocal || dateTimeLocal.trim() === "") return null;
-    // datetime-local format: "2025-11-27T08:00"
-    // Backend expects: "2025-11-27T08:00:00"
-
-    // If it's just a date (YYYY-MM-DD), add default time
-    if (dateTimeLocal.length === 10) {
-      return dateTimeLocal + "T00:00:00";
+  
+  const handleImageFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Trong thực tế, bạn sẽ upload file này lên server và nhận về một URL.
+      // Ở đây, chúng ta tạm thời chỉ lưu tên file để hiển thị.
+      handleChange("tourImage", file.name);
     }
-
-    // If it's datetime-local format (YYYY-MM-DDTHH:mm), add seconds
-    if (dateTimeLocal.length === 16) {
-      return dateTimeLocal + ":00";
-    }
-
-    // If it already has seconds, return as is
-    return dateTimeLocal;
   };
 
-  const handleAdd = async () => {
+  const resetForm = () => {
+    setFormData({
+      tourName: "",
+      tourDescription: "",
+      tourPrice: "",
+      tourStatus: "Available",
+      tourRemainingSlots: "",
+      tourImage: "",
+      tourStartDate: "",
+      tourEndDate: "",
+      tourGuideId: "",
+      accommodationId: "",
+    });
+    setSelectedVehicles([]);
+    setSelectedDestinations([]);
+    if(imageFileRef.current) imageFileRef.current.value = null;
+  };
+  
+  const formatDateTimeForBackend = (dateTimeLocal) => {
+    if (!dateTimeLocal) return null;
+    return new Date(dateTimeLocal).toISOString().slice(0, 19);
+  };
+
+  const handleSubmit = async () => {
     try {
       const payload = {
         ...formData,
-        tourPrice: parseFloat(formData.tourPrice),
-        tourRemainingSlots: parseInt(formData.tourRemainingSlots),
+        tourPrice: parseFloat(formData.tourPrice) || 0,
+        tourRemainingSlots: parseInt(formData.tourRemainingSlots) || 0,
         tourStartDate: formatDateTimeForBackend(formData.tourStartDate),
         tourEndDate: formatDateTimeForBackend(formData.tourEndDate),
-        tourGuideId: formData.tourGuideId,
-        accommodationId: formData.accommodationId,
-        travelVehicleIds: selectedVehicleIds,
-        touristDestinationIds: selectedDestinationIds,
+        travelVehicleIds: selectedVehicles.map(v => v.value), // Chuyển lại thành mảng ID
+        touristDestinationIds: selectedDestinations.map(d => d.value), // Chuyển lại thành mảng ID
       };
 
-      // Debug: Log the payload to see what's being sent
-      console.log("Payload being sent:", JSON.stringify(payload, null, 2));
+      if (isEdit) {
+        await updateTour(editId, payload);
+      } else {
+        await addTour(payload);
+      }
 
-      await addTour(payload);
       onClose();
       loadTours();
-      setSelectedVehicleIds([]);
-      setSelectedDestinationIds([]);
-      setFormData({
-        tourName: "",
-        tourDescription: "",
-        tourPrice: "",
-        tourStatus: "",
-        tourRemainingSlots: "",
-        tourImage: "",
-        tourStartDate: "",
-        tourEndDate: "",
-        tourGuideId: "",
-        accommodationId: "",
-        travelVehicleIds: "",
-        touristDestinationIds: "",
-      });
+      resetForm();
     } catch (err) {
-      console.error("Lỗi thêm tour", err);
-      console.error("Error response:", err.response?.data);
-      alert(`Lỗi khi thêm tour!\n${err.response?.data?.message || err.message}`);
+      console.error("Lỗi khi lưu tour", err);
+      alert(`Lỗi khi lưu tour!\n${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -168,67 +184,40 @@ const TourManagementPage = () => {
     setIsEdit(true);
     setEditId(tour.tourId);
 
-    const vehicleIds = tour.travelVehicles?.map(v => v.vehicleId) || [];
-    const destinationIds = tour.touristDestinations?.map(d => d.destinationId) || [];
+    // Chuyển đổi mảng ID từ tour thành định dạng {value, label}
+    const currentVehicles = tour.travelVehicles?.map(v => ({
+      value: v.vehicleId,
+      label: `${v.vehicleType} - Capacity: ${v.capacity}`
+    })) || [];
+    
+    const currentDestinations = tour.touristDestinations?.map(d => ({
+        value: d.destinationId,
+        label: `${d.destinationName} - ${d.location}`
+    })) || [];
 
-    setSelectedVehicleIds(vehicleIds);
-    setSelectedDestinationIds(destinationIds);
+    setSelectedVehicles(currentVehicles);
+    setSelectedDestinations(currentDestinations);
 
     setFormData({
       tourName: tour.tourName || "",
       tourDescription: tour.tourDescription || "",
       tourPrice: tour.tourPrice || "",
-      tourStatus: tour.tourStatus || "",
+      tourStatus: tour.tourStatus || "Available",
       tourRemainingSlots: tour.tourRemainingSlots || "",
-      tourImage: tour.tourImage || "",
+      tourImage: tour.tourImage || "", // Giả sử đây là tên file hoặc URL
       tourStartDate: tour.tourStartDate ? tour.tourStartDate.substring(0, 16) : "",
       tourEndDate: tour.tourEndDate ? tour.tourEndDate.substring(0, 16) : "",
       tourGuideId: tour.tourGuide?.tourGuideId || "",
       accommodationId: tour.accommodation?.accommodationId || "",
-      travelVehicleIds: vehicleIds.join(', '),
-      touristDestinationIds: destinationIds.join(', '),
     });
 
     onOpen();
   };
-
-  const handleUpdate = async () => {
-    try {
-      const payload = {
-        ...formData,
-        tourPrice: parseFloat(formData.tourPrice),
-        tourRemainingSlots: parseInt(formData.tourRemainingSlots),
-        tourStartDate: formatDateTimeForBackend(formData.tourStartDate),
-        tourEndDate: formatDateTimeForBackend(formData.tourEndDate),
-        tourGuideId: formData.tourGuideId,
-        accommodationId: formData.accommodationId,
-        travelVehicleIds: selectedVehicleIds,
-        touristDestinationIds: selectedDestinationIds,
-      };
-      await updateTour(editId, payload);
-      onClose();
-      loadTours();
+  
+  const openAdd = () => {
       setIsEdit(false);
-      setSelectedVehicleIds([]);
-      setSelectedDestinationIds([]);
-      setFormData({
-        tourName: "",
-        tourDescription: "",
-        tourPrice: "",
-        tourStatus: "",
-        tourRemainingSlots: "",
-        tourImage: "",
-        tourStartDate: "",
-        tourEndDate: "",
-        tourGuideId: "",
-        accommodationId: "",
-        travelVehicleIds: "",
-        touristDestinationIds: "",
-      });
-    } catch (err) {
-      console.error("Lỗi update tour", err);
-      alert("Lỗi khi cập nhật tour!");
-    }
+      resetForm();
+      onOpen();
   };
 
   const handleDelete = async (id) => {
@@ -238,86 +227,49 @@ const TourManagementPage = () => {
       loadTours();
     } catch (err) {
       console.error("Lỗi xóa tour", err);
-      alert("Không thể xóa!");
+      alert("Không thể xóa tour này!");
     }
   };
 
   return (
-    <Box p={6} bg="navy.900" color="white" borderRadius="2xl">
-      <Heading size="md" mb={6} color="white">
+    <Box p={6}>
+      <Heading size="lg" mb={6}>
         Tour Management
       </Heading>
 
-      <Box bg="navy.800" p={6} borderRadius="2xl">
+      <Box bg="white" p={6} borderRadius="lg" shadow="md">
         <Box display="flex" justifyContent="space-between" mb={4}>
-          <Heading size="sm">Tour List</Heading>
-          <Button
-            colorScheme="blue"
-            onClick={() => {
-              setIsEdit(false);
-              setSelectedVehicleIds([]);
-              setSelectedDestinationIds([]);
-              setFormData({
-                tourName: "",
-                tourDescription: "",
-                tourPrice: "",
-                tourStatus: "",
-                tourRemainingSlots: "",
-                tourImage: "",
-                tourStartDate: "",
-                tourEndDate: "",
-                tourGuideId: "",
-                accommodationId: "",
-                travelVehicleIds: "",
-                touristDestinationIds: "",
-              });
-              onOpen();
-            }}
-          >
+          <Heading size="md">Tour List</Heading>
+          <Button colorScheme="blue" onClick={openAdd}>
             Add New Tour
           </Button>
         </Box>
 
-        <Table variant="simple" colorScheme="whiteAlpha">
+        <Table variant="simple">
           <Thead>
             <Tr>
-              <Th color="white">ID</Th>
-              <Th color="white">NAME</Th>
-              <Th color="white">PRICE</Th>
-              <Th color="white">STATUS</Th>
-              <Th color="white">SLOTS</Th>
-              <Th color="white">DESTINATION</Th>
-              <Th color="white">ACTIONS</Th>
+              <Th>ID</Th>
+              <Th>NAME</Th>
+              <Th>PRICE</Th>
+              <Th>STATUS</Th>
+              <Th>SLOTS</Th>
+              <Th>DESTINATIONS</Th>
+              <Th>ACTIONS</Th>
             </Tr>
           </Thead>
-
           <Tbody>
             {tours.map((tour) => (
               <Tr key={tour.tourId}>
                 <Td>{tour.tourId}</Td>
                 <Td>{tour.tourName}</Td>
-                <Td>{tour.tourPrice}</Td>
+                <Td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tour.tourPrice)}</Td>
                 <Td>{tour.tourStatus}</Td>
                 <Td>{tour.tourRemainingSlots}</Td>
                 <Td>{tour.touristDestinations?.map(d => d.destinationName).join(', ') || 'N/A'}</Td>
-
                 <Td>
                   <HStack>
-                    <Button
-                      colorScheme="yellow"
-                      size="sm"
-                      onClick={() => openEdit(tour)}
-                    >
-                      Edit
-                    </Button>
-
-                    <Button
-                      colorScheme="red"
-                      size="sm"
-                      onClick={() => handleDelete(tour.tourId)}
-                    >
-                      Delete
-                    </Button>
+                    <Button colorScheme="yellow" size="sm" onClick={() => openEdit(tour)}>Edit</Button>
+                    <Button colorScheme="red" size="sm" onClick={() => handleDelete(tour.tourId)}>Delete</Button>
                   </HStack>
                 </Td>
               </Tr>
@@ -326,142 +278,104 @@ const TourManagementPage = () => {
         </Table>
       </Box>
 
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>{isEdit ? "Edit Tour" : "Add New Tour"}</ModalHeader>
           <ModalCloseButton />
-
-          <ModalBody>
-            <Input
-              placeholder="Tour Name *"
-              mb={3}
-              value={formData.tourName}
-              onChange={(e) => handleChange("tourName", e.target.value)}
-            />
-            <Textarea
-              placeholder="Tour Description *"
-              mb={3}
-              value={formData.tourDescription}
-              onChange={(e) => handleChange("tourDescription", e.target.value)}
-              rows={3}
-            />
-            <Input
-              placeholder="Price *"
-              mb={3}
-              type="number"
-              value={formData.tourPrice}
-              onChange={(e) => handleChange("tourPrice", e.target.value)}
-            />
-            <Select
-              placeholder="Select Status *"
-              mb={3}
-              value={formData.tourStatus}
-              onChange={(e) => handleChange("tourStatus", e.target.value)}
-            >
-              <option value="Available">Available</option>
-              <option value="Fully Booked">Fully Booked</option>
-            </Select>
-            <Input
-              placeholder="Remaining Slots *"
-              mb={3}
-              type="number"
-              value={formData.tourRemainingSlots}
-              onChange={(e) => handleChange("tourRemainingSlots", e.target.value)}
-            />
-            <Input
-              placeholder="Tour Image URL *"
-              mb={3}
-              value={formData.tourImage}
-              onChange={(e) => handleChange("tourImage", e.target.value)}
-            />
-            <Input
-              placeholder="Start Date *"
-              mb={3}
-              type="datetime-local"
-              value={formData.tourStartDate}
-              onChange={(e) => handleChange("tourStartDate", e.target.value)}
-            />
-            <Input
-              placeholder="End Date *"
-              mb={3}
-              type="datetime-local"
-              value={formData.tourEndDate}
-              onChange={(e) => handleChange("tourEndDate", e.target.value)}
-            />
-            <Select
-              placeholder="Select Tour Guide *"
-              mb={3}
-              value={formData.tourGuideId}
-              onChange={(e) => handleChange("tourGuideId", e.target.value)}
-            >
-              {tourGuides.map((guide) => (
-                <option key={guide.tourGuideId} value={guide.tourGuideId}>
-                  {guide.tourGuideName} - {guide.tourGuideEmail}
-                </option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Select Accommodation *"
-              mb={3}
-              value={formData.accommodationId}
-              onChange={(e) => handleChange("accommodationId", e.target.value)}
-            >
-              {accommodations.map((accommodation) => (
-                <option key={accommodation.accommodationId} value={accommodation.accommodationId}>
-                  {accommodation.accommodationName} - {accommodation.location}
-                </option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Select Travel Vehicles * (hold Ctrl/Cmd for multiple)"
-              mb={3}
-              multiple
-              size="md"
-              height="120px"
-              value={selectedVehicleIds}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                setSelectedVehicleIds(selected);
-              }}
-            >
-              {travelVehicles.map((vehicle) => (
-                <option key={vehicle.vehicleId} value={vehicle.vehicleId}>
-                  {vehicle.vehicleType} - Capacity: {vehicle.capacity}
-                </option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Select Tourist Destinations * (hold Ctrl/Cmd for multiple)"
-              mb={3}
-              multiple
-              size="md"
-              height="120px"
-              value={selectedDestinationIds}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                setSelectedDestinationIds(selected);
-              }}
-            >
-              {touristDestinations.map((destination) => (
-                <option key={destination.destinationId} value={destination.destinationId}>
-                  {destination.destinationName} - {destination.location}
-                </option>
-              ))}
-            </Select>
+          <ModalBody pb={6}>
+            <HStack spacing={4} mb={4}>
+                <FormControl isRequired>
+                    <FormLabel>Tour Name</FormLabel>
+                    <Input placeholder="Tour Name" value={formData.tourName} onChange={(e) => handleChange("tourName", e.target.value)} />
+                </FormControl>
+                <FormControl isRequired>
+                    <FormLabel>Price</FormLabel>
+                    <Input placeholder="Price" type="number" value={formData.tourPrice} onChange={(e) => handleChange("tourPrice", e.target.value)} />
+                </FormControl>
+            </HStack>
+            <FormControl mb={4}>
+                <FormLabel>Description</FormLabel>
+                <Textarea placeholder="Tour Description" value={formData.tourDescription} onChange={(e) => handleChange("tourDescription", e.target.value)} />
+            </FormControl>
+             <HStack spacing={4} mb={4}>
+                <FormControl isRequired>
+                    <FormLabel>Status</FormLabel>
+                    <ChakraSelect value={formData.tourStatus} onChange={(e) => handleChange("tourStatus", e.target.value)}>
+                        <option value="Available">Available</option>
+                        <option value="Fully Booked">Fully Booked</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </ChakraSelect>
+                </FormControl>
+                <FormControl isRequired>
+                    <FormLabel>Remaining Slots</FormLabel>
+                    <Input placeholder="Remaining Slots" type="number" value={formData.tourRemainingSlots} onChange={(e) => handleChange("tourRemainingSlots", e.g.target.value)} />
+                </FormControl>
+            </HStack>
+            <FormControl mb={4}>
+                <FormLabel>Tour Image</FormLabel>
+                <InputGroup>
+                    <Input placeholder="Click button to select image" readOnly value={formData.tourImage} />
+                    <InputRightElement width="4.5rem">
+                        <Button h="1.75rem" size="sm" onClick={() => imageFileRef.current?.click()}>Browse</Button>
+                    </InputRightElement>
+                </InputGroup>
+                <Input type="file" ref={imageFileRef} onChange={handleImageFileChange} accept="image/*" style={{ display: "none" }}/>
+            </FormControl>
+             <HStack spacing={4} mb={4}>
+                <FormControl isRequired>
+                    <FormLabel>Start Date</FormLabel>
+                    <Input type="datetime-local" value={formData.tourStartDate} onChange={(e) => handleChange("tourStartDate", e.target.value)} />
+                </FormControl>
+                 <FormControl isRequired>
+                    <FormLabel>End Date</FormLabel>
+                    <Input type="datetime-local" value={formData.tourEndDate} onChange={(e) => handleChange("tourEndDate", e.target.value)} />
+                </FormControl>
+            </HStack>
+             <HStack spacing={4} mb={4}>
+                <FormControl>
+                    <FormLabel>Tour Guide</FormLabel>
+                    <ChakraSelect placeholder="Select Tour Guide" value={formData.tourGuideId} onChange={(e) => handleChange("tourGuideId", e.target.value)}>
+                        {tourGuides.map((guide) => <option key={guide.tourGuideId} value={guide.tourGuideId}>{guide.tourGuideName}</option>)}
+                    </ChakraSelect>
+                </FormControl>
+                <FormControl>
+                    <FormLabel>Accommodation</FormLabel>
+                    <ChakraSelect placeholder="Select Accommodation" value={formData.accommodationId} onChange={(e) => handleChange("accommodationId", e.target.value)}>
+                        {accommodations.map((acc) => <option key={acc.accommodationId} value={acc.accommodationId}>{acc.accommodationName}</option>)}
+                    </ChakraSelect>
+                </FormControl>
+            </HStack>
+            <FormControl mb={4}>
+                <FormLabel>Travel Vehicles</FormLabel>
+                <Select
+                    isMulti
+                    name="vehicles"
+                    options={vehicleOptions}
+                    placeholder="Select vehicles..."
+                    value={selectedVehicles}
+                    onChange={setSelectedVehicles}
+                    closeMenuOnSelect={false}
+                />
+            </FormControl>
+             <FormControl mb={4}>
+                <FormLabel>Tourist Destinations</FormLabel>
+                <Select
+                    isMulti
+                    name="destinations"
+                    options={destinationOptions}
+                    placeholder="Select destinations..."
+                    value={selectedDestinations}
+                    onChange={setSelectedDestinations}
+                    closeMenuOnSelect={false}
+                />
+            </FormControl>
           </ModalBody>
-
           <ModalFooter>
-            <Button
-              colorScheme="green"
-              mr={3}
-              onClick={isEdit ? handleUpdate : handleAdd}
-            >
-              {isEdit ? "Update" : "Save"}
+            <Button colorScheme="blue" mr={3} onClick={handleSubmit}>
+              {isEdit ? "Update Tour" : "Save Tour"}
             </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
