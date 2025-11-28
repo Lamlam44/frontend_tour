@@ -414,3 +414,27 @@ export const applyPromotion = async (promotionCode, tourId) => {
     throw error.response || error;
   }
 };
+
+// --- Thêm vào src/services/api.js ---
+
+// Lấy danh sách Khách sạn/Nơi ở
+export const getAccommodations = async () => {
+  try {
+    const response = await apiClient.get('/accommodations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching accommodations:', error);
+    throw error;
+  }
+};
+
+// Lấy danh sách Phương tiện
+export const getTravelVehicles = async () => {
+  try {
+    const response = await apiClient.get('/travel-vehicles'); // Kiểm tra lại Controller backend xem endpoint là /vehicles hay /travel-vehicles nhé
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    throw error;
+  }
+};

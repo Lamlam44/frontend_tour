@@ -14,6 +14,7 @@ import NewAdminDashboard from './Admin/views/NewAdminDashboard';
 import AdminLayout from './Admin/layouts/AdminLayout';
 import theme from './Admin/theme';
 import ProtectedRoute from './Components/ProtectedRoute';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Import new pages for booking flows
 import PaymentMethodPage from './Pages/User/PaymentMethodPage'; 

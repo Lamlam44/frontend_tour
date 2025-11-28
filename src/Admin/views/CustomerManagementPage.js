@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Badge } from 'reactstrap';
 import {
   Box,
   Button,
