@@ -37,8 +37,9 @@ const TravelVehicleManagementPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [formData, setFormData] = useState({
-    name: "",
-    type: "",
+    vehicleType: "",
+    capacity: "",
+    rentalPricePerDay: "",
   });
 
   const [editId, setEditId] = useState(null);
@@ -64,26 +65,34 @@ const TravelVehicleManagementPage = () => {
 
   const handleAdd = async () => {
     try {
-      await addTravelVehicle(formData);
+      const payload = {
+        ...formData,
+        capacity: parseInt(formData.capacity) || 0,
+        rentalPricePerDay: parseFloat(formData.rentalPricePerDay) || 0,
+      };
+      await addTravelVehicle(payload);
       onClose();
       loadTravelVehicles();
       setFormData({
-        name: "",
-        type: "",
+        vehicleType: "",
+        capacity: "",
+        rentalPricePerDay: "",
       });
     } catch (err) {
       console.error("Lỗi thêm travel vehicle", err);
-      alert("Lỗi khi thêm travel vehicle!");
+      console.error("Error response:", err.response?.data);
+      alert(`Lỗi khi thêm travel vehicle!\n${err.response?.data?.message || err.message}`);
     }
   };
 
   const openEdit = (travelVehicle) => {
     setIsEdit(true);
-    setEditId(travelVehicle.id);
+    setEditId(travelVehicle.vehicleId);
 
     setFormData({
-        name: travelVehicle.name,
-        type: travelVehicle.type,
+      vehicleType: travelVehicle.vehicleType || "",
+      capacity: travelVehicle.capacity || "",
+      rentalPricePerDay: travelVehicle.rentalPricePerDay || "",
     });
 
     onOpen();
@@ -91,17 +100,24 @@ const TravelVehicleManagementPage = () => {
 
   const handleUpdate = async () => {
     try {
-      await updateTravelVehicle(editId, formData);
+      const payload = {
+        ...formData,
+        capacity: parseInt(formData.capacity) || 0,
+        rentalPricePerDay: parseFloat(formData.rentalPricePerDay) || 0,
+      };
+      await updateTravelVehicle(editId, payload);
       onClose();
       loadTravelVehicles();
       setIsEdit(false);
       setFormData({
-        name: "",
-        type: "",
+        vehicleType: "",
+        capacity: "",
+        rentalPricePerDay: "",
       });
     } catch (err) {
       console.error("Lỗi update travel vehicle", err);
-      alert("Lỗi khi cập nhật travel vehicle!");
+      console.error("Error response:", err.response?.data);
+      alert(`Lỗi khi cập nhật travel vehicle!\n${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -124,30 +140,33 @@ const TravelVehicleManagementPage = () => {
             Travel Vehicle Management
           </Text>
           <Button colorScheme='blue' onClick={() => {
-              setIsEdit(false);
-              setFormData({
-                name: "",
-                type: "",
-              });
-              onOpen();
-            }}>Add New Travel Vehicle</Button>
+            setIsEdit(false);
+            setFormData({
+              vehicleType: "",
+              capacity: "",
+              rentalPricePerDay: "",
+            });
+            onOpen();
+          }}>Add New Travel Vehicle</Button>
         </Flex>
         <Box mt='20px'>
           <Table variant='simple'>
             <Thead>
               <Tr>
                 <Th color={textColor}>ID</Th>
-                <Th color={textColor}>Name</Th>
-                <Th color={textColor}>Type</Th>
+                <Th color={textColor}>Vehicle Type</Th>
+                <Th color={textColor}>Capacity</Th>
+                <Th color={textColor}>Rental Price/Day</Th>
                 <Th color={textColor}>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {travelVehicles.map((travelVehicle) => (
-                <Tr key={travelVehicle.id}>
-                  <Td color={textColor}>{travelVehicle.id}</Td>
-                  <Td color={textColor}>{travelVehicle.name}</Td>
-                  <Td color={textColor}>{travelVehicle.type}</Td>
+                <Tr key={travelVehicle.vehicleId}>
+                  <Td color={textColor}>{travelVehicle.vehicleId}</Td>
+                  <Td color={textColor}>{travelVehicle.vehicleType}</Td>
+                  <Td color={textColor}>{travelVehicle.capacity}</Td>
+                  <Td color={textColor}>${travelVehicle.rentalPricePerDay}</Td>
                   <Td>
                     <HStack>
                       <Button
@@ -161,7 +180,7 @@ const TravelVehicleManagementPage = () => {
                       <Button
                         colorScheme="red"
                         size="sm"
-                        onClick={() => handleDelete(travelVehicle.id)}
+                        onClick={() => handleDelete(travelVehicle.vehicleId)}
                       >
                         Delete
                       </Button>
@@ -182,16 +201,27 @@ const TravelVehicleManagementPage = () => {
 
           <ModalBody>
             <Input
-              placeholder="Travel Vehicle Name"
+              placeholder="Vehicle Type *"
               mb={3}
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              value={formData.vehicleType}
+              onChange={(e) => handleChange("vehicleType", e.target.value)}
             />
             <Input
-              placeholder="Type"
+              placeholder="Capacity *"
               mb={3}
-              value={formData.type}
-              onChange={(e) => handleChange("type", e.target.value)}
+              type="number"
+              min="1"
+              value={formData.capacity}
+              onChange={(e) => handleChange("capacity", e.target.value)}
+            />
+            <Input
+              placeholder="Rental Price Per Day *"
+              mb={3}
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.rentalPricePerDay}
+              onChange={(e) => handleChange("rentalPricePerDay", e.target.value)}
             />
           </ModalBody>
 

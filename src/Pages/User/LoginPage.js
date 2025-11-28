@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { googleLogin } from '../../api/authApi';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/LoginPage.module.css';
@@ -11,7 +13,7 @@ function LoginPage() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-
+  const { login } = useAuth();
   const googleButtonRef = useRef(null);
 
   // Load Google Sign-In API
@@ -69,11 +71,24 @@ function LoginPage() {
     setErrors({});
 
     try {
-      // Since AuthContext and its login function are removed,
-      // we'll simulate a failed login attempt.
-      setErrors({ submit: 'Chức năng đăng nhập hiện không khả dụng do AuthContext bị thiếu.' });
+      const result = await login(username, password);
+      
+      if (result.success) {
+        const userRole = result.data.user.role;
+        
+        if (userRole === 'admin' || userRole === 'ROLE_ADMIN') {
+          navigate('/dashboard');
+        } else {
+          navigate('/');
+        }
+      } else {
+        // Hiển thị message từ backend
+        setErrors({ submit: result.message || result.error || 'Đăng nhập thất bại' });
+      }
     } catch (error) {
-      setErrors({ submit: 'Đã xảy ra lỗi. Vui lòng thử lại!' });
+      // Xử lý lỗi từ backend (responseDTO)
+      const errorMessage = error.message || error.error || 'Đã xảy ra lỗi. Vui lòng thử lại!';
+      setErrors({ submit: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -93,16 +108,11 @@ function LoginPage() {
       const googleUser = JSON.parse(jsonPayload);
       const email = googleUser.email;
 
-      // Gọi API backend với email từ Google
-      const loginResult = await fetch('http://localhost:8080/api/auth/google-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
-      });
+      // Gọi API backend với axios
+      const loginData = await googleLogin(email);
 
-      const loginData = await loginResult.json();
-
-      if (loginResult.ok && loginData.token) {
+      // Backend trả về LoginResponseDTO trực tiếp: {token, user: {accountId, username, role}}
+      if (loginData && loginData.token) {
         // Đăng nhập thành công
         localStorage.setItem('token', loginData.token);
         localStorage.setItem('user', JSON.stringify(loginData.user));
@@ -113,15 +123,26 @@ function LoginPage() {
         } else {
           navigate('/');
         }
-      } else if (loginResult.status === 202) {
-        // Cần xác thực email
-        setErrors({ submit: loginData.message || 'Vui lòng kiểm tra email để xác thực tài khoản' });
       } else {
-        setErrors({ submit: 'Đăng nhập Google thất bại' });
+        // Trường hợp chưa có account, backend trả về message
+        setErrors({ submit: loginData?.message || 'Đăng nhập Google thất bại' });
       }
     } catch (error) {
       console.error('Google login error:', error);
-      setErrors({ submit: 'Lỗi kết nối với Google' });
+      
+      // Lấy message từ backend
+      let errorMessage = 'Lỗi kết nối với Google';
+      
+      if (error.response?.status === 202) {
+        // HTTP 202 ACCEPTED - Cần verify email
+        errorMessage = error.response.data?.message || 'Vui lòng kiểm tra email để xác thực tài khoản';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setErrors({ submit: errorMessage });
     }
   };
 
@@ -156,7 +177,7 @@ function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Nhập tên đăng nhập"
+                placeholder=""
                 className={errors.username ? styles.inputError : ''}
                 autoComplete="username"
               />

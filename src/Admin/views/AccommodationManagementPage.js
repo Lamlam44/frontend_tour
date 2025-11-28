@@ -37,9 +37,11 @@ const AccommodationManagementPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [formData, setFormData] = useState({
-    name: "",
-    price: "",
+    accommodationName: "",
+    location: "",
     rating: "",
+    pricePerNight: "",
+    accommodationType: "",
   });
 
   const [editId, setEditId] = useState(null);
@@ -65,28 +67,38 @@ const AccommodationManagementPage = () => {
 
   const handleAdd = async () => {
     try {
-      await addAccommodation(formData);
+      const payload = {
+        ...formData,
+        rating: formData.rating ? parseFloat(formData.rating) : 0,
+        pricePerNight: parseFloat(formData.pricePerNight),
+      };
+      await addAccommodation(payload);
       onClose();
       loadAccommodations();
       setFormData({
-        name: "",
-        price: "",
+        accommodationName: "",
+        location: "",
         rating: "",
+        pricePerNight: "",
+        accommodationType: "",
       });
     } catch (err) {
       console.error("Lỗi thêm accommodation", err);
-      alert("Lỗi khi thêm accommodation!");
+      console.error("Error response:", err.response?.data);
+      alert(`Lỗi khi thêm accommodation!\n${err.response?.data?.message || err.message}`);
     }
   };
 
   const openEdit = (accommodation) => {
     setIsEdit(true);
-    setEditId(accommodation.id);
+    setEditId(accommodation.accommodationId);
 
     setFormData({
-        name: accommodation.name,
-        price: accommodation.price,
-        rating: accommodation.rating,
+      accommodationName: accommodation.accommodationName || "",
+      location: accommodation.location || "",
+      rating: accommodation.rating || "",
+      pricePerNight: accommodation.pricePerNight || "",
+      accommodationType: accommodation.accommodationType || "",
     });
 
     onOpen();
@@ -94,14 +106,21 @@ const AccommodationManagementPage = () => {
 
   const handleUpdate = async () => {
     try {
-      await updateAccommodation(editId, formData);
+      const payload = {
+        ...formData,
+        rating: formData.rating ? parseFloat(formData.rating) : 0,
+        pricePerNight: parseFloat(formData.pricePerNight),
+      };
+      await updateAccommodation(editId, payload);
       onClose();
       loadAccommodations();
       setIsEdit(false);
       setFormData({
-        name: "",
-        price: "",
+        accommodationName: "",
+        location: "",
         rating: "",
+        pricePerNight: "",
+        accommodationType: "",
       });
     } catch (err) {
       console.error("Lỗi update accommodation", err);
@@ -128,14 +147,16 @@ const AccommodationManagementPage = () => {
             Accommodation Management
           </Text>
           <Button colorScheme='blue' onClick={() => {
-              setIsEdit(false);
-              setFormData({
-                name: "",
-                price: "",
-                rating: "",
-              });
-              onOpen();
-            }}>Add New Accommodation</Button>
+            setIsEdit(false);
+            setFormData({
+              accommodationName: "",
+              location: "",
+              rating: "",
+              pricePerNight: "",
+              accommodationType: "",
+            });
+            onOpen();
+          }}>Add New Accommodation</Button>
         </Flex>
         <Box mt='20px'>
           <Table variant='simple'>
@@ -143,17 +164,21 @@ const AccommodationManagementPage = () => {
               <Tr>
                 <Th color={textColor}>ID</Th>
                 <Th color={textColor}>Name</Th>
-                <Th color={textColor}>Price</Th>
+                <Th color={textColor}>Location</Th>
+                <Th color={textColor}>Type</Th>
+                <Th color={textColor}>Price/Night</Th>
                 <Th color={textColor}>Rating</Th>
                 <Th color={textColor}>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {accommodations.map((accommodation) => (
-                <Tr key={accommodation.id}>
-                  <Td color={textColor}>{accommodation.id}</Td>
-                  <Td color={textColor}>{accommodation.name}</Td>
-                  <Td color={textColor}>{accommodation.price}</Td>
+                <Tr key={accommodation.accommodationId}>
+                  <Td color={textColor}>{accommodation.accommodationId}</Td>
+                  <Td color={textColor}>{accommodation.accommodationName}</Td>
+                  <Td color={textColor}>{accommodation.location}</Td>
+                  <Td color={textColor}>{accommodation.accommodationType}</Td>
+                  <Td color={textColor}>{accommodation.pricePerNight}</Td>
                   <Td color={textColor}>{accommodation.rating}</Td>
                   <Td>
                     <HStack>
@@ -168,7 +193,7 @@ const AccommodationManagementPage = () => {
                       <Button
                         colorScheme="red"
                         size="sm"
-                        onClick={() => handleDelete(accommodation.id)}
+                        onClick={() => handleDelete(accommodation.accommodationId)}
                       >
                         Delete
                       </Button>
@@ -189,20 +214,37 @@ const AccommodationManagementPage = () => {
 
           <ModalBody>
             <Input
-              placeholder="Accommodation Name"
+              placeholder="Accommodation Name *"
               mb={3}
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              value={formData.accommodationName}
+              onChange={(e) => handleChange("accommodationName", e.target.value)}
             />
             <Input
-              placeholder="Price"
+              placeholder="Location *"
               mb={3}
-              value={formData.price}
-              onChange={(e) => handleChange("price", e.target.value)}
+              value={formData.location}
+              onChange={(e) => handleChange("location", e.target.value)}
             />
             <Input
-              placeholder="Rating"
+              placeholder="Accommodation Type (e.g., Hotel, Resort, Villa) *"
               mb={3}
+              value={formData.accommodationType}
+              onChange={(e) => handleChange("accommodationType", e.target.value)}
+            />
+            <Input
+              placeholder="Price Per Night *"
+              mb={3}
+              type="number"
+              value={formData.pricePerNight}
+              onChange={(e) => handleChange("pricePerNight", e.target.value)}
+            />
+            <Input
+              placeholder="Rating (0-5)"
+              mb={3}
+              type="number"
+              step="0.1"
+              min="0"
+              max="5"
               value={formData.rating}
               onChange={(e) => handleChange("rating", e.target.value)}
             />

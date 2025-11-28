@@ -37,10 +37,10 @@ const TourGuideManagementPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
+    tourGuideName: "",
+    tourGuideEmail: "",
+    tourGuidePhone: "",
+    tourGuideExperienceYears: "",
   });
 
   const [editId, setEditId] = useState(null);
@@ -66,30 +66,35 @@ const TourGuideManagementPage = () => {
 
   const handleAdd = async () => {
     try {
-      await addTourGuide(formData);
+      const payload = {
+        ...formData,
+        tourGuideExperienceYears: parseInt(formData.tourGuideExperienceYears) || 0,
+      };
+      await addTourGuide(payload);
       onClose();
       loadTourGuides();
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
+        tourGuideName: "",
+        tourGuideEmail: "",
+        tourGuidePhone: "",
+        tourGuideExperienceYears: "",
       });
     } catch (err) {
       console.error("Lỗi thêm tour guide", err);
-      alert("Lỗi khi thêm tour guide!");
+      console.error("Error response:", err.response?.data);
+      alert(`Lỗi khi thêm tour guide!\n${err.response?.data?.message || err.message}`);
     }
   };
 
   const openEdit = (tourGuide) => {
     setIsEdit(true);
-    setEditId(tourGuide.id);
+    setEditId(tourGuide.tourGuideId);
 
     setFormData({
-        name: tourGuide.name,
-        email: tourGuide.email,
-        phone: tourGuide.phone,
-        address: tourGuide.address,
+      tourGuideName: tourGuide.tourGuideName || "",
+      tourGuideEmail: tourGuide.tourGuideEmail || "",
+      tourGuidePhone: tourGuide.tourGuidePhone || "",
+      tourGuideExperienceYears: tourGuide.tourGuideExperienceYears || "",
     });
 
     onOpen();
@@ -97,19 +102,24 @@ const TourGuideManagementPage = () => {
 
   const handleUpdate = async () => {
     try {
-      await updateTourGuide(editId, formData);
+      const payload = {
+        ...formData,
+        tourGuideExperienceYears: parseInt(formData.tourGuideExperienceYears) || 0,
+      };
+      await updateTourGuide(editId, payload);
       onClose();
       loadTourGuides();
       setIsEdit(false);
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
+        tourGuideName: "",
+        tourGuideEmail: "",
+        tourGuidePhone: "",
+        tourGuideExperienceYears: "",
       });
     } catch (err) {
       console.error("Lỗi update tour guide", err);
-      alert("Lỗi khi cập nhật tour guide!");
+      console.error("Error response:", err.response?.data);
+      alert(`Lỗi khi cập nhật tour guide!\n${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -132,15 +142,15 @@ const TourGuideManagementPage = () => {
             Tour Guide Management
           </Text>
           <Button colorScheme='blue' onClick={() => {
-              setIsEdit(false);
-              setFormData({
-                name: "",
-                email: "",
-                phone: "",
-                address: "",
-              });
-              onOpen();
-            }}>Add New Tour Guide</Button>
+            setIsEdit(false);
+            setFormData({
+              tourGuideName: "",
+              tourGuideEmail: "",
+              tourGuidePhone: "",
+              tourGuideExperienceYears: "",
+            });
+            onOpen();
+          }}>Add New Tour Guide</Button>
         </Flex>
         <Box mt='20px'>
           <Table variant='simple'>
@@ -150,18 +160,18 @@ const TourGuideManagementPage = () => {
                 <Th color={textColor}>Name</Th>
                 <Th color={textColor}>Email</Th>
                 <Th color={textColor}>Phone</Th>
-                <Th color={textColor}>Address</Th>
+                <Th color={textColor}>Experience (Years)</Th>
                 <Th color={textColor}>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {tourGuides.map((tourGuide) => (
-                <Tr key={tourGuide.id}>
-                  <Td color={textColor}>{tourGuide.id}</Td>
-                  <Td color={textColor}>{tourGuide.name}</Td>
-                  <Td color={textColor}>{tourGuide.email}</Td>
-                  <Td color={textColor}>{tourGuide.phone}</Td>
-                  <Td color={textColor}>{tourGuide.address}</Td>
+                <Tr key={tourGuide.tourGuideId}>
+                  <Td color={textColor}>{tourGuide.tourGuideId}</Td>
+                  <Td color={textColor}>{tourGuide.tourGuideName}</Td>
+                  <Td color={textColor}>{tourGuide.tourGuideEmail}</Td>
+                  <Td color={textColor}>{tourGuide.tourGuidePhone}</Td>
+                  <Td color={textColor}>{tourGuide.tourGuideExperienceYears}</Td>
                   <Td>
                     <HStack>
                       <Button
@@ -175,7 +185,7 @@ const TourGuideManagementPage = () => {
                       <Button
                         colorScheme="red"
                         size="sm"
-                        onClick={() => handleDelete(tourGuide.id)}
+                        onClick={() => handleDelete(tourGuide.tourGuideId)}
                       >
                         Delete
                       </Button>
@@ -196,28 +206,31 @@ const TourGuideManagementPage = () => {
 
           <ModalBody>
             <Input
-              placeholder="Tour Guide Name"
+              placeholder="Tour Guide Name *"
               mb={3}
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              value={formData.tourGuideName}
+              onChange={(e) => handleChange("tourGuideName", e.target.value)}
             />
             <Input
-              placeholder="Email"
+              placeholder="Email *"
               mb={3}
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
+              type="email"
+              value={formData.tourGuideEmail}
+              onChange={(e) => handleChange("tourGuideEmail", e.target.value)}
             />
             <Input
-              placeholder="Phone"
+              placeholder="Phone *"
               mb={3}
-              value={formData.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              value={formData.tourGuidePhone}
+              onChange={(e) => handleChange("tourGuidePhone", e.target.value)}
             />
             <Input
-              placeholder="Address"
+              placeholder="Experience Years *"
               mb={3}
-              value={formData.address}
-              onChange={(e) => handleChange("address", e.target.value)}
+              type="number"
+              min="0"
+              value={formData.tourGuideExperienceYears}
+              onChange={(e) => handleChange("tourGuideExperienceYears", e.target.value)}
             />
           </ModalBody>
 
