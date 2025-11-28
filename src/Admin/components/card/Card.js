@@ -12,7 +12,7 @@ function Card(props) {
             position="relative"
             borderRadius="20px"
             minWidth="0px"
-            wordWrap="break-word"
+            style={{ wordWrap: "break-word" }}
             bg="navy.800"
             _dark={{ bg: "navy.800" }}
             backgroundClip="border-box"

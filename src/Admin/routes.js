@@ -9,7 +9,7 @@ import {
   MdPerson,
   MdPersonPin,
   MdPlace,
-  MdDirectionsCar,
+  MdDirectionsCar,MdAccountCircle,MdPeopleAlt
 } from "react-icons/md";
 
 // Admin Imports
@@ -23,6 +23,7 @@ import TourGuideManagementPage from "./views/TourGuideManagementPage";
 import TouristDestinationManagementPage from "./views/TouristDestinationManagementPage";
 import TravelVehicleManagementPage from "./views/TravelVehicleManagementPage";
 import InvoiceSettingPage from "./views/InvoiceSettingPage";
+import AccountManagementPage from "./views/AccountManagementPage";
 
 const routes = [
   {
@@ -95,6 +96,13 @@ const routes = [
     icon: <Icon as={MdEventNote} width="20px" height="20px" color="inherit" />,
     component: <InvoiceSettingPage />,
   },
+  {
+    name:"Account Management",
+    layout:"/admin",
+    path:"/account-management",
+    icon: <Icon as={MdAccountCircle} width="20px" height="20px" color="inherit" />,
+    component: <AccountManagementPage />,
+  }
 ];
 
 export default routes;

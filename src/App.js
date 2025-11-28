@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ChakraProvider } from '@chakra-ui/react';
+import { AuthProvider } from './context/AuthContext';
 import HomePage from './Pages/User/HomePage';
 import TourDetailPage from './Pages/User/TourDetailPage';
 import HotelDetailPage from './Pages/User/HotelDetailPage';
@@ -18,6 +19,13 @@ import RegisterPage from './Pages/User/RegisterPage';
 import NewAdminDashboard from './Admin/views/NewAdminDashboard';
 import AdminLayout from './Admin/layouts/AdminLayout';
 import theme from './Admin/theme';
+import ProtectedRoute from './Components/ProtectedRoute';
+
+// Import new pages for booking flows
+import PaymentMethodPage from './Pages/User/PaymentMethodPage'; 
+import HotelPaymentPage from './Pages/User/HotelPaymentPage';
+import FlightAddonsPage from './Pages/User/FlightAddonsPage';
+import FlightPaymentPage from './Pages/User/FlightPaymentPage';
 
 // Import new pages for booking flows
 import PaymentMethodPage from './Pages/User/PaymentMethodPage'; 
@@ -67,9 +75,39 @@ function App() {
           <Route path="/dashboard" element={<NewAdminDashboard />} />
           <Route path="/admin/*" element={<AdminLayout />} />
 
-        </Routes>
-      </Router>
-    </ChakraProvider>
+            {/* Hotel Flow */}
+            <Route path="/booking/hotel/:hotelId" element={<HotelBookingPage />} />
+            <Route path="/payment/hotel" element={<HotelPaymentPage />} />
+
+            {/* Flight Flow */}
+            <Route path="/booking/flight/:flightId" element={<FlightBookingPage />} />
+            <Route path="/booking/flight/addons" element={<FlightAddonsPage />} />
+            <Route path="/payment/flight" element={<FlightPaymentPage />} />
+            
+            {/* Universal Confirmation Page */}
+            <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
+            
+            {/* User Account */}
+            <Route path="/profile" element={<UserProfilePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+
+            {/* Admin Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute requiredRole="admin">
+                <NewAdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/*" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            } />
+
+          </Routes>
+        </Router>
+      </ChakraProvider>
+    </AuthProvider>
   );
 }
 
