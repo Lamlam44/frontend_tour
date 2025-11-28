@@ -33,6 +33,20 @@ const renderVehicles = (vehicles) => {
     return vehicles.map(v => v.vehicleType).join(', ');
 };
 
+// Hàm helper để xác định nguồn ảnh
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/300'; // Ảnh mặc định nếu null
+    
+    // Nếu là ảnh online (bắt đầu bằng http hoặc https) -> Giữ nguyên
+    if (imagePath.startsWith('http')) {
+        return imagePath;
+    }
+    
+    // Nếu là ảnh local (bắt đầu bằng /Images) -> Thêm domain Backend vào trước
+    // Giả sử backend chạy port 8080
+    return `http://localhost:8080${imagePath}`;
+};
+
 
 function TourListPage() {
     const [allTours, setAllTours] = useState([]);
@@ -243,7 +257,7 @@ function TourListPage() {
                             {filteredTours.length > 0 ? (
                                 filteredTours.map(tour => (
                                     <Link to={`/tours/${tour.tourId}`} key={tour.tourId} className={styles.card}>
-                                        <img src={tour.tourImage} alt={tour.tourName} />
+                                        <img src={getImageUrl(tour.tourImage)} alt={tour.tourName} />
                                         <div className={styles.cardContent}>
                                             <h3>{tour.tourName}</h3>
                                             <p className={styles.description}>

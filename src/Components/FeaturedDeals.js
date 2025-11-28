@@ -11,11 +11,25 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
+// Hàm helper để xác định nguồn ảnh
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/300'; // Ảnh mặc định nếu null
+    
+    // Nếu là ảnh online (bắt đầu bằng http hoặc https) -> Giữ nguyên
+    if (imagePath.startsWith('http')) {
+        return imagePath;
+    }
+    
+    // Nếu là ảnh local (bắt đầu bằng /Images) -> Thêm domain Backend vào trước
+    // Giả sử backend chạy port 8080
+    return `http://localhost:8080${imagePath}`;
+};
+
 function DealCard({ tour }) {
   // Component này giờ nhận prop là 'tour' với cấu trúc từ API
   return (
     <Link to={`/tours/${tour.tourId}`} className={styles.card}>
-      <img src={tour.tourImage} alt={tour.tourName} />
+      <img src={getImageUrl(tour.tourImage)} alt={tour.tourName} />
       <h3>{tour.tourName}</h3>
       <p>Chỉ từ: <strong>{formatPrice(tour.tourPrice)}</strong></p>
     </Link>
