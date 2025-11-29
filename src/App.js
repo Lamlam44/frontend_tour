@@ -15,6 +15,7 @@ import AdminLayout from './Admin/layouts/AdminLayout';
 import theme from './Admin/theme';
 import ProtectedRoute from './Components/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import OAuth2RedirectHandler from './Pages/User/OAuth2RedirectHandler'; // Import file mới tạo
 
 // Import new pages for booking flows
 import PaymentMethodPage from './Pages/User/PaymentMethodPage'; 
@@ -44,9 +45,15 @@ function App() {
             <Route path="/booking-confirmation" element={<BookingConfirmationPage />} />
             
             {/* User Account */}
-            <Route path="/profile" element={<UserProfilePage />} />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <UserProfilePage />
+              </ProtectedRoute>
+            } />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            {/* THÊM ROUTE NÀY: Route để nhận Redirect từ Backend */}
+            <Route path="/callback" element={<OAuth2RedirectHandler />} />
 
             {/* Admin Routes */}
             <Route path="/dashboard" element={

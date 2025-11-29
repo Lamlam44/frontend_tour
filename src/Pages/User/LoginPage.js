@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { googleLogin } from '../../api/authApi';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/LoginPage.module.css';
@@ -14,51 +13,18 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  const googleButtonRef = useRef(null);
 
-  // Load Google Sign-In API
-  useEffect(() => {
-    const loadGoogleScript = () => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        if (window.google && googleButtonRef.current) {
-          window.google.accounts.id.initialize({
-            client_id: '782213992795-q76p3jo5em0dktaevab51ab8drnq62df.apps.googleusercontent.com',
-            callback: handleGoogleResponse,
-          });
-          // Render button vào div
-          window.google.accounts.id.renderButton(
-            googleButtonRef.current,
-            { 
-              theme: 'outline', 
-              size: 'large',
-              width: googleButtonRef.current.offsetWidth,
-              text: 'signin_with',
-              locale: 'vi'
-            }
-          );
-        }
-      };
-      document.body.appendChild(script);
-    };
-    loadGoogleScript();
-  }, []);
+  // Hàm xử lý khi bấm nút Google - CHUYỂN HƯỚNG SANG BACKEND
+  const handleGoogleLogin = () => {
+    // URL của Spring Security OAuth2 Endpoint
+    // Backend chạy port 8080 (mặc định), nếu khác thì sửa lại
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
 
   const validate = () => {
     const newErrors = {};
-    if (!username) {
-      newErrors.username = 'Vui lòng nhập tên đăng nhập';
-    } else if (username.length < 3) {
-      newErrors.username = 'Tên đăng nhập phải có ít nhất 3 ký tự';
-    }
-    if (!password) {
-      newErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (password.length < 6) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
+    if (!username) newErrors.username = 'Vui lòng nhập tên đăng nhập';
+    if (!password) newErrors.password = 'Vui lòng nhập mật khẩu';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -74,86 +40,21 @@ function LoginPage() {
       const result = await login(username, password);
       
       if (result.success) {
-        const userRole = result.data.user.role;
-        
-        if (userRole === 'admin' || userRole === 'ROLE_ADMIN') {
-          navigate('/dashboard');
-        } else {
-          navigate('/');
-        }
+        // After a successful login, the AuthContext state will update.
+        // We simply navigate to the home page.
+        // Role-based redirects should be handled by a dedicated router component or ProtectedRoutes.
+        navigate('/');
       } else {
-        // Hiển thị message từ backend
-        setErrors({ submit: result.message || result.error || 'Đăng nhập thất bại' });
+        // Show error message from backend
+        setErrors({ submit: result.error || 'Đăng nhập thất bại' });
       }
     } catch (error) {
-      // Xử lý lỗi từ backend (responseDTO)
-      const errorMessage = error.message || error.error || 'Đã xảy ra lỗi. Vui lòng thử lại!';
+      const errorMessage = error.message || 'Đã xảy ra lỗi. Vui lòng thử lại!';
       setErrors({ submit: errorMessage });
     } finally {
       setSubmitting(false);
     }
   };
-
-  const handleGoogleResponse = async (response) => {
-    if (!response.credential) return;
-
-    try {
-      // Decode JWT token từ Google
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      
-      const googleUser = JSON.parse(jsonPayload);
-      const email = googleUser.email;
-
-      // Gọi API backend với axios
-      const loginData = await googleLogin(email);
-
-      // Backend trả về LoginResponseDTO trực tiếp: {token, user: {accountId, username, role}}
-      if (loginData && loginData.token) {
-        // Đăng nhập thành công
-        localStorage.setItem('token', loginData.token);
-        localStorage.setItem('user', JSON.stringify(loginData.user));
-        
-        const userRole = loginData.user.role;
-        if (userRole === 'admin' || userRole === 'ROLE_ADMIN') {
-          navigate('/dashboard');
-        } else {
-          navigate('/');
-        }
-      } else {
-        // Trường hợp chưa có account, backend trả về message
-        setErrors({ submit: loginData?.message || 'Đăng nhập Google thất bại' });
-      }
-    // src/Pages/User/LoginPage.js
-
-    } catch (error) {
-        console.error('Google login error:', error);
-        
-        let errorMessage = 'Lỗi kết nối với Google';
-        
-        // Vì auth.js đã throw error.response.data, nên biến 'error' ở đây chính là data từ backend
-        if (error?.message) {
-            // Trường hợp backend trả về { message: "..." }
-            errorMessage = error.message;
-        } else if (typeof error === 'string') {
-            // Trường hợp auth.js throw error.message (chuỗi text)
-            errorMessage = error;
-        } else if (error?.error) {
-            // Trường hợp backend trả về { error: "..." }
-            errorMessage = error.error;
-        }
-        
-        // Xử lý riêng trường hợp verify email (Backend trả về message hướng dẫn)
-        // Lúc này 'error' chính là object { message: "Vui lòng kiểm tra email..." }
-        
-        setErrors({ submit: errorMessage });
-    }
-  };
-
-
 
   return (
     <div>
@@ -164,14 +65,7 @@ function LoginPage() {
           <p className={styles.subtitle}>Chào mừng bạn quay lại 👋</p>
 
           {errors.submit && (
-            <div className={styles.errorBox} style={{
-              backgroundColor: '#fee', 
-              color: '#c33', 
-              padding: '10px', 
-              borderRadius: '4px', 
-              marginBottom: '15px',
-              border: '1px solid #fcc'
-            }}>
+            <div className={styles.errorBox} style={{backgroundColor: '#fee', color: '#c33', padding: '10px', borderRadius: '4px', marginBottom: '15px'}}>
               {errors.submit}
             </div>
           )}
@@ -179,43 +73,17 @@ function LoginPage() {
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <div className={styles.formGroup}>
               <label htmlFor="username">Tên đăng nhập</label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder=""
-                className={errors.username ? styles.inputError : ''}
-                autoComplete="username"
-              />
+              <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} className={errors.username ? styles.inputError : ''} />
               {errors.username && <div className={styles.error}>{errors.username}</div>}
             </div>
 
             <div className={styles.formGroup}>
               <div className={styles.labelRow}>
                 <label htmlFor="password">Mật khẩu</label>
-                <button
-                  type="button"
-                  className={styles.smallLink}
-                  onClick={() => setShowPassword((s) => !s)}
-                >
-                  {showPassword ? 'Ẩn' : 'Hiện'}
-                </button>
+                <button type="button" className={styles.smallLink} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Ẩn' : 'Hiện'}</button>
               </div>
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className={errors.password ? styles.inputError : ''}
-                autoComplete="current-password"
-              />
+              <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className={errors.password ? styles.inputError : ''} />
               {errors.password && <div className={styles.error}>{errors.password}</div>}
-            </div>
-
-            <div className={styles.optionsRow}>
-              <Link className={styles.smallLink} to="#">Quên mật khẩu?</Link>
             </div>
 
             <button className={styles.submitBtn} type="submit" disabled={submitting}>
@@ -223,15 +91,23 @@ function LoginPage() {
             </button>
           </form>
 
-          <p className={styles.bottomText}>
-            Chưa có tài khoản?{' '}
-            <Link to="/register" className={styles.linkAccent}>Đăng ký ngay</Link>
-          </p>
-
+          <p className={styles.bottomText}>Chưa có tài khoản? <Link to="/register" className={styles.linkAccent}>Đăng ký ngay</Link></p>
           <div className={styles.divider}><span>hoặc</span></div>
 
           <div className={styles.socials}>
-            <div ref={googleButtonRef} style={{ width: '100%' }}></div>
+            {/* Nút Google mới - Đơn giản và hiệu quả */}
+            <button 
+                type="button"
+                onClick={handleGoogleLogin}
+                style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    padding: '10px', backgroundColor: '#fff', border: '1px solid #dadce0', borderRadius: '4px',
+                    cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#3c4043', height: '40px'
+                }}
+            >
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style={{ width: '18px' }} />
+                Đăng nhập với Google
+            </button>
           </div>
         </div>
       </main>

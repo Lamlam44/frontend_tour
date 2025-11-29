@@ -111,7 +111,7 @@ function RegisterPage() {
       const accountData = {
         username: formData.username,
         password: formData.password,
-        roleId: "ROL-94C8E4AC", // mặc định là ROLE_USER
+        roleId: "ROLE000002", // mặc định là ROLE_USER
         status: true // Active by default
       };
 

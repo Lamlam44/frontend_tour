@@ -1,8 +1,19 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from '../Assets/CSS/ComponentsCSS/Header.module.css';
+import { useAuth } from '../context/AuthContext';
 
 function Header() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/'); // Redirect to home page after logout
+    setDropdownOpen(false);
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.logo}>
@@ -16,12 +27,35 @@ function Header() {
         </ul>
       </nav>
       <div className={styles.actions}>
-        <Link to="/login">
-          <button className={styles.loginBtn}>Đăng nhập</button>
-        </Link>
-        <Link to="/register">
-          <button className={styles.registerBtn}>Đăng ký</button>
-        </Link>
+        {isAuthenticated ? (
+          <div 
+            className={styles.profileContainer} 
+            onMouseEnter={() => setDropdownOpen(true)}
+            onMouseLeave={() => setDropdownOpen(false)}
+          >
+            <div className={styles.profileIcon}>
+              {/* Simple user icon placeholder */}
+              <span>{user?.username?.charAt(0).toUpperCase() || 'P'}</span>
+            </div>
+            {isDropdownOpen && (
+              <div className={styles.dropdownMenu}>
+                <Link to="/profile" className={styles.dropdownItem}>Hồ sơ</Link >
+                <button onClick={handleLogout} className={styles.dropdownItem}>
+                  Đăng xuất
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <Link to="/login">
+              <button className={styles.loginBtn}>Đăng nhập</button>
+            </Link>
+            <Link to="/register">
+              <button className={styles.registerBtn}>Đăng ký</button>
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );

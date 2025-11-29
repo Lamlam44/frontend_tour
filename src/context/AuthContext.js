@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { login as loginApi, logout as logoutApi } from '../api/authApi';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { login as loginApi, logout as logoutApi, getUserProfile, updateUserProfile } from '../api/authApi';
+import axiosInstance from '../api/axiosConfig';
 
 const AuthContext = createContext();
 
@@ -16,42 +17,56 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Kiểm tra token khi component mount
-    useEffect(() => {
+    const loadUser = useCallback(async () => {
         const token = localStorage.getItem('token');
-        const savedUser = localStorage.getItem('user');
-        
-        if (token && savedUser) {
-            setUser(JSON.parse(savedUser));
-            setIsAuthenticated(true);
+        if (token) {
+            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            try {
+                const profile = await getUserProfile();
+                setUser(profile);
+                setIsAuthenticated(true);
+                localStorage.setItem('user', JSON.stringify(profile));
+            } catch (error) {
+                console.error("Failed to fetch user profile, logging out.", error);
+                logoutApi(); // Token is invalid or expired
+                setUser(null);
+                setIsAuthenticated(false);
+            }
         }
         setLoading(false);
     }, []);
 
+    useEffect(() => {
+        loadUser();
+    }, [loadUser]);
+
     const login = async (username, password) => {
         try {
-            // Gọi API login từ backend
-            const data = await loginApi(username, password);
+            const data = await loginApi(username, password); // data = { token, user }
             
-            // Lưu token và thông tin user vào localStorage
+            // Set token
             localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
             
-            setUser(data.user);
-            setIsAuthenticated(true);
+            // Directly use user data from login response
+            if (data.user) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+                setUser(data.user);
+                setIsAuthenticated(true);
+            } else {
+                // Fallback to loadUser if login API doesn't return user for some reason
+                await loadUser();
+            }
             
+            // Return the full data object that LoginPage expects
             return { success: true, data: data };
             
         } catch (error) {
-            // Xử lý lỗi từ backend
             let errorMessage = 'Đã xảy ra lỗi. Vui lòng thử lại!';
-            
             if (error.message) {
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
                 errorMessage = error;
             }
-            
             return { 
                 success: false, 
                 error: errorMessage
@@ -63,6 +78,22 @@ export const AuthProvider = ({ children }) => {
         logoutApi();
         setUser(null);
         setIsAuthenticated(false);
+        // The Authorization header will be removed by axios interceptor if it exists
+    };
+
+    const updateUser = async (profileData) => {
+        try {
+            const updatedUser = await updateUserProfile(profileData);
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            return { success: true, data: updatedUser };
+        } catch (error) {
+            let errorMessage = 'Cập nhật thất bại. Vui lòng thử lại!';
+            if (error.message) {
+                errorMessage = error.message;
+            }
+            return { success: false, error: errorMessage };
+        }
     };
 
     const value = {
@@ -71,6 +102,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         login,
         logout,
+        updateUser, // Expose the new function
     };
 
     return (
