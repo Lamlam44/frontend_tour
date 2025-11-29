@@ -236,6 +236,31 @@ export const getTours = async () => {
   }
 };
 
+export const searchTours = async (keyword) => {
+  try {
+    const response = await apiClient.get('/tours/search', {
+      params: {
+        keyword: keyword
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching tours:', error);
+    throw error;
+  }
+};
+
+// New function to fetch invoices for the current user
+export const getInvoicesForCurrentUser = async () => {
+  try {
+    const response = await apiClient.get('/invoices/my-invoices');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching invoices for current user:', error);
+    throw error;
+  }
+};
+
 export const getTourById = async (id) => {
   try {
     const response = await apiClient.get(`/tours/${id}`);

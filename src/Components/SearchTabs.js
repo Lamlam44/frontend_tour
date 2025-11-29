@@ -1,7 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../Assets/CSS/ComponentsCSS/SearchTabs.module.css';
 
 function SearchTabs() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/tours?keyword=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+        // Optionally navigate to the tour list page without a specific search query
+        navigate('/tours');
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.tabs}>
@@ -10,7 +23,17 @@ function SearchTabs() {
         </button>
       </div>
       <div className={styles.form}>
-        <input type="text" placeholder="Bạn muốn đi đâu?" />
+        <input 
+          type="text" 
+          placeholder="Bạn muốn đi đâu?" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
+        />
         <input type="date" />
         <select>
           <option value="" disabled selected>Chọn ngân sách</option>
@@ -18,7 +41,7 @@ function SearchTabs() {
           <option value="4000000-8000000">4 - 8 triệu</option>
           <option value="8000000-Infinity">Trên 8 triệu</option>
         </select>
-        <button>Tìm Tour</button>
+        <button onClick={handleSearch}>Tìm Tour</button>
       </div>
     </div>
   );

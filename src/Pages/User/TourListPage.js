@@ -1,12 +1,13 @@
 // FileName: TourListPage.js
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/ListPage.module.css';
-import { getTours, getTouristDestinations, getTravelVehicles } from '../../services/api';
+import { getTours, getTouristDestinations, getTravelVehicles, searchTours } from '../../services/api';
 
+// --- Helper Functions ---
 const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
@@ -17,7 +18,6 @@ const formatDateForDisplay = (dateString) => {
     return new Intl.DateTimeFormat('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 };
 
-// Helper function to render destinations
 const renderDestinations = (destinations) => {
     if (!destinations || destinations.length === 0) {
         return 'N/A';
@@ -25,7 +25,6 @@ const renderDestinations = (destinations) => {
     return destinations.map(d => d.destinationName).join(', ');
 };
 
-// Helper function to render vehicles
 const renderVehicles = (vehicles) => {
     if (!vehicles || vehicles.length === 0) {
         return 'N/A';
@@ -33,57 +32,65 @@ const renderVehicles = (vehicles) => {
     return vehicles.map(v => v.vehicleType).join(', ');
 };
 
-// Hàm helper để xác định nguồn ảnh
 const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/300'; // Ảnh mặc định nếu null
-    
-    // Nếu là ảnh online (bắt đầu bằng http hoặc https) -> Giữ nguyên
+    if (!imagePath) return 'https://via.placeholder.com/300'; 
     if (imagePath.startsWith('http')) {
         return imagePath;
     }
-    
-    // Nếu là ảnh local (bắt đầu bằng /Images) -> Thêm domain Backend vào trước
     // Giả sử backend chạy port 8080
     return `http://localhost:8080${imagePath}`;
 };
 
-
+// --- Main Component ---
 function TourListPage() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const queryParams = new URLSearchParams(location.search);
+    const initialSearchKeyword = queryParams.get('keyword') || '';
+
+    // --- State ---
     const [allTours, setAllTours] = useState([]);
     const [allTouristDestinations, setAllTouristDestinations] = useState([]);
     const [filteredTours, setFilteredTours] = useState([]);
-    const [selectedDeparture, setSelectedDeparture] = useState('Tất cả'); 
+    
+    // Filters State
     const [selectedDestination, setSelectedDestination] = useState('Tất cả'); 
     const [selectedDepartureDate, setSelectedDepartureDate] = useState(''); 
-    const [selectedTourType, setSelectedTourType] = useState([]); 
     const [selectedVehicle, setSelectedVehicle] = useState([]); 
     const [selectedBudget, setSelectedBudget] = useState(''); 
+    const [currentSearchKeyword, setCurrentSearchKeyword] = useState(initialSearchKeyword);
 
     const departureDateInputRef = useRef(null);
 
-    const tourTypeOptions = ['Cao cấp', 'Tiêu chuẩn', 'Tiết kiệm', 'Giá tốt'];
+    // Options
     const vehicleOptions = ['Xe', 'Máy bay', 'Tàu']; 
-
     const budgetOptions = useMemo(() => [
         { label: 'Dưới 4 triệu', value: 'under4', min: 0, max: 4000000 },
         { label: 'Từ 4 - 8 triệu', value: '4-8', min: 4000001, max: 8000000 },
         { label: 'Trên 8 triệu', value: 'over8', min: 8000001, max: Infinity },
     ], []);
 
-
+    // --- Effects ---
     useEffect(() => {
-      const fetchTours = async () => {
-        try {
-          const data = await getTours();
-          setAllTours(data);
-          setFilteredTours(data.filter(t => t.tourStatus !== 'Canceled'));
-        } catch (error) {
-          console.error('Error fetching tours:', error);
-        }
-      };
-  
-      fetchTours();
-    }, []);
+        const fetchAndFilterTours = async () => {
+            try {
+                let data;
+                if (initialSearchKeyword) {
+                    data = await searchTours(initialSearchKeyword);
+                } else {
+                    data = await getTours();
+                }
+                setAllTours(data);
+                
+                // Initial filter (remove canceled tours)
+                let currentFiltered = data.filter(t => t.tourStatus !== 'Canceled' && t.tourStatus !== 'CANCELLED');
+                setFilteredTours(currentFiltered);
+            } catch (error) {
+                console.error('Error fetching tours:', error);
+            }
+        };
+        fetchAndFilterTours();
+    }, [initialSearchKeyword]); 
 
     useEffect(() => {
         const fetchTourDestinations = async () => {
@@ -97,10 +104,11 @@ function TourListPage() {
         fetchTourDestinations();
     }, []);
 
+    // Filter Logic
     useEffect(() => {
         let tours = [...allTours];
 
-        // 1. Lọc theo Điểm đến (touristDestinations là danh sách)
+        // 1. Lọc theo Điểm đến
         if (selectedDestination !== 'Tất cả' && selectedDestination) {
             tours = tours.filter(tour => 
                 tour.touristDestinations && 
@@ -108,14 +116,14 @@ function TourListPage() {
             );
         }
 
-        // 2. Lọc theo Ngày đi (tourStartDate)
+        // 2. Lọc theo Ngày đi
         if (selectedDepartureDate) {
             tours = tours.filter(tour => 
                 tour.tourStartDate && tour.tourStartDate.toString().startsWith(selectedDepartureDate)
             );
         }
 
-        // 4. Lọc theo Phương tiện
+        // 3. Lọc theo Phương tiện
         if (selectedVehicle.length > 0) {
             tours = tours.filter(tour => {
                 if (!tour.travelVehicles || tour.travelVehicles.length === 0) return false;
@@ -126,7 +134,7 @@ function TourListPage() {
             });
         }
 
-        // 5. Lọc theo Ngân sách (tourPrice)
+        // 4. Lọc theo Ngân sách
         if (selectedBudget) {
             const budgetRange = budgetOptions.find(b => b.value === selectedBudget);
             if (budgetRange) {
@@ -134,12 +142,14 @@ function TourListPage() {
             }
         }
         
+        // Luôn loại bỏ tour bị hủy
         tours = tours.filter(t => t.tourStatus !== 'CANCELLED' && t.tourStatus !== 'Canceled');
         
         setFilteredTours(tours);
 
     }, [allTours, selectedDestination, selectedDepartureDate, selectedVehicle, selectedBudget, budgetOptions]);
-    
+
+    // --- Handlers ---
     const handleToggleSelection = (state, setState, value) => {
         if (state.includes(value)) {
             setState(state.filter(item => item !== value));
@@ -161,9 +171,20 @@ function TourListPage() {
     };
 
     const handleApplyFilters = () => {
-        // Logic is in useEffect
+        // Logic lọc đã nằm trong useEffect, nút này chủ yếu mang tính chất UX
+        console.log("Filters applied");
     };
 
+    // QUAN TRỌNG: Hàm này đã được di chuyển lên đây (trong vùng logic), TRƯỚC return
+    const handleSearchSubmit = () => {
+        if (currentSearchKeyword.trim()) {
+            navigate(`/tours?keyword=${encodeURIComponent(currentSearchKeyword.trim())}`);
+        } else {
+            navigate('/tours'); // Navigate to base tour list if search is cleared
+        }
+    };
+
+    // --- Render JSX ---
     return (
         <div>
             <Header />
@@ -174,6 +195,7 @@ function TourListPage() {
                 </div>
                 <div className={styles.layout}>
                     
+                    {/* SIDEBAR */}
                     <aside className={`${styles.sidebar} ${styles.tourSidebar}`}> 
                         <h3>Bộ lọc tìm kiếm</h3>
 
@@ -249,10 +271,25 @@ function TourListPage() {
                         <button className={styles.applyButton} onClick={handleApplyFilters}>
                             Áp dụng bộ lọc
                         </button>
-
                     </aside>
 
+                    {/* MAIN CONTENT */}
                     <main className={styles.mainContent}>
+                        <div className={styles.searchBarContainer}>
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm tour..."
+                                value={currentSearchKeyword}
+                                onChange={(e) => setCurrentSearchKeyword(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSearchSubmit();
+                                    }
+                                }}
+                                className={styles.searchInput}
+                            />
+                            <button onClick={handleSearchSubmit} className={styles.searchButton}>Tìm kiếm</button>
+                        </div>
                         <div className={styles.grid}>
                             {filteredTours.length > 0 ? (
                                 filteredTours.map(tour => (

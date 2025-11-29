@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../Assets/CSS/PageCSS/UserProfilePage.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { getInvoicesForCurrentUser } from '../../services/api'; // Import new function
 
 const UserProfilePage = () => {
     const { user, updateUser, logout, isAuthenticated } = useAuth();
@@ -19,6 +20,8 @@ const UserProfilePage = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [notification, setNotification] = useState({ message: '', type: '' });
+    const [userInvoices, setUserInvoices] = useState([]); // New state for invoices
+    const [showBookingHistory, setShowBookingHistory] = useState(false); // New state to toggle history visibility
 
     // Store initial data to revert to
     const initialFormData = {
@@ -37,6 +40,16 @@ const UserProfilePage = () => {
             navigate('/login');
         } else if (user) {
             setFormData(initialFormData);
+            const fetchUserInvoices = async () => {
+                try {
+                    const invoices = await getInvoicesForCurrentUser();
+                    setUserInvoices(invoices);
+                } catch (error) {
+                    console.error("Error fetching user invoices:", error);
+                    setNotification({ message: 'Không thể tải lịch sử đặt tour.', type: 'error' });
+                }
+            };
+            fetchUserInvoices();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, isAuthenticated, navigate]);
@@ -203,6 +216,48 @@ const UserProfilePage = () => {
                     )}
                 </div>
             </form>
+
+            <div className={styles.historySection}>
+                <button 
+                    className={styles.toggleHistoryButton} 
+                    onClick={() => setShowBookingHistory(!showBookingHistory)}
+                >
+                    {showBookingHistory ? 'Ẩn lịch sử đặt tour' : 'Xem lịch sử đặt tour'} ({userInvoices.length})
+                </button>
+
+                {showBookingHistory && (
+                    <div className={styles.invoiceList}>
+                        {userInvoices.length > 0 ? (
+                            <table className={styles.invoiceTable}>
+                                <thead>
+                                    <tr>
+                                        <th>Mã hóa đơn</th>
+                                        <th>Tour</th>
+                                        <th>Số người</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {userInvoices.map(invoice => (
+                                        <tr key={invoice.invoiceId}>
+                                            <td>{invoice.invoiceId}</td>
+                                            <td>{invoice.tour?.tourName || 'N/A'}</td>
+                                            <td>{invoice.numberOfPeople}</td>
+                                            <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(invoice.totalAmount)}</td>
+                                            <td>{invoice.status}</td>
+                                            <td>{new Date(invoice.invoiceDate).toLocaleDateString('vi-VN')}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p>Bạn chưa có lịch sử đặt tour nào.</p>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
