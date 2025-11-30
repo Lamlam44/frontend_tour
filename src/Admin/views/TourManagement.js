@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Heading,
   Button,
   Table,
   Thead,
@@ -21,17 +20,19 @@ import {
   useDisclosure,
   Textarea,
   Select as ChakraSelect,
-  InputGroup,
-  InputRightElement,
   FormControl,
   FormLabel,
   Flex,
   Text,
   Badge,
-  Card, // SỬA LỖI: Import Card từ Chakra UI, không phải từ file local
+  useColorModeValue,
+  Spinner,
+  Center
 } from "@chakra-ui/react";
-// Import thư viện multi-select mới
 import { Select } from "chakra-react-select";
+import Card from "../components/card/Card"; 
+// Đảm bảo đường dẫn import Card đúng với project của bạn
+
 import {
   getTours,
   addTour,
@@ -43,36 +44,34 @@ import {
   getTouristDestinations,
 } from "../../services/api";
 
-// --- BẮT BUỘC: Hướng dẫn cài đặt ---
-// Do tôi không thể chạy lệnh, bạn cần tự cài đặt thư viện còn thiếu.
-// Mở terminal trong thư mục 'frontend_tour' và chạy lệnh sau:
-// npm install chakra-react-select
-// --- KẾT THÚC HƯỚNG DẪN ---
-
 const TourManagement = () => {
   const [tours, setTours] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const imageFileRef = useRef(null);
-  const textColor = "white"; // SỬA LỖI: Đặt màu chữ là trắng để tương phản trên nền tối của Card
+  
+  // Màu sắc đồng bộ với TourDetail và Dark Mode
+  const textColor = useColorModeValue("secondaryGray.900", "white");
+  const cardBg = useColorModeValue("secondaryGray.300", "navy.800"); 
+  const modalBg = "gray.800"; // Ép cứng dark mode cho modal giống yêu cầu cũ
 
-  // State cho các dropdown
+  // State cho dropdowns
   const [tourGuides, setTourGuides] = useState([]);
   const [accommodations, setAccommodations] = useState([]);
   const [travelVehicles, setTravelVehicles] = useState([]);
   const [touristDestinations, setTouristDestinations] = useState([]);
 
-  // State cho các lựa chọn trong form (sử dụng định dạng {value, label} cho multi-select)
+  // State cho multi-select
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [selectedDestinations, setSelectedDestinations] = useState([]);
 
+  // Form Data - ĐÃ BỎ tourImage
   const [formData, setFormData] = useState({
     tourName: "",
     tourDescription: "",
     tourPrice: "",
     tourStatus: "Available",
     tourRemainingSlots: "",
-    tourImage: "", // Sẽ lưu tên file hoặc URL
+    // tourImage: "", // Đã bỏ theo yêu cầu
     tourStartDate: "",
     tourEndDate: "",
     tourGuideId: "",
@@ -80,8 +79,9 @@ const TourManagement = () => {
   });
 
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Tối ưu hóa việc tạo options cho các dropdown
+  // Memo options cho Select
   const vehicleOptions = useMemo(() => 
     travelVehicles.map(v => ({ value: v.vehicleId, label: `${v.vehicleType} - Capacity: ${v.capacity}` })),
     [travelVehicles]
@@ -91,46 +91,34 @@ const TourManagement = () => {
     [touristDestinations]
   );
 
-  const loadTours = async () => {
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const data = await getTours();
-      setTours(data);
-    } catch (err) {
-      console.error("Lỗi load tours", err);
-    }
-  };
-
-  const loadDropdownOptions = async () => {
-    try {
-      const [guidesData, accommodationsData, vehiclesData, destinationsData] = await Promise.all([
+      const [toursData, guidesData, accData, vehiclesData, destData] = await Promise.all([
+        getTours(),
         getTourGuides(),
         getAccommodations(),
         getTravelVehicles(),
         getTouristDestinations(),
       ]);
+      setTours(toursData);
       setTourGuides(guidesData);
-      setAccommodations(accommodationsData);
+      setAccommodations(accData);
       setTravelVehicles(vehiclesData);
-      setTouristDestinations(destinationsData);
+      setTouristDestinations(destData);
     } catch (err) {
-      console.error("Lỗi load dropdown options", err);
+      console.error("Error loading data", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadTours();
-    loadDropdownOptions();
+    loadData();
   }, []);
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
-  };
-  
-  const handleImageFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      handleChange("tourImage", file.name);
-    }
   };
 
   const resetForm = () => {
@@ -140,7 +128,6 @@ const TourManagement = () => {
       tourPrice: "",
       tourStatus: "Available",
       tourRemainingSlots: "",
-      tourImage: "",
       tourStartDate: "",
       tourEndDate: "",
       tourGuideId: "",
@@ -148,12 +135,11 @@ const TourManagement = () => {
     });
     setSelectedVehicles([]);
     setSelectedDestinations([]);
-    if(imageFileRef.current) imageFileRef.current.value = null;
   };
-  
+
   const formatDateTimeForBackend = (dateTimeLocal) => {
     if (!dateTimeLocal) return null;
-    return new Date(dateTimeLocal).toISOString().slice(0, 19);
+    return dateTimeLocal.length === 16 ? dateTimeLocal + ":00" : dateTimeLocal;
   };
 
   const handleSubmit = async () => {
@@ -164,18 +150,28 @@ const TourManagement = () => {
         tourRemainingSlots: parseInt(formData.tourRemainingSlots) || 0,
         tourStartDate: formatDateTimeForBackend(formData.tourStartDate),
         tourEndDate: formatDateTimeForBackend(formData.tourEndDate),
-        travelVehicleIds: selectedVehicles.map(v => v.value), // Chuyển lại thành mảng ID
-        touristDestinationIds: selectedDestinations.map(d => d.value), // Chuyển lại thành mảng ID
+        travelVehicleIds: selectedVehicles.map(v => v.value),
+        touristDestinationIds: selectedDestinations.map(d => d.value),
+        tourImages: [] // Mặc định danh sách rỗng khi tạo/sửa ở đây, việc thêm ảnh thực hiện ở TourDetail
       };
 
       if (isEdit) {
+        // Khi update ở đây, ta gửi tourImages rỗng hoặc logic backend cần xử lý. 
+        // Tuy nhiên, theo yêu cầu "bỏ phần quản lý ảnh", ta nên giữ nguyên ảnh cũ nếu backend hỗ trợ patch, 
+        // hoặc gửi list ảnh cũ nếu backend bắt buộc ghi đè.
+        // Để an toàn và đơn giản theo yêu cầu: TourManagement KHÔNG can thiệp ảnh.
+        // Cần lấy lại list ảnh cũ để gửi kèm nếu PUT request ghi đè toàn bộ.
+        const currentTour = tours.find(t => t.tourId === editId);
+        if(currentTour && currentTour.tourImages) {
+            payload.tourImages = currentTour.tourImages.map(img => img.imageUrl);
+        }
         await updateTour(editId, payload);
       } else {
         await addTour(payload);
       }
 
       onClose();
-      loadTours();
+      loadData(); // Reload lại list
       resetForm();
     } catch (err) {
       console.error("Lỗi khi lưu tour", err);
@@ -187,7 +183,6 @@ const TourManagement = () => {
     setIsEdit(true);
     setEditId(tour.tourId);
 
-    // Chuyển đổi mảng ID từ tour thành định dạng {value, label}
     const currentVehicles = vehicleOptions.filter(option => 
         tour.travelVehicles?.some(v => v.vehicleId === option.value)
     );
@@ -205,7 +200,6 @@ const TourManagement = () => {
       tourPrice: tour.tourPrice || "",
       tourStatus: tour.tourStatus || "Available",
       tourRemainingSlots: tour.tourRemainingSlots || "",
-      tourImage: tour.tourImage || "", // Giả sử đây là tên file hoặc URL
       tourStartDate: tour.tourStartDate ? tour.tourStartDate.substring(0, 16) : "",
       tourEndDate: tour.tourEndDate ? tour.tourEndDate.substring(0, 16) : "",
       tourGuideId: tour.tourGuide?.tourGuideId || "",
@@ -225,18 +219,23 @@ const TourManagement = () => {
     if (!window.confirm("Bạn có muốn xóa tour này?")) return;
     try {
       await deleteTour(id);
-      loadTours();
+      loadData();
     } catch (err) {
       console.error("Lỗi xóa tour", err);
       alert("Không thể xóa tour này!");
     }
   };
 
+  if (loading) {
+      return <Center h="50vh"><Spinner size="xl" color="blue.500" /></Center>;
+  }
+
   return (
-    <Box marginTop={100} color={textColor}>
-      <Card>
+    <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
+      {/* Sử dụng Card và bg đồng bộ */}
+      <Card bg={cardBg} mb="20px">
         <Flex justify='space-between' align='center' mb='20px'>
-           <Text fontSize='xl' fontWeight='bold'>
+           <Text fontSize='xl' fontWeight='bold' color={textColor}>
             Tour Management
           </Text>
           <Button colorScheme="blue" onClick={openAdd}>
@@ -244,8 +243,8 @@ const TourManagement = () => {
           </Button>
         </Flex>
 
-        <Box mt='20px'>
-          <Table variant="simple">
+        <Box overflowX="auto">
+          <Table variant="simple" color={textColor}>
             <Thead>
               <Tr>
                 <Th color={textColor}>ID</Th>
@@ -261,7 +260,7 @@ const TourManagement = () => {
               {tours.map((tour) => (
                 <Tr key={tour.tourId}>
                   <Td>{tour.tourId}</Td>
-                  <Td>{tour.tourName}</Td>
+                  <Td fontWeight="bold">{tour.tourName}</Td>
                   <Td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tour.tourPrice)}</Td>
                   <Td>
                      <Badge colorScheme={tour.tourStatus === 'Available' ? 'green' : 'red'}>
@@ -283,13 +282,13 @@ const TourManagement = () => {
         </Box>
       </Card>
 
+      {/* MODAL THÊM / SỬA - ĐÃ BỎ TOUR IMAGE */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent bg={modalBg} color="white">
           <ModalHeader>{isEdit ? "Edit Tour" : "Add New Tour"}</ModalHeader>
           <ModalCloseButton />
-          {/* SỬA LỖI: Thêm màu nền và màu chữ cho Modal để hợp với theme tối */}
-          <ModalBody pb={6} bg="gray.800" color="white">
+          <ModalBody pb={6}>
             <HStack spacing={4} mb={4}>
                 <FormControl isRequired>
                     <FormLabel>Tour Name</FormLabel>
@@ -307,7 +306,7 @@ const TourManagement = () => {
              <HStack spacing={4} mb={4}>
                 <FormControl isRequired>
                     <FormLabel>Status</FormLabel>
-                    <ChakraSelect value={formData.tourStatus} onChange={(e) => handleChange("tourStatus", e.target.value)}>
+                    <ChakraSelect value={formData.tourStatus} onChange={(e) => handleChange("tourStatus", e.target.value)} bg="gray.700" borderColor="gray.600">
                         <option style={{ backgroundColor: '#2D3748' }} value="Available">Available</option>
                         <option style={{ backgroundColor: '#2D3748' }} value="Fully Booked">Fully Booked</option>
                         <option style={{ backgroundColor: '#2D3748' }} value="Cancelled">Cancelled</option>
@@ -315,20 +314,12 @@ const TourManagement = () => {
                 </FormControl>
                 <FormControl isRequired>
                     <FormLabel>Remaining Slots</FormLabel>
-                    {/* SỬA LỖI: e.g.target.value -> e.target.value */}
                     <Input placeholder="Remaining Slots" type="number" value={formData.tourRemainingSlots} onChange={(e) => handleChange("tourRemainingSlots", e.target.value)} />
                 </FormControl>
             </HStack>
-            <FormControl mb={4}>
-                <FormLabel>Tour Image</FormLabel>
-                <InputGroup>
-                    <Input placeholder="Click button to select image" readOnly value={formData.tourImage} />
-                    <InputRightElement width="4.5rem">
-                        <Button h="1.75rem" size="sm" onClick={() => imageFileRef.current?.click()}>Browse</Button>
-                    </InputRightElement>
-                </InputGroup>
-                <Input type="file" ref={imageFileRef} onChange={handleImageFileChange} accept="image/*" style={{ display: "none" }}/>
-            </FormControl>
+            
+            {/* ĐÃ XÓA FORM CONTROL IMAGE TẠI ĐÂY */}
+
              <HStack spacing={4} mb={4}>
                 <FormControl isRequired>
                     <FormLabel>Start Date</FormLabel>
@@ -342,20 +333,19 @@ const TourManagement = () => {
              <HStack spacing={4} mb={4}>
                 <FormControl>
                     <FormLabel>Tour Guide</FormLabel>
-                    <ChakraSelect placeholder="Select Tour Guide" value={formData.tourGuideId} onChange={(e) => handleChange("tourGuideId", e.target.value)}>
+                    <ChakraSelect placeholder="Select Tour Guide" value={formData.tourGuideId} onChange={(e) => handleChange("tourGuideId", e.target.value)} bg="gray.700" borderColor="gray.600">
                         {tourGuides.map((guide) => <option style={{ backgroundColor: '#2D3748' }} key={guide.tourGuideId} value={guide.tourGuideId}>{guide.tourGuideName}</option>)}
                     </ChakraSelect>
                 </FormControl>
                 <FormControl>
                     <FormLabel>Accommodation</FormLabel>
-                    <ChakraSelect placeholder="Select Accommodation" value={formData.accommodationId} onChange={(e) => handleChange("accommodationId", e.target.value)}>
+                    <ChakraSelect placeholder="Select Accommodation" value={formData.accommodationId} onChange={(e) => handleChange("accommodationId", e.target.value)} bg="gray.700" borderColor="gray.600">
                         {accommodations.map((acc) => <option style={{ backgroundColor: '#2D3748' }} key={acc.accommodationId} value={acc.accommodationId}>{acc.accommodationName}</option>)}
                     </ChakraSelect>
                 </FormControl>
             </HStack>
             <FormControl mb={4}>
                 <FormLabel>Travel Vehicles</FormLabel>
-                {/* SỬA LỖI: Thêm style cho multi-select để hợp với theme tối */}
                 <Select
                     isMulti
                     name="vehicles"
@@ -397,7 +387,7 @@ const TourManagement = () => {
             <Button colorScheme="blue" mr={3} onClick={handleSubmit}>
               {isEdit ? "Update Tour" : "Save Tour"}
             </Button>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose} _hover={{ bg: "gray.700" }}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

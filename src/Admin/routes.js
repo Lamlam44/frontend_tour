@@ -14,6 +14,7 @@ import {
 // Admin Imports
 import MainDashboard from "./views/dashboard/MainDashboard";
 import DataTables from "./views/dataTables/DataTables";
+import AccommodationManagementPage from "./views/AccommodationManagementPage";
 import TourManagement from "./views/TourManagement";
 import PromotionSettingPage from "./views/PromotionSettingPage";
 import CustomerManagementPage from "./views/CustomerManagementPage";
@@ -63,7 +64,14 @@ const routes = [
     layout: "/admin",
     path: "/tourist-destination-management",
     icon: <Icon as={MdPlace} width="20px" height="20px" color="inherit" />,
-    component: <TouristDestinationManagementPage />,
+    component: <TouristDestinationManagementPage />
+  },
+  {
+    name: "Accommodation Management",
+    layout: "/admin",
+    path: "/accommodation-management",
+    icon: <Icon as={MdPlace} width="20px" height="20px" color="inherit" />,
+    component: <AccommodationManagementPage />,
   },
   {
     name: "Promotion Settings",

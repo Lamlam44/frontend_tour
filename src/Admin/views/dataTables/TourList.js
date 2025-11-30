@@ -48,6 +48,7 @@ export default function TourList(props) {
             overflowX={{ sm: 'scroll', lg: 'hidden' }}
             h="100vh" // Set full viewport height
             maxH="100vh" // Ensure it doesn't exceed viewport height
+            bg={useColorModeValue("secondaryGray.300", "navy.800")}
         >
             <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
                 <Text
@@ -89,22 +90,7 @@ export default function TourList(props) {
                                 onClick={() => onTourSelect && onTourSelect(tour)}
                             >
                                 <HStack spacing="15px" align="center">
-                                    {/* Minimal Tour Image */}
-                                    <Box
-                                        flexShrink={0}
-                                        borderRadius="8px"
-                                        overflow="hidden"
-                                        w="75px"
-                                        h="50px"
-                                    >
-                                        <Image
-                                            src={tour.tourImage || tour.img}
-                                            alt={tour.tourName || tour.title}
-                                            w="100%"
-                                            h="100%"
-                                            objectFit="cover"
-                                        />
-                                    </Box>
+
 
                                     {/* Tour Information */}
                                     <VStack align="start" spacing="4px" flex="1">

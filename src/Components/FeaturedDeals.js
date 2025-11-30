@@ -11,25 +11,34 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-// Hàm helper để xác định nguồn ảnh
-const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/300'; // Ảnh mặc định nếu null
+// Hàm helper để xác định nguồn ảnh (Dùng chung cho cả 3 file)
+const getImageUrl = (imageInput) => {
+    // 1. Ảnh thế thân (Fallback) nếu dữ liệu null
+    // Sử dụng placehold.co (ổn định hơn via.placeholder.com)
+    const PLACEHOLDER_IMG = 'https://placehold.co/600x400?text=No+Image';
+
+    if (!imageInput) return PLACEHOLDER_IMG;
     
-    // Nếu là ảnh online (bắt đầu bằng http hoặc https) -> Giữ nguyên
-    if (imagePath.startsWith('http')) {
-        return imagePath;
+    // 2. Lấy đường dẫn (Xử lý cả trường hợp String lẫn Object)
+    let path = (typeof imageInput === 'string') ? imageInput : imageInput.imageUrl;
+
+    if (!path) return PLACEHOLDER_IMG;
+
+    // 3. Nếu là ảnh Online (bắt đầu bằng http) -> Giữ nguyên
+    if (path.startsWith('http')) {
+        return path;
     }
     
-    // Nếu là ảnh local (bắt đầu bằng /Images) -> Thêm domain Backend vào trước
-    // Giả sử backend chạy port 8080
-    return `http://localhost:8080${imagePath}`;
+    // 4. Nếu là ảnh Local -> Thêm domain backend
+    // Đảm bảo không bị thừa dấu / (ví dụ: path là "/Images/..." thì cộng chuỗi bình thường)
+    return `http://localhost:8080${path}`;
 };
 
 function DealCard({ tour }) {
   // Component này giờ nhận prop là 'tour' với cấu trúc từ API
   return (
     <Link to={`/tours/${tour.tourId}`} className={styles.card}>
-      <img src={getImageUrl(tour.tourImage)} alt={tour.tourName} />
+      <img src={getImageUrl(tour.tourImages && tour.tourImages.length > 0 ? tour.tourImages[1].imageUrl : null)} alt={tour.tourName} />
       <h3>{tour.tourName}</h3>
       <p>Chỉ từ: <strong>{formatPrice(tour.tourPrice)}</strong></p>
     </Link>

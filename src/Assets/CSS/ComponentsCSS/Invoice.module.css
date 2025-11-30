@@ -1,0 +1,122 @@
+.summary {
+    flex: 1;
+    background: #f8f9fa; /* Màu nền xám nhạt */
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    position: sticky;
+    top: 20px; /* Dính khi cuộn */
+}
+
+.summary h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+}
+
+.summaryItem {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: #555;
+}
+
+.summaryItem p {
+    margin: 0;
+    /* Giới hạn chiều rộng tên tour nếu dài quá */
+    max-width: 60%; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.summaryItem span {
+    font-weight: 600;
+    color: #333;
+}
+
+.summary hr {
+    border: none;
+    border-top: 1px dashed #ccc;
+    margin: 1.5rem 0;
+}
+
+.summaryItem.total {
+    font-size: 1.3rem;
+    color: #000;
+    margin-top: 0.5rem;
+}
+
+.summaryItem.total span {
+    color: var(--secondary-color, #e53e3e); /* Màu giá tiền nổi bật */
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.promotionSection {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.promotionSection h4 {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.promotionInput {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.promotionInput input {
+    flex-grow: 1;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.promotionInput button {
+    padding: 0.6rem 1rem;
+    background-color: var(--primary-color, #007bff);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.promotionInput button:hover {
+    background-color: #0056b3;
+}
+
+.errorMessage {
+    color: #e53e3e;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.discount {
+    color: #28a745; /* Green for discount */
+}
+.confirmBtn {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--primary-color, #007bff);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+
+.confirmBtn:hover {
+    background: #0056b3;
+}

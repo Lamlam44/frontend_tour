@@ -151,6 +151,17 @@ export const createInvoice = async (invoiceData) => {
   }
 };
 
+// Function to trigger the cash payment request email flow
+export const requestCashPayment = async (invoiceId) => {
+  try {
+    const response = await apiClient.post(`/invoices/${invoiceId}/request-cash-payment`);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi yêu cầu thanh toán tiền mặt cho hóa đơn ${invoiceId}:`, error);
+    throw new Error(error.response?.data?.message || 'Không thể gửi yêu cầu thanh toán tiền mặt.');
+  }
+};
+
 
 // 2. Tạo URL thanh toán VNPAY
 export const createVnPayPaymentUrl = async (paymentData) => {
@@ -462,4 +473,22 @@ export const getTravelVehicles = async () => {
     console.error('Error fetching vehicles:', error);
     throw error;
   }
+};
+
+// 2. Thêm mới Accommodation
+export const addAccommodation = async (accommodationData) => {
+    const response = await axios.post(`${API_BASE_URL}/accommodations`, accommodationData);
+    return response.data;
+};
+
+// 3. Cập nhật Accommodation
+export const updateAccommodation = async (id, accommodationData) => {
+    const response = await axios.put(`${API_BASE_URL}/accommodations/${id}`, accommodationData);
+    return response.data;
+};
+
+// 4. Xóa Accommodation
+export const deleteAccommodation = async (id) => {
+    const response = await axios.delete(`${API_BASE_URL}/accommodations/${id}`);
+    return response.data;
 };

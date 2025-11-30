@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
+  Heading,
   Button,
   Table,
   Thead,
@@ -18,23 +19,39 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  useColorModeValue,
-  Flex,
+  useToast,
+  Badge,
   Text,
+  FormControl,
+  FormLabel,
+  SimpleGrid,
+  Select,
+  Icon,
 } from "@chakra-ui/react";
+import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
 import {
   getAccommodations,
   addAccommodation,
   updateAccommodation,
   deleteAccommodation,
 } from "../../services/api";
-import Card from '../../Admin/components/card/Card';
 
 const AccommodationManagementPage = () => {
+  // --- STATE ---
   const [accommodations, setAccommodations] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
+
+  // Design System Colors (Đồng bộ với Invoice/Promotion Page)
+  const bgColor = "navy.900";
+  const cardBg = "navy.800";
+  const modalBg = "gray.800";
+  const inputBg = "gray.700";
+  const borderColor = "gray.600";
+  const hoverBg = "navy.700";
 
   const [formData, setFormData] = useState({
     accommodationName: "",
@@ -44,16 +61,19 @@ const AccommodationManagementPage = () => {
     accommodationType: "",
   });
 
-  const [editId, setEditId] = useState(null);
-
-  const textColor = useColorModeValue('white');
-
+  // --- API CALLS ---
   const loadAccommodations = async () => {
     try {
       const data = await getAccommodations();
       setAccommodations(data);
     } catch (err) {
       console.error("Lỗi load accommodations", err);
+      toast({
+        title: "Error loading data",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -61,47 +81,52 @@ const AccommodationManagementPage = () => {
     loadAccommodations();
   }, []);
 
+  // --- HANDLERS ---
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  const resetForm = () => {
+    setFormData({
+      accommodationName: "",
+      location: "",
+      rating: "",
+      pricePerNight: "",
+      accommodationType: "",
+    });
+    setIsEdit(false);
+    setEditId(null);
+  };
+
   const handleAdd = async () => {
     try {
+      // Validate cơ bản
+      if (!formData.accommodationName || !formData.pricePerNight) {
+        toast({ title: "Please fill required fields", status: "warning", duration: 3000 });
+        return;
+      }
+
       const payload = {
         ...formData,
         rating: formData.rating ? parseFloat(formData.rating) : 0,
         pricePerNight: parseFloat(formData.pricePerNight),
       };
+      
       await addAccommodation(payload);
+      
+      toast({ title: "Added successfully", status: "success", duration: 3000 });
       onClose();
       loadAccommodations();
-      setFormData({
-        accommodationName: "",
-        location: "",
-        rating: "",
-        pricePerNight: "",
-        accommodationType: "",
-      });
+      resetForm();
     } catch (err) {
-      console.error("Lỗi thêm accommodation", err);
-      console.error("Error response:", err.response?.data);
-      alert(`Lỗi khi thêm accommodation!\n${err.response?.data?.message || err.message}`);
+      console.error("Error adding", err);
+      toast({ 
+        title: "Error adding accommodation", 
+        description: err.response?.data?.message || err.message, 
+        status: "error", 
+        duration: 5000 
+      });
     }
-  };
-
-  const openEdit = (accommodation) => {
-    setIsEdit(true);
-    setEditId(accommodation.accommodationId);
-
-    setFormData({
-      accommodationName: accommodation.accommodationName || "",
-      location: accommodation.location || "",
-      rating: accommodation.rating || "",
-      pricePerNight: accommodation.pricePerNight || "",
-      accommodationType: accommodation.accommodationType || "",
-    });
-
-    onOpen();
   };
 
   const handleUpdate = async () => {
@@ -111,92 +136,109 @@ const AccommodationManagementPage = () => {
         rating: formData.rating ? parseFloat(formData.rating) : 0,
         pricePerNight: parseFloat(formData.pricePerNight),
       };
+      
       await updateAccommodation(editId, payload);
+      
+      toast({ title: "Updated successfully", status: "success", duration: 3000 });
       onClose();
       loadAccommodations();
-      setIsEdit(false);
-      setFormData({
-        accommodationName: "",
-        location: "",
-        rating: "",
-        pricePerNight: "",
-        accommodationType: "",
-      });
+      resetForm();
     } catch (err) {
-      console.error("Lỗi update accommodation", err);
-      alert("Lỗi khi cập nhật accommodation!");
+      console.error("Error updating", err);
+      toast({ title: "Error updating accommodation", status: "error", duration: 3000 });
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có muốn xóa accommodation này?")) return;
+    if (!window.confirm("Are you sure you want to delete this accommodation?")) return;
     try {
       await deleteAccommodation(id);
+      toast({ title: "Deleted successfully", status: "success", duration: 3000 });
       loadAccommodations();
     } catch (err) {
-      console.error("Lỗi xóa accommodation", err);
-      alert("Không thể xóa!");
+      console.error("Error deleting", err);
+      toast({ title: "Cannot delete accommodation", status: "error", duration: 3000 });
     }
   };
 
+  const openEdit = (acc) => {
+    setIsEdit(true);
+    setEditId(acc.accommodationId);
+    setFormData({
+      accommodationName: acc.accommodationName || "",
+      location: acc.location || "",
+      rating: acc.rating || "",
+      pricePerNight: acc.pricePerNight || "",
+      accommodationType: acc.accommodationType || "",
+    });
+    onOpen();
+  };
+
+  // --- RENDER ---
   return (
-    <Box marginTop={100}>
-      <Card>
-        <Flex justify='space-between' align='center' mb='20px'>
-          <Text fontSize='xl' fontWeight='bold' color={textColor}>
-            Accommodation Management
-          </Text>
-          <Button colorScheme='blue' onClick={() => {
-            setIsEdit(false);
-            setFormData({
-              accommodationName: "",
-              location: "",
-              rating: "",
-              pricePerNight: "",
-              accommodationType: "",
-            });
-            onOpen();
-          }}>Add New Accommodation</Button>
-        </Flex>
-        <Box mt='20px'>
-          <Table variant='simple'>
+    <Box p={6} bg={bgColor} color="white" borderRadius="2xl" minH="100vh">
+      <Heading size="md" mb={6}>Accommodation Management</Heading>
+
+      <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
+        <Box display="flex" justifyContent="space-between" mb={6} alignItems="center">
+          <Heading size="sm">Accommodation List</Heading>
+          <Button 
+            colorScheme="blue" 
+            onClick={() => { resetForm(); onOpen(); }}
+            size="md"
+          >
+            Add New Accommodation
+          </Button>
+        </Box>
+
+        <Box overflowX="auto">
+          <Table variant="simple" colorScheme="whiteAlpha">
             <Thead>
               <Tr>
-                <Th color={textColor}>ID</Th>
-                <Th color={textColor}>Name</Th>
-                <Th color={textColor}>Location</Th>
-                <Th color={textColor}>Type</Th>
-                <Th color={textColor}>Price/Night</Th>
-                <Th color={textColor}>Rating</Th>
-                <Th color={textColor}>Actions</Th>
+                <Th color="gray.400">ID</Th>
+                <Th color="gray.400">Name / Type</Th>
+                <Th color="gray.400">Location</Th>
+                <Th color="gray.400" isNumeric>Price / Night</Th>
+                <Th color="gray.400" isNumeric>Rating</Th>
+                <Th color="gray.400">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {accommodations.map((accommodation) => (
-                <Tr key={accommodation.accommodationId}>
-                  <Td color={textColor}>{accommodation.accommodationId}</Td>
-                  <Td color={textColor}>{accommodation.accommodationName}</Td>
-                  <Td color={textColor}>{accommodation.location}</Td>
-                  <Td color={textColor}>{accommodation.accommodationType}</Td>
-                  <Td color={textColor}>{accommodation.pricePerNight}</Td>
-                  <Td color={textColor}>{accommodation.rating}</Td>
+              {accommodations.map((acc) => (
+                <Tr key={acc.accommodationId} _hover={{ bg: hoverBg }}>
+                  <Td fontSize="sm" color="gray.400">{acc.accommodationId}</Td>
+                  
+                  <Td>
+                    <Box>
+                        <Text fontWeight="bold" fontSize="md">{acc.accommodationName}</Text>
+                        <Badge colorScheme="purple" fontSize="0.7em" mt={1}>
+                            {acc.accommodationType || "Unknown"}
+                        </Badge>
+                    </Box>
+                  </Td>
+                  
                   <Td>
                     <HStack>
-                      <Button
-                        colorScheme="yellow"
-                        size="sm"
-                        onClick={() => openEdit(accommodation)}
-                      >
-                        Edit
-                      </Button>
-
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        onClick={() => handleDelete(accommodation.accommodationId)}
-                      >
-                        Delete
-                      </Button>
+                        <Icon as={FaMapMarkerAlt} color="red.400" />
+                        <Text fontSize="sm">{acc.location}</Text>
+                    </HStack>
+                  </Td>
+                  
+                  <Td isNumeric fontWeight="bold" color="green.300">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(acc.pricePerNight)}
+                  </Td>
+                  
+                  <Td isNumeric>
+                    <HStack justify="flex-end">
+                        <Text fontWeight="bold" color="yellow.400">{acc.rating}</Text>
+                        <Icon as={FaStar} color="yellow.400" />
+                    </HStack>
+                  </Td>
+                  
+                  <Td>
+                    <HStack>
+                      <Button colorScheme="yellow" size="sm" onClick={() => openEdit(acc)}>Edit</Button>
+                      <Button colorScheme="red" size="sm" onClick={() => handleDelete(acc.accommodationId)}>Delete</Button>
                     </HStack>
                   </Td>
                 </Tr>
@@ -204,50 +246,88 @@ const AccommodationManagementPage = () => {
             </Tbody>
           </Table>
         </Box>
-      </Card>
+      </Box>
 
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      {/* MODAL FORM */}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent bg={modalBg} color="white">
           <ModalHeader>{isEdit ? "Edit Accommodation" : "Add New Accommodation"}</ModalHeader>
           <ModalCloseButton />
 
-          <ModalBody>
-            <Input
-              placeholder="Accommodation Name *"
-              mb={3}
-              value={formData.accommodationName}
-              onChange={(e) => handleChange("accommodationName", e.target.value)}
-            />
-            <Input
-              placeholder="Location *"
-              mb={3}
-              value={formData.location}
-              onChange={(e) => handleChange("location", e.target.value)}
-            />
-            <Input
-              placeholder="Accommodation Type (e.g., Hotel, Resort, Villa) *"
-              mb={3}
-              value={formData.accommodationType}
-              onChange={(e) => handleChange("accommodationType", e.target.value)}
-            />
-            <Input
-              placeholder="Price Per Night *"
-              mb={3}
-              type="number"
-              value={formData.pricePerNight}
-              onChange={(e) => handleChange("pricePerNight", e.target.value)}
-            />
-            <Input
-              placeholder="Rating (0-5)"
-              mb={3}
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              value={formData.rating}
-              onChange={(e) => handleChange("rating", e.target.value)}
-            />
+          <ModalBody pb={6}>
+            <SimpleGrid columns={1} spacing={4}>
+                {/* Name & Type */}
+                <SimpleGrid columns={2} spacing={4}>
+                    <FormControl isRequired>
+                        <FormLabel>Accommodation Name</FormLabel>
+                        <Input
+                          placeholder="e.g. Sunrise Hotel"
+                          value={formData.accommodationName}
+                          onChange={(e) => handleChange("accommodationName", e.target.value)}
+                          bg={inputBg} borderColor={borderColor}
+                        />
+                    </FormControl>
+
+                    <FormControl isRequired>
+                        <FormLabel>Type</FormLabel>
+                        {/* Dùng Select cho Type để chuẩn hóa dữ liệu */}
+                        <Select 
+                            placeholder="Select Type" 
+                            value={formData.accommodationType}
+                            onChange={(e) => handleChange("accommodationType", e.target.value)}
+                            bg={inputBg} borderColor={borderColor}
+                        >
+                            <option style={{backgroundColor: '#2D3748'}} value="Hotel">Hotel</option>
+                            <option style={{backgroundColor: '#2D3748'}} value="Resort">Resort</option>
+                            <option style={{backgroundColor: '#2D3748'}} value="Villa">Villa</option>
+                            <option style={{backgroundColor: '#2D3748'}} value="Homestay">Homestay</option>
+                            <option style={{backgroundColor: '#2D3748'}} value="Guesthouse">Guesthouse</option>
+                        </Select>
+                    </FormControl>
+                </SimpleGrid>
+
+                {/* Location */}
+                <FormControl isRequired>
+                    <FormLabel>Location</FormLabel>
+                    <Input
+                      placeholder="e.g. 123 Beach Road, Da Nang"
+                      value={formData.location}
+                      onChange={(e) => handleChange("location", e.target.value)}
+                      bg={inputBg} borderColor={borderColor}
+                    />
+                </FormControl>
+
+                {/* Price & Rating */}
+                <SimpleGrid columns={2} spacing={4}>
+                    <FormControl isRequired>
+                        <FormLabel>Price Per Night (VND)</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 500000"
+                          value={formData.pricePerNight}
+                          onChange={(e) => handleChange("pricePerNight", e.target.value)}
+                          bg={inputBg} borderColor={borderColor}
+                        />
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel>Rating (0 - 5)</FormLabel>
+                        <HStack>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="5"
+                              value={formData.rating}
+                              onChange={(e) => handleChange("rating", e.target.value)}
+                              bg={inputBg} borderColor={borderColor}
+                            />
+                            <Icon as={FaStar} color="yellow.400" />
+                        </HStack>
+                    </FormControl>
+                </SimpleGrid>
+            </SimpleGrid>
           </ModalBody>
 
           <ModalFooter>
@@ -258,7 +338,7 @@ const AccommodationManagementPage = () => {
             >
               {isEdit ? "Update" : "Save"}
             </Button>
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" onClick={onClose} _hover={{ bg: "whiteAlpha.200" }}>
               Cancel
             </Button>
           </ModalFooter>
@@ -266,6 +346,6 @@ const AccommodationManagementPage = () => {
       </Modal>
     </Box>
   );
-}
+};
 
 export default AccommodationManagementPage;

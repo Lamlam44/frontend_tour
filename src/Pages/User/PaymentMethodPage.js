@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
-import { createInvoice, createVnPayPaymentUrl } from '../../services/api';
+import { requestCashPayment, createVnPayPaymentUrl } from '../../services/api';
+import InvoiceDisplay from '../../Components/InvoiceDisplay';
 
 const formatPrice = (price) => {
     if (typeof price !== 'number') return '0 đ';
@@ -14,74 +15,49 @@ function PaymentMethodPage() {
     const navigate = useNavigate();
     const location = useLocation();
     
-    // Lấy dữ liệu an toàn từ state
-    const { 
-        bookingDetails, 
-        itemDetails: tourDetails, 
-        displayTotalAmount, // Chỉ để hiển thị
-        transactionData     // Dữ liệu quan trọng: { tourId, quantity, promotionIds }
-    } = location.state || {};
+    const { invoice } = location.state || {};
 
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
-    if (!bookingDetails || !tourDetails || !transactionData) {
-        return <div className={styles.container}>Lỗi: Thiếu thông tin đặt tour.</div>;
+    if (!invoice) {
+        return (
+            <div>
+                <Header />
+                <div className={styles.container}>
+                    <h1>Lỗi</h1>
+                    <p>Không tìm thấy thông tin hóa đơn. Vui lòng thử lại từ đầu.</p>
+                </div>
+                <Footer />
+            </div>
+        );
     }
 
     const handlePayment = async (paymentMethod) => {
         setIsLoading(true);
         setErrorMessage('');
 
-        // Payload gửi về Backend (Khớp với InvoiceRequestDTO)
-        const invoicePayload = {
-            customerName: bookingDetails.name,
-            customerEmail: bookingDetails.email,
-            customerPhone: bookingDetails.phone,
-            
-            tourId: transactionData.tourId,
-            numberOfPeople: transactionData.quantity,
-            
-            // Gửi danh sách ID khuyến mãi để Backend tự tính
-            promotionIds: transactionData.promotionIds, 
-            
-            paymentMethod: paymentMethod,
-            
-            // Gửi 0 hoặc null, Backend sẽ ghi đè giá trị này
-            totalAmount: 0, 
-            discountAmount: 0,
-            taxAmount: 0
-        };
-        
         try {
-            // 1. Tạo hóa đơn - Backend tính tiền và trả về số tiền thật
-            const invoiceResponse = await createInvoice(invoicePayload);
-            
-            if (invoiceResponse && invoiceResponse.invoiceId) { 
-                const realAmount = invoiceResponse.totalAmount; // Số tiền Backend chốt
+            if (paymentMethod === 'CASH') {
+                await requestCashPayment(invoice.invoiceId);
+                setSuccessMessage('Yêu cầu thanh toán tiền mặt đã được ghi nhận. Vui lòng kiểm tra email để xem chi tiết và hướng dẫn thanh toán.');
+                setTimeout(() => navigate('/'), 4000); // Redirect to homepage
 
-                if (paymentMethod === 'CASH') {
-                    setSuccessMessage(`Đặt tour thành công! Vui lòng thanh toán: ${formatPrice(realAmount)}`);
-                    setTimeout(() => navigate('/tours'), 3000);
-                } else if (paymentMethod === 'VNPAY') {
-                    // 2. Tạo link thanh toán với số tiền Backend vừa trả về
-                    // (Hoặc chỉ gửi invoiceId, Backend tự query lại tiền)
-                    const vnpayUrl = await createVnPayPaymentUrl({
-                        invoiceId: invoiceResponse.invoiceId,
-                        amount: realAmount, // Đảm bảo khớp với DB
-                        orderInfo: `Thanh toan hoa don ${invoiceResponse.invoiceId}`
-                    });
+            } else if (paymentMethod === 'VNPAY') {
+                const vnpayUrl = await createVnPayPaymentUrl({
+                    invoiceId: invoice.invoiceId,
+                });
 
-                    if (vnpayUrl) window.location.href = vnpayUrl;
-                    else throw new Error('Lỗi tạo link thanh toán');
+                if (vnpayUrl) {
+                    window.location.href = vnpayUrl;
+                } else {
+                    throw new Error('Lỗi tạo link thanh toán VNPAY');
                 }
-            } else {
-                throw new Error(invoiceResponse.message || 'Lỗi server');
             }
         } catch (error) {
             console.error(error);
-            setErrorMessage('Đã xảy ra lỗi. Vui lòng thử lại.');
+            setErrorMessage('Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
@@ -101,10 +77,10 @@ function PaymentMethodPage() {
                                 <h3>Phương thức thanh toán</h3>
                                 <div className={styles.paymentMethods}>
                                     <button onClick={() => handlePayment('CASH')} disabled={isLoading} className={styles.paymentButton}>
-                                        {isLoading ? 'Đang xử lý...' : 'Tiền mặt'}
+                                        {isLoading ? 'Đang xử lý...' : 'Thanh toán tiền mặt'}
                                     </button>
                                     <button onClick={() => handlePayment('VNPAY')} disabled={isLoading} className={styles.paymentButton}>
-                                        {isLoading ? 'Đang xử lý...' : 'VNPAY'}
+                                        {isLoading ? 'Đang xử lý...' : 'Thanh toán qua VNPAY'}
                                     </button>
                                 </div>
                                 {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
@@ -112,24 +88,7 @@ function PaymentMethodPage() {
                         )}
                     </div>
 
-                    <aside className={styles.summary}>
-                        <h3>Tóm tắt đơn hàng</h3>
-                        <div className={styles.summaryItem}>
-                            <p><strong>Tour:</strong> {tourDetails.name}</p>
-                        </div>
-                        <div className={styles.summaryItem}>
-                            <p><strong>Khách hàng:</strong> {bookingDetails.name}</p>
-                        </div>
-                        <div className={styles.summaryItem}>
-                            <p><strong>Số lượng:</strong> {transactionData.quantity}</p>
-                        </div>
-                        <hr />
-                        <div className={`${styles.summaryItem} ${styles.total}`}>
-                            <p>Tổng cộng (Dự kiến)</p>
-                            {/* Hiển thị giá Frontend tính cho user xem trước */}
-                            <span>{formatPrice(displayTotalAmount)}</span>
-                        </div>
-                    </aside>
+                    <InvoiceDisplay invoice={invoice} />
                 </div>
             </div>
             <Footer />

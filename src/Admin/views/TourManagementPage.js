@@ -49,7 +49,6 @@ const TourManagementPage = () => {
   const [tours, setTours] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const imageFileRef = useRef(null);
 
   // State cho các dropdown
   const [tourGuides, setTourGuides] = useState([]);
@@ -61,19 +60,19 @@ const TourManagementPage = () => {
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [selectedDestinations, setSelectedDestinations] = useState([]);
 
-  const [formData, setFormData] = useState({
-    tourName: "",
-    tourDescription: "",
-    tourPrice: "",
-    tourStatus: "Available",
-    tourRemainingSlots: "",
-    tourImage: "", // Sẽ lưu tên file hoặc URL
-    tourStartDate: "",
-    tourEndDate: "",
-    tourGuideId: "",
-    accommodationId: "",
-  });
-
+      const [formData, setFormData] = useState({
+        tourName: "",
+        tourDescription: "",
+        tourPrice: "",
+        tourStatus: "Available",
+        tourRemainingSlots: "",
+        tourImages: [], // Changed to array for multiple images
+        tourStartDate: "",
+        tourEndDate: "",
+        tourMeetingPoint: "", // Added tourMeetingPoint
+        tourGuideId: "",
+        accommodationId: "",
+      });
   const [editId, setEditId] = useState(null);
 
   // Tối ưu hóa việc tạo options cho các dropdown
@@ -120,15 +119,6 @@ const TourManagementPage = () => {
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
-  
-  const handleImageFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Trong thực tế, bạn sẽ upload file này lên server và nhận về một URL.
-      // Ở đây, chúng ta tạm thời chỉ lưu tên file để hiển thị.
-      handleChange("tourImage", file.name);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -137,15 +127,15 @@ const TourManagementPage = () => {
       tourPrice: "",
       tourStatus: "Available",
       tourRemainingSlots: "",
-      tourImage: "",
+      tourImages: [], // Reset to empty array
       tourStartDate: "",
       tourEndDate: "",
+      tourMeetingPoint: "", // Reset tourMeetingPoint
       tourGuideId: "",
       accommodationId: "",
     });
     setSelectedVehicles([]);
     setSelectedDestinations([]);
-    if(imageFileRef.current) imageFileRef.current.value = null;
   };
   
   const formatDateTimeForBackend = (dateTimeLocal) => {
@@ -161,6 +151,8 @@ const TourManagementPage = () => {
         tourRemainingSlots: parseInt(formData.tourRemainingSlots) || 0,
         tourStartDate: formatDateTimeForBackend(formData.tourStartDate),
         tourEndDate: formatDateTimeForBackend(formData.tourEndDate),
+        tourMeetingPoint: formData.tourMeetingPoint, // Add tourMeetingPoint
+
         travelVehicleIds: selectedVehicles.map(v => v.value), // Chuyển lại thành mảng ID
         touristDestinationIds: selectedDestinations.map(d => d.value), // Chuyển lại thành mảng ID
       };
@@ -204,9 +196,10 @@ const TourManagementPage = () => {
       tourPrice: tour.tourPrice || "",
       tourStatus: tour.tourStatus || "Available",
       tourRemainingSlots: tour.tourRemainingSlots || "",
-      tourImage: tour.tourImage || "", // Giả sử đây là tên file hoặc URL
+
       tourStartDate: tour.tourStartDate ? tour.tourStartDate.substring(0, 16) : "",
       tourEndDate: tour.tourEndDate ? tour.tourEndDate.substring(0, 16) : "",
+      tourMeetingPoint: tour.tourMeetingPoint || "", // Populate tourMeetingPoint
       tourGuideId: tour.tourGuide?.tourGuideId || "",
       accommodationId: tour.accommodation?.accommodationId || "",
     });
@@ -237,7 +230,7 @@ const TourManagementPage = () => {
         Tour Management
       </Heading>
 
-      <Box bg="white" p={6} borderRadius="lg" shadow="md">
+      <Box bg={useColorModeValue("secondaryGray.300", "navy.800")} p={6} borderRadius="lg" shadow="md">
         <Box display="flex" justifyContent="space-between" mb={4}>
           <Heading size="md">Tour List</Heading>
           <Button colorScheme="blue" onClick={openAdd}>
@@ -253,6 +246,9 @@ const TourManagementPage = () => {
               <Th>PRICE</Th>
               <Th>STATUS</Th>
               <Th>SLOTS</Th>
+              <Th>MEETING POINT</Th>
+              <Th>TOUR GUIDE</Th>
+              <Th>ACCOMMODATION</Th>
               <Th>DESTINATIONS</Th>
               <Th>ACTIONS</Th>
             </Tr>
@@ -265,6 +261,9 @@ const TourManagementPage = () => {
                 <Td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tour.tourPrice)}</Td>
                 <Td>{tour.tourStatus}</Td>
                 <Td>{tour.tourRemainingSlots}</Td>
+                <Td>{tour.tourMeetingPoint || 'N/A'}</Td>
+                <Td>{tour.tourGuide?.tourGuideName || 'N/A'}</Td>
+                <Td>{tour.accommodation?.accommodationName || 'N/A'}</Td>
                 <Td>{tour.touristDestinations?.map(d => d.destinationName).join(', ') || 'N/A'}</Td>
                 <Td>
                   <HStack>
@@ -312,16 +311,7 @@ const TourManagementPage = () => {
                     <Input placeholder="Remaining Slots" type="number" value={formData.tourRemainingSlots} onChange={(e) => handleChange("tourRemainingSlots", e.g.target.value)} />
                 </FormControl>
             </HStack>
-            <FormControl mb={4}>
-                <FormLabel>Tour Image</FormLabel>
-                <InputGroup>
-                    <Input placeholder="Click button to select image" readOnly value={formData.tourImage} />
-                    <InputRightElement width="4.5rem">
-                        <Button h="1.75rem" size="sm" onClick={() => imageFileRef.current?.click()}>Browse</Button>
-                    </InputRightElement>
-                </InputGroup>
-                <Input type="file" ref={imageFileRef} onChange={handleImageFileChange} accept="image/*" style={{ display: "none" }}/>
-            </FormControl>
+
              <HStack spacing={4} mb={4}>
                 <FormControl isRequired>
                     <FormLabel>Start Date</FormLabel>
@@ -332,6 +322,10 @@ const TourManagementPage = () => {
                     <Input type="datetime-local" value={formData.tourEndDate} onChange={(e) => handleChange("tourEndDate", e.target.value)} />
                 </FormControl>
             </HStack>
+            <FormControl mb={4}>
+                <FormLabel>Meeting Point</FormLabel>
+                <Input placeholder="Tour Meeting Point" value={formData.tourMeetingPoint} onChange={(e) => handleChange("tourMeetingPoint", e.target.value)} />
+            </FormControl>
              <HStack spacing={4} mb={4}>
                 <FormControl>
                     <FormLabel>Tour Guide</FormLabel>

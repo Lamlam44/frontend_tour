@@ -4,15 +4,22 @@ import styles from '../Assets/CSS/ComponentsCSS/SearchTabs.module.css';
 
 function SearchTabs() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [date, setDate] = useState('');
+  const [budget, setBudget] = useState('');
   const navigate = useNavigate();
 
   const handleSearch = () => {
+    const queryParams = new URLSearchParams();
     if (searchQuery.trim()) {
-      navigate(`/tours?keyword=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-        // Optionally navigate to the tour list page without a specific search query
-        navigate('/tours');
+      queryParams.append('keyword', searchQuery.trim());
     }
+    if (date) {
+      queryParams.append('date', date);
+    }
+    if (budget) {
+      queryParams.append('budget', budget);
+    }
+    navigate(`/tours?${queryParams.toString()}`);
   };
 
   return (
@@ -34,9 +41,16 @@ function SearchTabs() {
             }
           }}
         />
-        <input type="date" />
-        <select>
-          <option value="" disabled selected>Chọn ngân sách</option>
+        <input 
+          type="date" 
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+        <select 
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+        >
+          <option value="">Chọn ngân sách</option>
           <option value="0-4000000">Dưới 4 triệu</option>
           <option value="4000000-8000000">4 - 8 triệu</option>
           <option value="8000000-Infinity">Trên 8 triệu</option>

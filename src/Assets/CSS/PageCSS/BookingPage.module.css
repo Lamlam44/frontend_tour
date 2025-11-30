@@ -1,194 +1,198 @@
-.container h1 {
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-  
-  .container p {
-    color: #666;
-    margin-bottom: 2rem;
-  }
-  
-  .layout {
-    display: flex;
-    justify-content: space-between;
-    gap: 2rem;
-  }
-  
-  .customerInfoForm {
-    flex-grow: 1; /* Takes up remaining space */
-  }
-  
-  .customerInfoForm h3 {
-    font-size: 1.5rem;
-    color: #444;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 0.5rem;
-  }
-  
-  .formGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Two equal columns */
-    gap: 1.5rem;
-  }
-  
-  .formGrid input {
-    width: 100%;
-    padding: 0.8rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1rem;
-  }
-  
-  .formGrid input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
-  }
-  
-  /* --- Summary Section --- */
-  
-  .summary {
-    width: 350px; /* Fixed width for the summary */
-    flex-shrink: 0; /* Prevents shrinking */
-    background-color: #f9f9f9;
-    padding: 1.5rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-  }
-  
-  .summary h3 {
-    font-size: 1.5rem;
-    color: #333;
-    margin-bottom: 1rem;
-    text-align: center;
-  }
-  
-  .summaryItem {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-  }
-  
-  .summaryItem p {
-    color: #555;
-    margin: 0;
-  }
-  
-  .summaryItem span {
-    color: #333;
-    font-weight: 500;
-  }
-  
-  .summary hr {
-    border: 0;
-    border-top: 1px solid #eee;
-    margin: 1.5rem 0;
-  }
-  
-  .total {
-    font-size: 1.2rem;
-    font-weight: bold;
-  }
-  
-  .total p {
-    color: #222;
-  }
-  
-  .total span {
-    color: #d9534f; /* A reddish color for emphasis */
-  }
-  
-  .confirmBtn {
-    width: 100%;
-    padding: 0.8rem;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .confirmBtn:hover {
-    background-color: #0056b3;
-  }
-  
-  /* Responsive adjustments could be added here */
-  @media (max-width: 992px) {
-    .layout {
-      flex-direction: column;
-    }
-  
-    .summary {
-      width: 100%; /* Full width on smaller screens */
-      margin-top: 2rem;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .formGrid {
-      grid-template-columns: 1fr; /* Single column on even smaller screens */
-    }
-  }
+/* --- LAYOUT CHUNG --- */
+.container {
+    padding: 2rem 5%;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 60vh; /* Đảm bảo trang không bị ngắn quá */
+}
 
-  /* Promotion Code Section Styles */
-.promotionSection {
-    margin-top: 1rem;
-  }
-  
-  .promotionSection h4 {
+.container h1 {
+    text-align: center;
+    color: var(--primary-color, #007bff);
+    margin-bottom: 1rem;
+    font-size: 2.2rem;
+}
+
+.container > p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2.5rem;
     font-size: 1.1rem;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-  
-  .promotionInput {
+}
+
+.layout {
     display: flex;
-    gap: 0.5rem;
-  }
-  
-  .promotionInput input {
-    flex-grow: 1;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .promotionInput button {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    color: #fff;
-    background-color: #28a745; /* Green color for apply button */
-    border: none;
-    border-radius: 4px;
+    gap: 2.5rem;
+    align-items: flex-start;
+}
+
+/* --- PHẦN FORM THÔNG TIN / THANH TOÁN (BÊN TRÁI) --- */
+.customerInfoForm {
+    flex: 2;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.customerInfoForm h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.4rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.8rem;
+}
+
+/* --- TITLE TRANG THANH TOÁN --- */
+.paymentTitle {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color, #007bff);
+    margin-bottom: 2rem;
+}
+
+/* --- PHƯƠNG THỨC THANH TOÁN (BUTTONS) --- */
+.paymentMethods {
+    display: flex;
+    flex-direction: column; /* Xếp dọc cho dễ nhìn trên mobile */
+    gap: 1rem;
+}
+
+.paymentButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #333;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .promotionInput button:hover {
-    background-color: #218838;
-  }
-  
-  .errorMessage {
-    color: #dc3545; /* Red for error messages */
-    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hiệu ứng Hover */
+.paymentButton:hover:not(:disabled) {
+    border-color: var(--primary-color, #007bff);
+    background-color: #f0f7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.15);
+}
+
+/* Trạng thái Loading / Disabled */
+.paymentButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f9f9f9;
+}
+
+/* Style riêng cho từng nút (Tùy chọn nếu muốn màu khác nhau) */
+/* Ví dụ: Nút VNPAY có thể thêm màu thương hiệu */
+.paymentButton:nth-child(2) { 
+    /* border-color: #ed1c24;  Màu đỏ VNPAY */
+}
+
+/* --- THÔNG BÁO LỖI / THÀNH CÔNG --- */
+.errorMessage {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: #fff5f5;
+    color: #e53e3e;
+    border: 1px solid #feb2b2;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.successMessage {
+    padding: 2rem;
+    background-color: #f0fff4;
+    color: #2f855a;
+    border: 1px solid #c6f6d5;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* --- SIDEBAR TÓM TẮT (BÊN PHẢI) --- */
+.summary {
+    flex: 1;
+    background: #f8f9fa; /* Màu nền xám nhạt */
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    position: sticky;
+    top: 20px; /* Dính khi cuộn */
+}
+
+.summary h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+}
+
+.summaryItem {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: #555;
+}
+
+.summaryItem p {
+    margin: 0;
+    /* Giới hạn chiều rộng tên tour nếu dài quá */
+    max-width: 60%; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.summaryItem span {
+    font-weight: 600;
+    color: #333;
+}
+
+.summary hr {
+    border: none;
+    border-top: 1px dashed #ccc;
+    margin: 1.5rem 0;
+}
+
+.summaryItem.total {
+    font-size: 1.3rem;
+    color: #000;
     margin-top: 0.5rem;
-  }
-  
-  .discount {
-    color: #28a745; /* Green for discount amount */
-  }
-  
-  .discount p {
-    color: #28a745;
-  }
-  
-  .discount span {
-    font-weight: bold;
-  }
-  
+}
+
+.summaryItem.total span {
+    color: var(--secondary-color, #e53e3e); /* Màu giá tiền nổi bật */
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+/* --- RESPONSIVE MOBILE --- */
+@media (max-width: 768px) {
+    .layout {
+        flex-direction: column;
+    }
+    
+    .customerInfoForm, .summary {
+        width: 100%;
+    }
+    
+    .summary {
+        order: -1; /* Đưa tóm tắt lên đầu trên mobile */
+        position: static;
+        margin-bottom: 2rem;
+    }
+}

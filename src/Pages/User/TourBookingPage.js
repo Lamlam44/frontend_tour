@@ -4,7 +4,8 @@ import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
 import { useAuth } from '../../context/AuthContext'; // Updated import
-import { getTourById, applyPromotion } from '../../services/api';
+import { getTourById, applyPromotion, createInvoice } from '../../services/api';
+import Invoice from '../../Components/Invoice';
 
 const formatPrice = (price) => {
     if (typeof price !== 'number') return 'N/A';
@@ -17,6 +18,9 @@ function TourBookingPage() {
     const location = useLocation();
     const { user, isAuthenticated } = useAuth(); // Using AuthContext
 
+    // Lấy accommodationId từ state được truyền từ trang chi tiết
+    const accommodationId = location.state?.accommodationId;
+
     const [fetchedTourDetails, setFetchedTourDetails] = useState(null);
     const [currentGuestCount, setCurrentGuestCount] = useState(location.state?.guestCount || 1);
     const [customerInfo, setCustomerInfo] = useState({
@@ -24,6 +28,8 @@ function TourBookingPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     
     // State for promotion code
     const [promotionCode, setPromotionCode] = useState('');
@@ -96,28 +102,33 @@ function TourBookingPage() {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const totalAmount = (tourDetails?.price || 0) * (guestCount || 1);
-        const finalPrice = totalAmount - promoDiscountAmount - memberDiscount;
+        setIsSubmitting(true);
+        setSubmitError('');
 
-        navigate('/payment', { 
-            state: { 
-                bookingDetails: {
-                    ...customerInfo,
-                    guestCount: guestCount || 1,
-                }, 
-                itemDetails: tourDetails,
-                displayTotalAmount: finalPrice, 
-                displayDiscountAmount: promoDiscountAmount + memberDiscount, // Total discount
-                transactionData: {
-                    tourId: tourDetails.tourId || tourDetails.id,
-                    quantity: guestCount || 1,
-                    promotionIds: appliedPromotionId ? [appliedPromotionId] : [] 
-                }
-            } 
-        });
+        const invoicePayload = {
+            customerName: customerInfo.fullName,
+            customerEmail: customerInfo.email,
+            customerPhone: customerInfo.phoneNumber,
+            tourId: tourDetails.tourId || tourDetails.id,
+            numberOfPeople: guestCount || 1,
+            promotionIds: appliedPromotionId ? [appliedPromotionId] : [],
+            accommodationId: accommodationId,
+        };
+
+        try {
+            const invoiceResponse = await createInvoice(invoicePayload);
+            if (invoiceResponse) {
+                navigate('/payment', { state: { invoice: invoiceResponse } });
+            } else {
+                throw new Error("Không nhận được phản hồi hóa đơn hợp lệ.");
+            }
+        } catch (err) {
+            setSubmitError(err.response?.data?.message || 'Tạo hóa đơn thất bại. Vui lòng thử lại.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (isLoading) {
@@ -154,43 +165,25 @@ function TourBookingPage() {
                                 <input name="phoneNumber" type="tel" placeholder="Số điện thoại*" value={customerInfo.phoneNumber || ''} onChange={handleInputChange} required />
                                 <input name="address" type="text" placeholder="Địa chỉ" value={customerInfo.address || ''} onChange={handleInputChange} />
                             </div>
+                            {submitError && <p className={styles.errorMessage}>{submitError}</p>}
                         </div>
 
-                        <aside className={styles.summary}>
-                            <h3>Tóm tắt chuyến đi</h3>
-                            <div className={styles.summaryItem}><p>{tourDetails.name}</p><span>{formatPrice(tourDetails.price)}</span></div>
-                            <div className={styles.summaryItem}><p>Số lượng khách</p><span>x {numberOfGuests}</span></div>
-                            <div className={styles.summaryItem}><p>Tạm tính</p><span>{formatPrice(totalPrice)}</span></div>
-                            <hr/>
-                            
-                            {memberDiscount > 0 && (
-                                <div className={`${styles.summaryItem} ${styles.discount}`}>
-                                    <p>Giảm giá thành viên</p>
-                                    <span>- {formatPrice(memberDiscount)}</span>
-                                </div>
-                            )}
-
-                            <div className={styles.promotionSection}>
-                                <h4>Áp dụng mã giảm giá</h4>
-                                <div className={styles.promotionInput}>
-                                    <input type="text" placeholder="Nhập mã giảm giá" value={promotionCode} onChange={(e) => setPromotionCode(e.target.value)} />
-                                    <button type="button" onClick={handleApplyPromotion}>Xác nhận</button>
-                                </div>
-                                {discountError && <p className={styles.errorMessage}>{discountError}</p>}
-                            </div>
-                            
-                            {promoDiscountAmount > 0 && (
-                                <div className={`${styles.summaryItem} ${styles.discount}`}>
-                                    <p>Số tiền giảm (Mã)</p>
-                                    <span>- {formatPrice(promoDiscountAmount)}</span>
-                                </div>
-                            )}
-
-                            <hr/>
-
-                            <div className={`${styles.summaryItem} ${styles.total}`}><p>Tổng cộng</p><span>{formatPrice(finalPrice)}</span></div>
-                            <button type="submit" className={styles.confirmBtn}>Tiếp tục đến thanh toán</button>
-                        </aside>
+                        <Invoice
+                            tourDetails={tourDetails}
+                            numberOfGuests={numberOfGuests}
+                            totalPrice={totalPrice}
+                            memberDiscount={memberDiscount}
+                            promoDiscountAmount={promoDiscountAmount}
+                            finalPrice={finalPrice}
+                            promotionCode={promotionCode}
+                            setPromotionCode={setPromotionCode}
+                            handleApplyPromotion={handleApplyPromotion}
+                            discountError={discountError}
+                        >
+                            <button type="submit" className={styles.confirmBtn} disabled={isSubmitting}>
+                                {isSubmitting ? 'Đang xử lý...' : 'Tiếp tục đến thanh toán'}
+                            </button>
+                        </Invoice>
                     </div>
                 </form>
             </div>

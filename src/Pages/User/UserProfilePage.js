@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../context/WebSocketContext';
 import styles from '../../Assets/CSS/PageCSS/UserProfilePage.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { getInvoicesForCurrentUser } from '../../services/api'; // Import new function
+import { getInvoicesForCurrentUser } from '../../services/api';
 
 const UserProfilePage = () => {
     const { user, updateUser, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    
+
+    // 1. Lấy context an toàn (tránh lỗi destructure null)
+    const webSocketContext = useWebSocket();
+    const { subscribe, isConnected } = webSocketContext || {}; 
+
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         customerName: '',
@@ -20,25 +25,37 @@ const UserProfilePage = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [notification, setNotification] = useState({ message: '', type: '' });
-    const [userInvoices, setUserInvoices] = useState([]); // New state for invoices
-    const [showBookingHistory, setShowBookingHistory] = useState(false); // New state to toggle history visibility
+    const [userInvoices, setUserInvoices] = useState([]);
+    const [showBookingHistory, setShowBookingHistory] = useState(false);
+    
+    // Ref lưu trữ subscription để unsubscribe sau này
+    const subscriptionRef = useRef(null);
 
-    // Store initial data to revert to
+    // Helper: Format Date an toàn
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+    };
+
+    // Giá trị khởi tạo form
     const initialFormData = {
         customerName: user?.name || '',
         customerEmail: user?.email || '',
         customerPhone: user?.phone || '',
         customerAddress: user?.address || '',
-        // Kiểm tra kỹ null/undefined trước khi format date
-        customerDateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        customerDateOfBirth: formatDateForInput(user?.dateOfBirth),
         password: ''
     };
 
-    // Effect to update form data when user object changes
+    // Effect 1: Kiểm tra Auth và tải dữ liệu ban đầu
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/login');
-        } else if (user) {
+            return;
+        }
+        
+        if (user) {
             setFormData(initialFormData);
             const fetchUserInvoices = async () => {
                 try {
@@ -54,6 +71,54 @@ const UserProfilePage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, isAuthenticated, navigate]);
 
+    // Effect 2: WebSocket Subscription (Đã fix lỗi)
+    useEffect(() => {
+        // Chỉ chạy khi đã kết nối và có user ID
+        if (isConnected && user?.id && subscribe) {
+            const topic = `/user/${user.id}/queue/invoice-updates`; 
+
+            // Hủy đăng ký cũ nếu tồn tại trước khi tạo cái mới
+            if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+            }
+
+            // Đăng ký nhận tin nhắn
+            const newSubscription = subscribe(topic, (message) => {
+                console.log("Invoice update received:", message);
+                
+                // Parse message body nếu cần (tùy vào backend gửi string hay json object)
+                const msgBody = message.body ? JSON.parse(message.body) : message;
+
+                setNotification({ 
+                    message: `Hóa đơn #${msgBody.invoiceId} cập nhật: ${msgBody.status}`, 
+                    type: 'success' 
+                });
+
+                // Cập nhật danh sách hóa đơn realtime
+                setUserInvoices(prevInvoices => 
+                    prevInvoices.map(invoice => 
+                        invoice.invoiceId === msgBody.invoiceId 
+                            ? { ...invoice, status: msgBody.status } 
+                            : invoice
+                    )
+                );
+            });
+
+            subscriptionRef.current = newSubscription;
+        }
+
+        // Cleanup khi component unmount
+        return () => {
+            if (subscriptionRef.current) {
+                // Cách chuẩn để hủy đăng ký trong StompJS
+                if (typeof subscriptionRef.current.unsubscribe === 'function') {
+                    subscriptionRef.current.unsubscribe();
+                }
+                subscriptionRef.current = null;
+            }
+        };
+    }, [isConnected, user?.id, subscribe]); // Bỏ unsubscribe khỏi dependency vì ta dùng method của object subscription
+
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -61,40 +126,25 @@ const UserProfilePage = () => {
         });
     };
 
-    // --- PHẦN SỬA ĐỔI QUAN TRỌNG ---
-    // Function to enter edit mode
     const handleEdit = (e) => {
-        // Ngăn chặn hành vi mặc định nếu có
         if(e) e.preventDefault();
-
-        // Sử dụng setTimeout để đẩy việc cập nhật state xuống cuối hàng đợi sự kiện.
-        // Điều này đảm bảo sự kiện "mouseup" của người dùng hoàn tất trên nút "Sửa"
-        // TRƯỚC KHI nút "Xác nhận" (Submit) xuất hiện tại cùng vị trí.
         setTimeout(() => {
             setIsEditing(true);
-        }, 100); // Delay 100ms là đủ an toàn và mượt mà
+        }, 100);
     };
-    // --------------------------------
 
-    // Function to cancel editing and revert changes
     const handleCancel = () => {
         setIsEditing(false);
         setFormData(initialFormData);
         setNotification({ message: '', type: '' });
     };
 
-    // Function to handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Safeguard: Do not submit if not in editing mode.
-        if (!isEditing) {
-            return;
-        }
+        if (!isEditing) return;
 
         const updateData = { ...formData };
-        
-        // Only include password if it has been changed
         if (!updateData.password) {
             delete updateData.password;
         }
@@ -103,7 +153,7 @@ const UserProfilePage = () => {
             const result = await updateUser(updateData);
             if (result.success) {
                 setNotification({ message: 'Cập nhật thông tin thành công!', type: 'success' });
-                setIsEditing(false); // Tắt chế độ edit sau khi thành công
+                setIsEditing(false);
             } else {
                 setNotification({ message: result.error || 'Đã xảy ra lỗi.', type: 'error' });
             }
@@ -111,7 +161,6 @@ const UserProfilePage = () => {
             setNotification({ message: 'Lỗi kết nối server.', type: 'error' });
         }
 
-        // Tự động ẩn thông báo sau 3 giây
         setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     };
 
@@ -124,8 +173,9 @@ const UserProfilePage = () => {
         setShowPassword(!showPassword);
     };
 
+    // Kiểm tra an toàn trước khi render
     if (!user) {
-        return <div>Loading...</div>;
+        return <div style={{ textAlign: 'center', marginTop: '50px' }}>Đang tải thông tin...</div>;
     }
 
     return (
@@ -142,7 +192,6 @@ const UserProfilePage = () => {
             )}
 
             <form onSubmit={handleSubmit} className={styles.profileForm}>
-                {/* Form Fields */}
                 <div className={styles.formRow}>
                     <div className={styles.formLabel}>Họ và Tên</div>
                     <div className={styles.formValue}>
@@ -152,7 +201,7 @@ const UserProfilePage = () => {
                 <div className={styles.formRow}>
                     <div className={styles.formLabel}>Email</div>
                     <div className={styles.formValue}>
-                        <input type="customerEmail" name="customerEmail" value={formData.customerEmail} onChange={handleChange} disabled={!isEditing} className={styles.inputField} />
+                        <input type="email" name="customerEmail" value={formData.customerEmail} onChange={handleChange} disabled={!isEditing} className={styles.inputField} />
                     </div>
                 </div>
                 <div className={styles.formRow}>
@@ -185,7 +234,6 @@ const UserProfilePage = () => {
                     </div>
                 )}
 
-                {/* Button Group */}
                 <div className={styles.buttonGroup}>
                     {isEditing ? (
                         <>
@@ -205,7 +253,6 @@ const UserProfilePage = () => {
                         </>
                     ) : (
                         <div className={styles.rightButtons}>
-                            {/* Đã thêm onClick gọi hàm handleEdit mới */}
                             <button type="button" className={styles.actionButton} onClick={handleEdit}>
                                 Sửa thông tin
                             </button>

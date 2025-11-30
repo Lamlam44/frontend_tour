@@ -86,6 +86,50 @@
 
 
 /* --- 2. STYLES CHO BUTTON (Ngân sách, Dòng Tour, Phương tiện) --- */
+/* --- 2. STYLES CHO BUTTON (Ngân sách - Đã chỉnh sửa) --- */
+
+/* Container cho các nút ngân sách */
+.priceRangeButtons {
+    display: flex;
+    flex-direction: column; /* Xếp dọc từ trên xuống */
+    gap: 10px; /* Khoảng cách giữa các nút */
+    width: 100%;
+}
+
+/* Style cho từng nút bấm */
+.priceRangeButton {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--white); /* Nền trắng giống dropdown */
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: left; /* Căn trái chữ cho giống dropdown */
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Để sau này có thể thêm icon check nếu muốn */
+}
+
+/* Hiệu ứng hover */
+.priceRangeButton:hover {
+    border-color: var(--primary-color);
+    background-color: var(--background-color-light);
+}
+
+/* Trạng thái đang chọn (Active) */
+.priceRangeButton.active {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 123, 255, 0.1); /* Màu xanh nhạt */
+    color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 0 0 1px var(--primary-color); /* Viền đậm hơn chút */
+}
+
+/* Style cho các nút option khác (Phương tiện) - Giữ nguyên hoặc điều chỉnh nhẹ */
 .optionButtons {
     display: flex;
     flex-wrap: wrap;
@@ -96,7 +140,7 @@
 .optionButton {
     padding: 8px 15px;
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: 20px; /* Bo tròn hơn cho tag phương tiện */
     background-color: var(--background-color-light);
     color: var(--text-color-primary);
     cursor: pointer;
@@ -116,7 +160,7 @@
     color: var(--secondary-color);
     font-size: 0.8rem;
     cursor: pointer;
-    margin-left: 10px;
+    margin-left: auto; /* Đẩy sang phải cùng */
 }
 
 /* Styles for search bar in TourListPage */

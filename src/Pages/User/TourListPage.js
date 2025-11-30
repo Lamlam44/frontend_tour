@@ -32,21 +32,50 @@ const renderVehicles = (vehicles) => {
     return vehicles.map(v => v.vehicleType).join(', ');
 };
 
-const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/300'; 
-    if (imagePath.startsWith('http')) {
-        return imagePath;
+const getImageUrl = (imageInput) => {
+    // 1. Ảnh thế thân (Fallback) nếu dữ liệu null
+    // Sử dụng placehold.co (ổn định hơn via.placeholder.com)
+    const PLACEHOLDER_IMG = 'https://placehold.co/600x400?text=No+Image';
+
+    if (!imageInput) return PLACEHOLDER_IMG;
+    
+    // 2. Lấy đường dẫn (Xử lý cả trường hợp String lẫn Object)
+    let path = (typeof imageInput === 'string') ? imageInput : imageInput.imageUrl;
+
+    if (!path) return PLACEHOLDER_IMG;
+
+    // 3. Nếu là ảnh Online (bắt đầu bằng http) -> Giữ nguyên
+    if (path.startsWith('http')) {
+        return path;
     }
-    // Giả sử backend chạy port 8080
-    return `http://localhost:8080${imagePath}`;
+    
+    // 4. Nếu là ảnh Local -> Thêm domain backend
+    // Đảm bảo không bị thừa dấu / (ví dụ: path là "/Images/..." thì cộng chuỗi bình thường)
+    return `http://localhost:8080${path}`;
 };
 
 // --- Main Component ---
 function TourListPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const queryParams = new URLSearchParams(location.search);
+    const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    
+    const budgetOptions = useMemo(() => [
+        { label: 'Dưới 4 triệu', value: 'under4', range: '0-4000000', min: 0, max: 4000000 },
+        { label: 'Từ 4 - 8 triệu', value: '4-8', range: '4000000-8000000', min: 4000001, max: 8000000 },
+        { label: 'Trên 8 triệu', value: 'over8', range: '8000000-Infinity', min: 8000001, max: Infinity },
+    ], []);
+
+    const getBudgetOptionFromRange = (range) => {
+        if (!range) return '';
+        const option = budgetOptions.find(b => b.range === range);
+        return option ? option.value : '';
+    };
+
     const initialSearchKeyword = queryParams.get('keyword') || '';
+    const initialDate = queryParams.get('date') || '';
+    const initialBudgetRange = queryParams.get('budget') || '';
+    const initialBudgetValue = getBudgetOptionFromRange(initialBudgetRange);
 
     // --- State ---
     const [allTours, setAllTours] = useState([]);
@@ -55,20 +84,15 @@ function TourListPage() {
     
     // Filters State
     const [selectedDestination, setSelectedDestination] = useState('Tất cả'); 
-    const [selectedDepartureDate, setSelectedDepartureDate] = useState(''); 
+    const [selectedDepartureDate, setSelectedDepartureDate] = useState(initialDate); 
     const [selectedVehicle, setSelectedVehicle] = useState([]); 
-    const [selectedBudget, setSelectedBudget] = useState(''); 
+    const [selectedBudget, setSelectedBudget] = useState(initialBudgetValue); 
     const [currentSearchKeyword, setCurrentSearchKeyword] = useState(initialSearchKeyword);
 
     const departureDateInputRef = useRef(null);
 
     // Options
     const vehicleOptions = ['Xe', 'Máy bay', 'Tàu']; 
-    const budgetOptions = useMemo(() => [
-        { label: 'Dưới 4 triệu', value: 'under4', min: 0, max: 4000000 },
-        { label: 'Từ 4 - 8 triệu', value: '4-8', min: 4000001, max: 8000000 },
-        { label: 'Trên 8 triệu', value: 'over8', min: 8000001, max: Infinity },
-    ], []);
 
     // --- Effects ---
     useEffect(() => {
@@ -294,7 +318,10 @@ function TourListPage() {
                             {filteredTours.length > 0 ? (
                                 filteredTours.map(tour => (
                                     <Link to={`/tours/${tour.tourId}`} key={tour.tourId} className={styles.card}>
-                                        <img src={getImageUrl(tour.tourImage)} alt={tour.tourName} />
+                                        <img 
+                                            src={getImageUrl(tour.tourImages && tour.tourImages.length > 0 ? tour.tourImages[0] : null)} 
+                                            alt={tour.tourName} 
+                                        />
                                         <div className={styles.cardContent}>
                                             <h3>{tour.tourName}</h3>
                                             <p className={styles.description}>
