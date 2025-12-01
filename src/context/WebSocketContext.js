@@ -20,32 +20,38 @@ export const WebSocketProvider = ({ children }) => {
     useEffect(() => {
         let client;
 
+        // Chỉ connect khi đã login
         if (isAuthenticated && user) {
-            // Establish connection
-            const socket = new SockJS('http://localhost:8080/ws'); // Backend WebSocket endpoint
+            const socket = new SockJS('http://localhost:8080/ws');
             client = Stomp.over(socket);
 
+            // Tắt debug log spam nếu muốn
+            // client.debug = () => {}; 
+
+            // --- QUAN TRỌNG: Gửi Token để Authenticate ---
+            const token = localStorage.getItem('token');
             const headers = {
-                // If using JWT, pass the token for authentication
-                // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}` 
             };
+            // ---------------------------------------------
 
             client.connect(headers, () => {
                 setIsConnected(true);
                 setStompClient(client);
-                console.log('WebSocket Connected');
+                console.log('WebSocket Connected as ' + user.username); // Log để debug
             }, (error) => {
                 console.error('WebSocket Connection Error:', error);
                 setIsConnected(false);
                 setStompClient(null);
             });
-
         }
 
         return () => {
-            // Cleanup on unmount or user logout
             if (client && client.connected) {
-                Object.values(subscriptions.current).forEach(sub => sub.unsubscribe());
+                // Hủy tất cả đăng ký trước khi ngắt
+                Object.values(subscriptions.current).forEach(sub => {
+                    if(sub && typeof sub.unsubscribe === 'function') sub.unsubscribe();
+                });
                 client.disconnect(() => {
                     console.log('WebSocket Disconnected');
                     setIsConnected(false);
@@ -54,15 +60,25 @@ export const WebSocketProvider = ({ children }) => {
                 });
             }
         };
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user]); // Re-connect nếu user thay đổi
 
     const subscribe = useCallback((topic, callback) => {
         if (stompClient && isConnected) {
+            // Kiểm tra để tránh subscribe trùng lặp
+            if (subscriptions.current[topic]) {
+                 subscriptions.current[topic].unsubscribe();
+            }
+
             const subscription = stompClient.subscribe(topic, message => {
-                const parsedMessage = JSON.parse(message.body);
-                console.log(`WebSocket message received on topic ${topic}:`, parsedMessage); // Placeholder for toast notification
-                setLastMessage(parsedMessage); // Store the last message
-                callback(parsedMessage); // Also call the specific callback
+                // Parse JSON an toàn
+                try {
+                    const parsedMessage = JSON.parse(message.body);
+                    console.log(`WS Message [${topic}]:`, parsedMessage);
+                    setLastMessage(parsedMessage);
+                    callback(parsedMessage);
+                } catch (e) {
+                    console.error("Error parsing WS message:", e);
+                }
             });
             subscriptions.current[topic] = subscription;
             return subscription;
@@ -81,7 +97,7 @@ export const WebSocketProvider = ({ children }) => {
         stompClient,
         isConnected,
         lastMessage,
-        subscribe: subscribe,
+        subscribe,
         unsubscribe,
     };
 

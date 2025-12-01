@@ -1,401 +1,402 @@
 import React, { useState, useEffect } from "react";
 import {
-    Box,
-    Heading,
-    Button,
-    Table,
-    Thead,
-    Tbody,
-    Tr,
-    Th,
-    Td,
-    Input,
-    HStack,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
-    useDisclosure,
-    Select,
-    Badge,
-    useToast,
-    FormControl,
-    FormLabel,
-    useColorModeValue,
+  Box,
+  Heading,
+  Button,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Input,
+  HStack,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Select,
+  Badge,
+  useToast,
+  FormControl,
+  FormLabel,
+  SimpleGrid,
+  Icon,
+  Text,
+  InputGroup,
+  InputRightElement,
+  Switch,
+  Flex
 } from "@chakra-ui/react";
-import axiosInstance from "../../api/axiosConfig";
-import Card from '../../Admin/components/card/Card';
-
-const API_ACCOUNTS = "http://localhost:8080/api/accounts";
-const API_ROLES = "http://localhost:8080/api/account-roles";
+import { FaUser, FaLock, FaUserTag, FaEye, FaEyeSlash, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  getAccounts,
+  getAccountRoles,
+  addAccount,
+  updateAccount,
+  deleteAccount,
+  getCustomers, 
+  deleteCustomer
+} from "../../services/api";
 
 const AccountManagementPage = () => {
-    const [accounts, setAccounts] = useState([]);
-    const [roles, setRoles] = useState([]);
-    const [isEdit, setIsEdit] = useState(false);
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-    const [deleteId, setDeleteId] = useState(null);
-    const toast = useToast();
+  // --- STATE ---
+  const [accounts, setAccounts] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
+  
+  // Password Visibility
+  const [showPassword, setShowPassword] = useState(false);
 
-    const [formData, setFormData] = useState({
-        username: "",
-        password: "",
-        roleId: "",
-        status: true,
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
+
+  // Design System Colors
+  const bgColor = "navy.900";
+  const cardBg = "navy.800";
+  const modalBg = "gray.800";
+  const inputBg = "gray.700";
+  const borderColor = "gray.600";
+  const hoverBg = "navy.700";
+
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    roleId: "",
+    status: true,
+  });
+
+  // --- API CALLS ---
+  const loadData = async () => {
+    try {
+        const [accountsData, rolesData] = await Promise.all([
+            getAccounts(),
+            getAccountRoles()
+        ]);
+        setAccounts(accountsData);
+        setRoles(rolesData);
+    } catch (err) {
+      console.error("Error loading data", err);
+      toast({
+        title: "Error loading data",
+        description: "Check console for details.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // --- HANDLERS ---
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      username: "",
+      password: "",
+      roleId: "",
+      status: true,
     });
+    setIsEdit(false);
+    setEditId(null);
+    setShowPassword(false);
+  };
 
-    const [editId, setEditId] = useState(null);
+  const validateForm = () => {
+    if (!formData.username || !formData.roleId) {
+        toast({ title: "Username and Role are required.", status: "warning", duration: 3000 });
+        return false;
+    }
+    // Validate password logic
+    if (!isEdit && !formData.password) {
+        toast({ title: "Password is required for new accounts.", status: "warning", duration: 3000 });
+        return false;
+    }
+    if (formData.password && formData.password.length < 6) {
+        toast({ title: "Password must be at least 6 characters.", status: "warning", duration: 3000 });
+        return false;
+    }
+    return true;
+  };
 
-    // Load accounts and roles
-    const loadAccounts = async () => {
+  const handleAdd = async () => {
+    if (!validateForm()) return;
+
+    try {
+      await addAccount(formData);
+      toast({ title: "Account created successfully", status: "success", duration: 3000 });
+      onClose();
+      loadData();
+      resetForm();
+    } catch (err) {
+      console.error("Error adding account", err);
+      toast({ 
+        title: "Error adding account", 
+        description: err.response?.data?.message || err.message, 
+        status: "error", 
+        duration: 5000 
+      });
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!validateForm()) return;
+
+    try {
+      // Backend DTO yêu cầu password @NotBlank. 
+      // Nếu user không nhập password mới, form sẽ gửi chuỗi rỗng và gây lỗi 400.
+      // Do không được sửa Backend, nếu user để trống, ta sẽ cảnh báo họ.
+      if (!formData.password) {
+          toast({ 
+            title: "Backend Constraint", 
+            description: "Password is required for update due to system security policy.", 
+            status: "warning", 
+            duration: 5000 
+          });
+          return;
+      }
+
+      await updateAccount(editId, formData);
+      toast({ title: "Account updated successfully", status: "success", duration: 3000 });
+      onClose();
+      loadData();
+      resetForm();
+    } catch (err) {
+      console.error("Error updating account", err);
+      toast({ 
+        title: "Error updating account", 
+        description: err.response?.data?.message || err.message, 
+        status: "error", 
+        duration: 5000 
+      });
+    }
+  };
+
+  const handleDelete = async (accountId) => {
+    if (!window.confirm("Are you sure? This will also delete any linked Customer data.")) return;
+
+    try {
+        // 1. Tìm và xóa Customer liên kết trước (Logic từ code cũ của bạn)
         try {
-            const res = await axiosInstance.get(API_ACCOUNTS);
-            setAccounts(res.data);
-        } catch (err) {
-            console.error("Error loading accounts", err);
-            toast({
-                title: "Error",
-                description: "Unable to load account list",
-                status: "error",
-                duration: 3000,
-            });
-        }
-    };
-
-    const loadRoles = async () => {
-        try {
-            const res = await axiosInstance.get(API_ROLES);
-            console.log("Loaded roles:", res.data);
-            setRoles(res.data);
-        } catch (err) {
-            console.error("Error loading roles", err);
-        }
-    };
-
-    useEffect(() => {
-        loadAccounts();
-        loadRoles();
-    }, []);
-
-    // Create new or update
-    const handleSubmit = async () => {
-        // Validation
-        if (!formData.username || !formData.roleId) {
-            toast({
-                title: "Error",
-                description: "Please fill in all required information (Username and Role)",
-                status: "error",
-                duration: 3000,
-            });
-            return;
-        }
-
-        if (!isEdit && !formData.password) {
-            toast({
-                title: "Error",
-                description: "Please enter password",
-                status: "error",
-                duration: 3000,
-            });
-            return;
-        }
-
-        console.log("Submitting data:", formData);
-
-        try {
-            if (isEdit) {
-                await axiosInstance.put(`${API_ACCOUNTS}/${editId}`, formData);
-                toast({
-                    title: "Success",
-                    description: "Account updated successfully",
-                    status: "success",
-                    duration: 3000,
-                });
-            } else {
-                await axiosInstance.post(API_ACCOUNTS, formData);
-                toast({
-                    title: "Success",
-                    description: "Account created successfully",
-                    status: "success",
-                    duration: 3000,
-                });
-            }
-            loadAccounts();
-            onClose();
-            resetForm();
-        } catch (err) {
-            console.error("Error submitting", err);
-            console.error("Response data:", err.response?.data);
+            const customers = await getCustomers();
+            const associatedCustomer = customers.find(c => c.account?.accountId === accountId);
             
-            // Handle validation errors from backend
-            let errorMessage = "An error occurred";
-            
-            if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
-                // Get all validation errors
-                const validationErrors = err.response.data.errors
-                    .map(error => error.defaultMessage)
-                    .join(", ");
-                errorMessage = validationErrors;
-            } else if (err.response?.data?.message) {
-                errorMessage = err.response.data.message;
+            if (associatedCustomer) {
+                await deleteCustomer(associatedCustomer.customerId);
+                console.log("Deleted associated customer:", associatedCustomer.customerId);
             }
-            
-            toast({
-                title: "Error",
-                description: errorMessage,
-                status: "error",
-                duration: 5000,
-            });
+        } catch (custErr) {
+            console.warn("Could not check/delete associated customer", custErr);
+            // Vẫn tiếp tục xóa account
         }
-    };
 
-    // Open delete confirmation
-    const openDeleteConfirm = (id) => {
-        setDeleteId(id);
-        onDeleteOpen();
-    };
+        // 2. Xóa Account
+        await deleteAccount(accountId);
+        toast({ title: "Account deleted successfully", status: "success", duration: 3000 });
+        loadData();
+    } catch (err) {
+      console.error("Error deleting account", err);
+      toast({ title: "Cannot delete account", status: "error", duration: 3000 });
+    }
+  };
 
-    // Delete account
-    const handleDelete = async () => {
-        try {
-            // First, try to find and delete associated customer
-            try {
-                const customersRes = await axiosInstance.get("http://localhost:8080/api/customers");
-                const associatedCustomer = customersRes.data.find(
-                    customer => customer.account?.accountId === deleteId
-                );
-                
-                if (associatedCustomer) {
-                    await axiosInstance.delete(`http://localhost:8080/api/customers/${associatedCustomer.customerId}`);
-                    console.log("Associated customer deleted");
-                }
-            } catch (customerErr) {
-                console.error("Error checking/deleting customer", customerErr);
-                // Continue to delete account even if customer deletion fails
-            }
+  const openEdit = (acc) => {
+    setIsEdit(true);
+    setEditId(acc.accountId);
+    setFormData({
+      username: acc.username || "",
+      password: "", // Không thể lấy mật khẩu cũ, user phải nhập mới nếu muốn đổi
+      roleId: acc.role?.accountRoleId || "",
+      status: acc.status,
+    });
+    onOpen();
+  };
 
-            // Then delete the account
-            await axiosInstance.delete(`${API_ACCOUNTS}/${deleteId}`);
-            toast({
-                title: "Success",
-                description: "Account deleted successfully",
-                status: "success",
-                duration: 3000,
-            });
-            loadAccounts();
-            onDeleteClose();
-        } catch (err) {
-            console.error("Error deleting", err);
-            toast({
-                title: "Error",
-                description: "Unable to delete account",
-                status: "error",
-                duration: 3000,
-            });
-        }
-    };
+  // --- RENDER ---
+  return (
+    <Box p={6} bg={bgColor} color="white" borderRadius="2xl" minH="100vh">
+      <Heading size="md" mb={6}>Account Management</Heading>
 
-    // Open edit form
-    const openEdit = (account) => {
-        setIsEdit(true);
-        setEditId(account.accountId);
-        setFormData({
-            username: account.username,
-            password: "", // Leave empty, user will enter new password
-            roleId: account.role?.accountRoleId || "",
-            status: account.status,
-        });
-        onOpen();
-    };
+      <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
+        <Flex justify='space-between' align='center' mb='20px'>
+          <Heading size="sm">System Accounts</Heading>
+          <Button 
+            colorScheme='blue' 
+            onClick={() => { resetForm(); onOpen(); }}
+            size="md"
+          >
+            Add New Account
+          </Button>
+        </Flex>
 
-    // Reset form
-    const resetForm = () => {
-        setFormData({
-            username: "",
-            password: "",
-            roleId: "",
-            status: true,
-        });
-        setIsEdit(false);
-        setEditId(null);
-    };
-
-    return (
-        <Box p={6} bg="navy.900" color="white" borderRadius="2xl">
-            <Heading size="md" mb={6} color="white">
-                Account Management
-            </Heading>
-
-            <Box bg="navy.800" p={6} borderRadius="2xl">
-                <Box display="flex" justifyContent="space-between" mb={4}>
-                    <Heading size="sm">Account List</Heading>
-                    <Button
-                        colorScheme="blue"
-                        onClick={() => {
-                            resetForm();
-                            onOpen();
-                        }}
+        <Box overflowX="auto">
+          <Table variant='simple' colorScheme="whiteAlpha">
+            <Thead>
+              <Tr>
+                <Th color="gray.400">ID / Username</Th>
+                <Th color="gray.400">Role</Th>
+                <Th color="gray.400">Status</Th>
+                <Th color="gray.400">Created At</Th>
+                <Th color="gray.400">Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {accounts.map((acc) => (
+                <Tr key={acc.accountId} _hover={{ bg: hoverBg }}>
+                  <Td>
+                    <Box>
+                        <Text fontSize="xs" color="gray.500">{acc.accountId}</Text>
+                        <HStack mt={1}>
+                            <Icon as={FaUser} color="blue.300" />
+                            <Text fontWeight="bold" fontSize="md">{acc.username}</Text>
+                        </HStack>
+                    </Box>
+                  </Td>
+                  
+                  <Td>
+                    <Badge 
+                        colorScheme={acc.role?.roleName === 'ROLE_ADMIN' ? 'red' : 'green'}
+                        variant="subtle"
+                        px={2} py={1} borderRadius="md"
                     >
-                        Add New Account
-                    </Button>
-                </Box>
+                        <HStack spacing={1}>
+                            <Icon as={FaUserTag} />
+                            <Text>{acc.role?.roleName || 'N/A'}</Text>
+                        </HStack>
+                    </Badge>
+                  </Td>
+                  
+                  <Td>
+                    {acc.status ? (
+                        <Badge colorScheme="green" borderRadius="full" px={2}><Icon as={FaCheckCircle} mr={1}/> Active</Badge>
+                    ) : (
+                        <Badge colorScheme="red" borderRadius="full" px={2}><Icon as={FaTimesCircle} mr={1}/> Inactive</Badge>
+                    )}
+                  </Td>
 
-                <Table variant="simple" colorScheme="whiteAlpha">
-                    <Thead>
-                        <Tr>
-                            <Th color="white">ID</Th>
-                            <Th color="white">USERNAME</Th>
-                            <Th color="white">ROLE</Th>
-                            <Th color="white">STATUS</Th>
-                            <Th color="white">CREATED AT</Th>
-                            <Th color="white">ACTIONS</Th>
-                        </Tr>
-                    </Thead>
-
-                    <Tbody>
-                        {accounts.map((account) => (
-                            <Tr key={account.accountId}>
-                                <Td>{account.accountId}</Td>
-                                <Td>{account.username}</Td>
-                                <Td>
-                                    <Badge colorScheme={account.role?.roleName === 'ROLE_ADMIN' ? 'red' : 'green'}>
-                                        {account.role?.roleName || 'N/A'}
-                                    </Badge>
-                                </Td>
-                                <Td>
-                                    <Badge colorScheme={account.status ? "green" : "red"}>
-                                        {account.status ? "Active" : "Inactive"}
-                                    </Badge>
-                                </Td>
-                                <Td>{new Date(account.accountCreatedAt).toLocaleDateString('en-US')}</Td>
-                                <Td>
-                                    <HStack>
-                                        <Button
-                                            colorScheme="yellow"
-                                            size="sm"
-                                            onClick={() => openEdit(account)}
-                                        >
-                                            Edit
-                                        </Button>
-
-                                        <Button
-                                            colorScheme="red"
-                                            size="sm"
-                                            onClick={() => openDeleteConfirm(account.accountId)}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </HStack>
-                                </Td>
-                            </Tr>
-                        ))}
-                    </Tbody>
-                </Table>
-            </Box>
-
-            {/* MODAL FORM */}
-            <Modal isOpen={isOpen} onClose={onClose} size="lg">
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>
-                        {isEdit ? "Edit Account" : "Add New Account"}
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        <FormControl mb={4}>
-                            <FormLabel>Username</FormLabel>
-                            <Input
-                                placeholder="Enter username"
-                                value={formData.username}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, username: e.target.value })
-                                }
-                            />
-                        </FormControl>
-
-                        <FormControl mb={4}>
-                            <FormLabel>Password {isEdit && "(Leave empty if not changing)"}</FormLabel>
-                            <Input
-                                type="password"
-                                placeholder="Enter password (minimum 6 characters)"
-                                value={formData.password}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, password: e.target.value })
-                                }
-                            />
-                        </FormControl>
-
-                        <FormControl mb={4}>
-                            <FormLabel>Role</FormLabel>
-                            <Select
-                                placeholder="Select role"
-                                value={formData.roleId}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, roleId: e.target.value })
-                                }
-                            >
-                                {roles.map((role) => (
-                                    <option key={role.accountRoleId} value={role.accountRoleId}>
-                                        {role.roleName}
-                                    </option>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-                        <FormControl mb={4}>
-                            <FormLabel>Status</FormLabel>
-                            <Select
-                                value={formData.status.toString()}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, status: e.target.value === "true" })
-                                }
-                            >
-                                <option value="true">Active</option>
-                                <option value="false">Inactive</option>
-                            </Select>
-                        </FormControl>
-                    </ModalBody>
-
-                    <ModalFooter>
-                        <Button
-                            colorScheme="green"
-                            mr={3}
-                            onClick={handleSubmit}
-                        >
-                            {isEdit ? "Update" : "Save"}
-                        </Button>
-                        <Button variant="ghost" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-
-            {/* DELETE CONFIRMATION MODAL */}
-            <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>Confirm Delete</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        Are you sure you want to delete this account? This action cannot be undone.
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button colorScheme="red" mr={3} onClick={handleDelete}>
-                            Delete
-                        </Button>
-                        <Button variant="ghost" onClick={onDeleteClose}>
-                            Cancel
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+                  <Td fontSize="sm" color="gray.300">
+                    {new Date(acc.accountCreatedAt).toLocaleDateString('vi-VN')}
+                  </Td>
+                  
+                  <Td>
+                    <HStack>
+                      <Button colorScheme="yellow" size="sm" onClick={() => openEdit(acc)}>Edit</Button>
+                      <Button colorScheme="red" size="sm" onClick={() => handleDelete(acc.accountId)}>Delete</Button>
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
         </Box>
-    );
-};
+      </Box>
+
+      {/* MODAL FORM */}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
+        <ModalOverlay />
+        <ModalContent bg={modalBg} color="white">
+          <ModalHeader>{isEdit ? "Edit Account" : "Add New Account"}</ModalHeader>
+          <ModalCloseButton />
+
+          <ModalBody pb={6}>
+            <SimpleGrid columns={1} spacing={4}>
+                
+                <FormControl isRequired>
+                    <FormLabel>Username</FormLabel>
+                    <InputGroup>
+                        <Input
+                          placeholder="e.g. admin_user"
+                          value={formData.username}
+                          onChange={(e) => handleChange("username", e.target.value)}
+                          bg={inputBg} borderColor={borderColor}
+                          isReadOnly={isEdit} // Thường không cho sửa username
+                          _readOnly={{ opacity: 0.6, cursor: 'not-allowed' }}
+                        />
+                        <InputRightElement children={<Icon as={FaUser} color="gray.500" />} />
+                    </InputGroup>
+                </FormControl>
+
+                <FormControl isRequired>
+                    <FormLabel>
+                        Password {isEdit && <Text as="span" fontSize="xs" color="yellow.300">(Required for update)</Text>}
+                    </FormLabel>
+                    <InputGroup>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder={isEdit ? "Enter new password" : "Enter password"}
+                          value={formData.password}
+                          onChange={(e) => handleChange("password", e.target.value)}
+                          bg={inputBg} borderColor={borderColor}
+                        />
+                        <InputRightElement width="4.5rem">
+                            <Button h="1.75rem" size="sm" onClick={() => setShowPassword(!showPassword)} bg="transparent">
+                                {showPassword ? <FaEyeSlash color="white"/> : <FaEye color="white"/>}
+                            </Button>
+                        </InputRightElement>
+                    </InputGroup>
+                </FormControl>
+
+                <SimpleGrid columns={2} spacing={4}>
+                    <FormControl isRequired>
+                        <FormLabel>Role</FormLabel>
+                        <Select
+                            placeholder="Select Role"
+                            value={formData.roleId}
+                            onChange={(e) => handleChange("roleId", e.target.value)}
+                            bg={inputBg} borderColor={borderColor}
+                        >
+                            {roles.map((role) => (
+                                <option style={{backgroundColor: '#2D3748'}} key={role.accountRoleId} value={role.accountRoleId}>
+                                    {role.roleName}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl display="flex" alignItems="center">
+                        <FormLabel mb="0">
+                            Status: <Badge ml={2} colorScheme={formData.status ? "green" : "red"}>{formData.status ? "Active" : "Inactive"}</Badge>
+                        </FormLabel>
+                        <Switch 
+                            id="status-switch" 
+                            isChecked={formData.status} 
+                            onChange={(e) => handleChange("status", e.target.checked)}
+                            colorScheme="green"
+                            ml="auto"
+                        />
+                    </FormControl>
+                </SimpleGrid>
+
+            </SimpleGrid>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button
+              colorScheme="green"
+              mr={3}
+              onClick={isEdit ? handleUpdate : handleAdd}
+            >
+              {isEdit ? "Update" : "Save"}
+            </Button>
+            <Button variant="ghost" onClick={onClose} _hover={{ bg: "whiteAlpha.200" }}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Box>
+  );
+}
 
 export default AccountManagementPage;

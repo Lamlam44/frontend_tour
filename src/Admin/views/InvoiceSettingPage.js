@@ -35,13 +35,18 @@ import {
   Wrap,
   WrapItem,
   Divider,
-  useColorModeValue,
+  useToast, // Import Toast
 } from "@chakra-ui/react";
-import { getAccommodations } from "../../services/api";
-import axios from "axios";
 
-const API_INVOICES = "http://localhost:8080/api/invoices";
-const API_PROMOTIONS = "http://localhost:8080/api/promotions";
+// SỬA LỖI: Import từ api.js thay vì dùng axios trực tiếp
+import { 
+    getInvoices, 
+    getPromotions, 
+    getAccommodations, 
+    createInvoice, 
+    updateInvoice, 
+    deleteInvoice 
+} from "../../services/api";
 
 const InvoiceSettingPage = () => {
   // --- STATE ---
@@ -53,6 +58,7 @@ const InvoiceSettingPage = () => {
   const [editId, setEditId] = useState(null);
   
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast(); // Hook thông báo
 
   // Styles
   const bgColor = "navy.900";
@@ -61,7 +67,7 @@ const InvoiceSettingPage = () => {
   const inputBg = "gray.700";
   const borderColor = "gray.600";
   
-  // Form Data cho việc Gửi đi (API Payload)
+  // Form Data gửi đi
   const [formData, setFormData] = useState({
     status: "",
     numberOfPeople: "",
@@ -79,48 +85,39 @@ const InvoiceSettingPage = () => {
     promotionIds: [],
   });
 
-  // State riêng để hiển thị thông tin Read-only khi Edit (Display Data)
-  // Giúp khắc phục lỗi dropdown không hiện giá trị cũ
+  // Display Data (Read-only)
   const [displayData, setDisplayData] = useState({
     tourName: "",
     accommodationName: "",
     username: "",
-    appliedPromotions: [], // Array objects đầy đủ
+    appliedPromotions: [],
     paymentMethodRaw: "",
   });
 
   // --- API CALLS ---
-  const loadInvoices = async () => {
+  const loadData = async () => {
     try {
-      const res = await axios.get(API_INVOICES);
-      setInvoices(res.data);
+        const [invData, promoData, accData] = await Promise.all([
+            getInvoices(),
+            getPromotions(),
+            getAccommodations()
+        ]);
+        setInvoices(invData);
+        setPromotionsList(promoData);
+        setAccommodations(accData);
     } catch (err) {
-      console.error("Error loading invoices", err);
-    }
-  };
-
-  const loadPromotions = async () => {
-    try {
-      const res = await axios.get(API_PROMOTIONS);
-      setPromotionsList(res.data);
-    } catch (err) {
-      console.error("Error loading promotions", err);
-    }
-  };
-
-  const loadAccommodations = async () => {
-    try {
-      const res = await getAccommodations();
-      setAccommodations(res.data);
-    } catch (err) {
-      console.error("Error loading accommodations", err);
+      console.error("Error loading data", err);
+      toast({
+          title: "Lỗi tải dữ liệu",
+          description: err.message || "Vui lòng kiểm tra kết nối",
+          status: "error",
+          duration: 3000
+      });
     }
   };
 
   useEffect(() => {
-    loadInvoices();
-    loadPromotions();
-    loadAccommodations();
+    loadData();
   }, []);
 
   // --- HANDLERS ---
@@ -154,22 +151,21 @@ const InvoiceSettingPage = () => {
     });
   };
 
-  // MỞ FORM EDIT - Logic quan trọng để fix lỗi hiển thị
+  // MỞ FORM EDIT
   const openEdit = (inv) => {
     setIsEdit(true);
     setEditId(inv.invoiceId);
 
-    // 1. Set dữ liệu để hiển thị (Read-only)
     const accName = inv.accommodation?.accommodationName || inv.tour?.accommodation?.accommodationName || "N/A";
+    
     setDisplayData({
         tourName: inv.tour?.tourName || "N/A",
         accommodationName: accName,
         username: inv.account?.username || "N/A",
-        appliedPromotions: inv.appliedPromotions || [], // Lấy mảng object promotion
+        appliedPromotions: inv.appliedPromotions || [],
         paymentMethodRaw: inv.paymentMethod || "N/A",
     });
 
-    // 2. Set dữ liệu vào Form để gửi đi (Editable fields)
     setFormData({
       status: inv.status,
       numberOfPeople: inv.numberOfPeople || "",
@@ -177,7 +173,7 @@ const InvoiceSettingPage = () => {
       taxAmount: inv.taxAmount || "",
       serviceFee: inv.serviceFee || "",
       totalAmount: inv.totalAmount || "",
-      paymentMethod: inv.paymentMethod || "",
+      paymentMethod: inv.paymentMethod || "", // Nếu null thì form sẽ nhận chuỗi rỗng ""
       customerName: inv.customerName || "",
       customerPhone: inv.customerPhone || "",
       customerEmail: inv.customerEmail || "",
@@ -206,20 +202,25 @@ const InvoiceSettingPage = () => {
             totalAmount: parseFloat(formData.totalAmount) || 0,
             promotionIds: formData.promotionIds.map(String),
         };
-        await axios.post(API_INVOICES, dataToSend);
-        loadInvoices();
+        // Sử dụng hàm từ api.js (có token)
+        await createInvoice(dataToSend);
+        
+        toast({ title: "Tạo hóa đơn thành công", status: "success", duration: 3000 });
+        loadData();
         onClose();
         resetForm();
     } catch (err) {
-        console.error("Error adding invoice", err);
-        alert("Cannot add invoice!");
+        toast({ 
+            title: "Lỗi tạo hóa đơn", 
+            description: err.message, 
+            status: "error", 
+            duration: 5000 
+        });
     }
   };
 
   const handleUpdate = async () => {
     try {
-      // Khi Edit, ta chỉ gửi các trường được phép sửa hoặc giữ nguyên các trường cũ
-      // Backend cần xử lý logic: nếu field null thì không update, hoặc frontend gửi lại data cũ
       const dataToSend = {
         ...formData,
         numberOfPeople: parseInt(formData.numberOfPeople) || 0,
@@ -228,30 +229,40 @@ const InvoiceSettingPage = () => {
         serviceFee: parseFloat(formData.serviceFee) || 0,
         totalAmount: parseFloat(formData.totalAmount) || 0,
         promotionIds: formData.promotionIds.map(String),
+        // PaymentMethod: nếu rỗng (null/undefined) thì backend sẽ xử lý hoặc giữ nguyên
+        paymentMethod: formData.paymentMethod || null
       };
-      await axios.put(`${API_INVOICES}/${editId}`, dataToSend);
-      loadInvoices();
+
+      // Sử dụng hàm từ api.js (có token)
+      await updateInvoice(editId, dataToSend);
+      
+      toast({ title: "Cập nhật thành công", status: "success", duration: 3000 });
+      loadData();
       onClose();
       setIsEdit(false);
       resetForm();
     } catch (err) {
-      console.error("Error updating invoice", err);
-      alert("Cannot update invoice!");
+      console.error("Update error:", err);
+      toast({ 
+        title: "Không thể cập nhật", 
+        description: err.message, 
+        status: "error", 
+        duration: 5000 
+      });
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure to delete this invoice?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa hóa đơn này?")) return;
     try {
-      await axios.delete(`${API_INVOICES}/${id}`);
-      loadInvoices();
+      await deleteInvoice(id);
+      toast({ title: "Đã xóa hóa đơn", status: "success", duration: 3000 });
+      loadData();
     } catch (err) {
-      console.error("Error deleting invoice", err);
-      alert("Cannot delete!");
+      toast({ title: "Lỗi xóa hóa đơn", description: err.message, status: "error", duration: 3000 });
     }
   };
 
-  // Helper hiển thị tên promotion trong dropdown (chỉ dùng cho Add mode)
   const getSelectedPromotionNames = (selectedIds) => {
     if (!selectedIds || selectedIds.length === 0) return "Select Promotions";
     return selectedIds
@@ -303,7 +314,16 @@ const InvoiceSettingPage = () => {
                 <Td isNumeric fontWeight="bold" color="green.300">
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.totalAmount)}
                 </Td>
-                <Td>{inv.paymentMethod}</Td>
+                <Td>
+                    {/* Hiển thị Payment Method đẹp hơn */}
+                    {inv.paymentMethod ? (
+                        <Tag colorScheme={inv.paymentMethod === 'VNPAY' ? 'blue' : 'yellow'}>
+                            {inv.paymentMethod}
+                        </Tag>
+                    ) : (
+                        <Text fontSize="sm" color="gray.500">N/A</Text>
+                    )}
+                </Td>
                 <Td>
                   <HStack>
                     <Button colorScheme="yellow" size="sm" onClick={() => openEdit(inv)}>Edit</Button>
@@ -326,7 +346,7 @@ const InvoiceSettingPage = () => {
           <ModalBody>
             <Stack spacing={4}>
                 
-                {/* 1. SECTION: THÔNG TIN KHÁCH HÀNG (EDITABLE) */}
+                {/* 1. SECTION: THÔNG TIN KHÁCH HÀNG */}
                 <Box border="1px solid" borderColor="blue.500" p={4} borderRadius="md" position="relative">
                     <Text position="absolute" top="-12px" left="10px" bg={modalBg} px={2} fontWeight="bold" color="blue.300">
                         Customer Information (Editable)
@@ -374,14 +394,13 @@ const InvoiceSettingPage = () => {
                     </SimpleGrid>
                 </Box>
 
-                {/* 2. SECTION: CHI TIẾT DỊCH VỤ (READ-ONLY KHI EDIT) */}
+                {/* 2. SECTION: CHI TIẾT DỊCH VỤ */}
                 <Box border="1px solid" borderColor={borderColor} p={4} borderRadius="md" position="relative" mt={2}>
                     <Text position="absolute" top="-12px" left="10px" bg={modalBg} px={2} fontWeight="bold" color="gray.400">
                         Service Details {isEdit && "(Read-Only)"}
                     </Text>
                     
                     <Stack spacing={4} mt={2}>
-                        {/* TOUR INFO */}
                         <FormControl isRequired={!isEdit}>
                             <FormLabel>Tour</FormLabel>
                             {isEdit ? (
@@ -391,7 +410,6 @@ const InvoiceSettingPage = () => {
                             )}
                         </FormControl>
 
-                        {/* ACCOMMODATION INFO */}
                         <FormControl>
                             <FormLabel>Accommodation</FormLabel>
                             {isEdit ? (
@@ -412,7 +430,6 @@ const InvoiceSettingPage = () => {
                             )}
                         </FormControl>
 
-                        {/* PAYMENT METHOD */}
                         <SimpleGrid columns={2} spacing={4}>
                              <FormControl>
                                 <FormLabel>User Account ID</FormLabel>
@@ -422,22 +439,25 @@ const InvoiceSettingPage = () => {
                                     <Input placeholder="User ID" value={formData.accountId} onChange={e => handleChange("accountId", e.target.value)} bg={inputBg} />
                                 )}
                             </FormControl>
+                             
+                             {/* PAYMENT METHOD FIX */}
                              <FormControl>
                                 <FormLabel>Payment Method</FormLabel>
-                                {isEdit ? (
-                                    <Text p={2} bg="whiteAlpha.100" borderRadius="md" fontWeight="bold" color={displayData.paymentMethodRaw === 'VNPAY' ? 'blue.300' : 'orange.300'}>
-                                        {displayData.paymentMethodRaw}
-                                    </Text>
-                                ) : (
-                                    <Select placeholder="Method" value={formData.paymentMethod} onChange={e => handleChange("paymentMethod", e.target.value)} bg={inputBg} borderColor={borderColor}>
-                                        <option style={{backgroundColor: '#2D3748'}} value="CASH">CASH</option>
-                                        <option style={{backgroundColor: '#2D3748'}} value="VNPAY">VNPAY</option>
-                                    </Select>
-                                )}
+                                {/* Trong chế độ Edit, chúng ta cho phép Admin GÁN phương thức thanh toán nếu nó đang trống (hoặc muốn đổi) */}
+                                <Select 
+                                    placeholder={isEdit && !formData.paymentMethod ? "Select Method (Currently N/A)" : "Select Method"}
+                                    value={formData.paymentMethod} 
+                                    onChange={e => handleChange("paymentMethod", e.target.value)} 
+                                    bg={inputBg} 
+                                    borderColor={borderColor}
+                                    // Có thể disable nếu muốn chặt chẽ: disabled={isEdit && formData.paymentMethod}
+                                >
+                                    <option style={{backgroundColor: '#2D3748'}} value="CASH">CASH</option>
+                                    <option style={{backgroundColor: '#2D3748'}} value="VNPAY">VNPAY</option>
+                                </Select>
                             </FormControl>
                         </SimpleGrid>
 
-                        {/* PROMOTIONS - HIỂN THỊ THÔNG MINH */}
                         <FormControl>
                             <FormLabel>Applied Promotions</FormLabel>
                             {isEdit ? (
@@ -480,7 +500,7 @@ const InvoiceSettingPage = () => {
                     </Stack>
                 </Box>
 
-                {/* 3. SECTION: TÀI CHÍNH (READ-ONLY KHI EDIT) */}
+                {/* 3. SECTION: TÀI CHÍNH */}
                 <Box border="1px solid" borderColor={borderColor} p={4} borderRadius="md" position="relative" mt={2}>
                      <Text position="absolute" top="-12px" left="10px" bg={modalBg} px={2} fontWeight="bold" color="green.300">
                         Financial Details {isEdit && "(Read-Only)"}
@@ -515,7 +535,6 @@ const InvoiceSettingPage = () => {
                             fontSize="lg"
                             textAlign="right"
                         />
-                         {/* Hidden input for logic if needed, but display formatted above */}
                     </FormControl>
                 </Box>
 

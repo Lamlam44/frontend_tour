@@ -5,12 +5,14 @@ import { useWebSocket } from '../../context/WebSocketContext';
 import styles from '../../Assets/CSS/PageCSS/UserProfilePage.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { getInvoicesForCurrentUser } from '../../services/api';
+import { useToast } from '@chakra-ui/react';
 
 const UserProfilePage = () => {
     const { user, updateUser, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
 
-    // 1. Lấy context an toàn (tránh lỗi destructure null)
+    // 1. Lấy context WebSocket an toàn
     const webSocketContext = useWebSocket();
     const { subscribe, isConnected } = webSocketContext || {}; 
 
@@ -71,53 +73,62 @@ const UserProfilePage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, isAuthenticated, navigate]);
 
-    // Effect 2: WebSocket Subscription (Đã fix lỗi)
+    // ==================================================================
+    // Effect 2: WebSocket Subscription 
+    // ==================================================================
     useEffect(() => {
-        // Chỉ chạy khi đã kết nối và có user ID
-        if (isConnected && user?.id && subscribe) {
-            const topic = `/user/${user.id}/queue/invoice-updates`; 
+        if (isConnected && user && subscribe) {
+            const topic = `/user/queue/payment-updates`; 
 
-            // Hủy đăng ký cũ nếu tồn tại trước khi tạo cái mới
             if (subscriptionRef.current) {
-                subscriptionRef.current.unsubscribe();
+                if (typeof subscriptionRef.current.unsubscribe === 'function') {
+                    subscriptionRef.current.unsubscribe();
+                }
             }
 
-            // Đăng ký nhận tin nhắn
-            const newSubscription = subscribe(topic, (message) => {
-                console.log("Invoice update received:", message);
+            const newSubscription = subscribe(topic, (msgBody) => {
+                console.log("Realtime invoice update received:", msgBody);
                 
-                // Parse message body nếu cần (tùy vào backend gửi string hay json object)
-                const msgBody = message.body ? JSON.parse(message.body) : message;
+                if (!msgBody || !msgBody.invoice) return;
 
-                setNotification({ 
-                    message: `Hóa đơn #${msgBody.invoiceId} cập nhật: ${msgBody.status}`, 
-                    type: 'success' 
+                const updatedInvoiceData = msgBody.invoice;
+
+                // 3. THÔNG BÁO BẰNG TOAST (Thay thế setNotification)
+                toast({
+                    title: `Cập nhật đơn hàng #${updatedInvoiceData.invoiceId}`,
+                    description: `Trạng thái mới: ${updatedInvoiceData.status}. ${msgBody.message || ''}`,
+                    status: 'success',
+                    duration: 5000,
+                    isClosable: true,
+                    position: 'top-right',
+                    variant: 'solid'
                 });
 
-                // Cập nhật danh sách hóa đơn realtime
-                setUserInvoices(prevInvoices => 
-                    prevInvoices.map(invoice => 
-                        invoice.invoiceId === msgBody.invoiceId 
-                            ? { ...invoice, status: msgBody.status } 
-                            : invoice
-                    )
-                );
+                // Cập nhật danh sách
+                setUserInvoices(prevInvoices => {
+                    if (!prevInvoices || prevInvoices.length === 0) return [updatedInvoiceData];
+                    return prevInvoices.map(inv => 
+                        inv.invoiceId === updatedInvoiceData.invoiceId 
+                            ? updatedInvoiceData 
+                            : inv
+                    );
+                });
             });
 
             subscriptionRef.current = newSubscription;
         }
 
-        // Cleanup khi component unmount
         return () => {
             if (subscriptionRef.current) {
-                // Cách chuẩn để hủy đăng ký trong StompJS
                 if (typeof subscriptionRef.current.unsubscribe === 'function') {
                     subscriptionRef.current.unsubscribe();
                 }
                 subscriptionRef.current = null;
             }
         };
-    }, [isConnected, user?.id, subscribe]); // Bỏ unsubscribe khỏi dependency vì ta dùng method của object subscription
+    }, [isConnected, user, subscribe, toast]); // Thêm toast vào dependency
+
+    // Các hàm xử lý Form
 
     const handleChange = (e) => {
         setFormData({
@@ -145,6 +156,7 @@ const UserProfilePage = () => {
         if (!isEditing) return;
 
         const updateData = { ...formData };
+        // Nếu không nhập password thì xóa field này để không gửi lên server
         if (!updateData.password) {
             delete updateData.password;
         }
@@ -161,6 +173,7 @@ const UserProfilePage = () => {
             setNotification({ message: 'Lỗi kết nối server.', type: 'error' });
         }
 
+        // Tự động ẩn thông báo sau 3s
         setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     };
 
@@ -294,7 +307,7 @@ const UserProfilePage = () => {
                                             <td>{invoice.numberOfPeople}</td>
                                             <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(invoice.totalAmount)}</td>
                                             <td>{invoice.status}</td>
-                                            <td>{new Date(invoice.invoiceDate).toLocaleDateString('vi-VN')}</td>
+                                            <td>{new Date(invoice.invoiceCreatedAt || invoice.invoiceDate).toLocaleDateString('vi-VN')}</td>
                                         </tr>
                                     ))}
                                 </tbody>

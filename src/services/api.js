@@ -1,494 +1,403 @@
-import axios from 'axios';
+import axiosInstance from '../api/axiosConfig';
 
-const API_BASE_URL = 'http://localhost:8080/api';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add a request interceptor to include the token in the headers
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Hàm đăng nhập (Gửi email + password lên Server)
-export const login = async (credentials) => {
-  try {
-    // 1. CHUẨN BỊ DỮ LIỆU THEO ĐÚNG ĐỊNH DẠNG
-    const formBody = new URLSearchParams();
-    formBody.append('username', credentials.username); // Backend mặc định dùng key 'username'
-    formBody.append('password', credentials.password);
-
-    // 2. GỌI ĐẾN ĐÚNG URL ĐĂNG NHẬP
-    // URL là '/login' theo cấu hình mặc định của Spring Security.
-    const response = await fetch('/login', {
-      method: 'POST',
-      headers: {
-        // 3. ĐỊNH NGHĨA ĐÚNG CONTENT-TYPE
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formBody.toString(),
-    });
-
-    // 4. KIỂM TRA KẾT QUẢ TRẢ VỀ
-    // fetch() không báo lỗi cho các mã HTTP như 401 (Unauthorized).
-    // Chúng ta phải tự kiểm tra response.ok.
-    if (!response.ok) {
-      // Nếu không 'ok', nghĩa là đăng nhập thất bại (sai email/mật khẩu).
-      throw new Error('Đăng nhập thất bại: Sai thông tin đăng nhập.');
-    }
-
-    // 5. XỬ LÝ KHI THÀNH CÔNG
-    // Khi đăng nhập thành công, trình duyệt sẽ tự động nhận và lưu session cookie.
-    // Body của response có thể trống. Chúng ta có thể trả về một trạng thái thành công.
-    // Hoặc nếu backend bạn có trả về thông tin user dạng JSON, chúng ta có thể thử parse nó.
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      return await response.json(); // Nếu có JSON, trả về dữ liệu đó
-    }
-    
-    return { loggedIn: true }; // Nếu không, trả về trạng thái đăng nhập thành công
-
-  } catch (error) {
-    console.error('Lỗi trong quá trình đăng nhập:', error);
-    // Ném lỗi ra ngoài để component có thể bắt và xử lý (ví dụ: hiển thị thông báo).
-    throw error;
-  }
+/**
+ * HELPER: Xử lý lỗi API thống nhất
+ */
+const handleApiError = (error, defaultMessage) => {
+    console.error(`${defaultMessage}:`, error);
+    throw error.response?.data || { message: error.message || defaultMessage };
 };
 
-// Hàm đăng ký người dùng
+// ============================================================
+// 1. AUTHENTICATION API (Đăng nhập, Đăng ký, Profile)
+// ============================================================
+export const login = async (username, password) => {
+    try {
+        // Nếu backend dùng JSON login
+        const response = await axiosInstance.post('/auth/login', { username, password });
+        return response.data;
+    } catch (error) {
+        // Fallback: Nếu backend dùng Form Login (x-www-form-urlencoded)
+        if (error.response?.status === 404 || error.code === "ERR_NETWORK") {
+             try {
+                const params = new URLSearchParams();
+                params.append('username', username);
+                params.append('password', password);
+                const formResponse = await axiosInstance.post('/login', params, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                return formResponse.data;
+             } catch (formError) {
+                 handleApiError(formError, "Login failed");
+             }
+        }
+        handleApiError(error, "Login failed");
+    }
+};
+
 export const registerUser = async (userData) => {
-  try {
-    // Endpoint để tạo tài khoản khách hàng mới
-    const response = await apiClient.post('/customers/register', userData);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi đăng ký:', error.response?.data || error.message);
-    // Ném lỗi cụ thể từ backend nếu có
-    throw new Error(error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
-  }
+    try {
+        const response = await axiosInstance.post('/auth/register', userData);
+        return response.data;
+    } catch (error) {
+        handleApiError(error, "Registration failed");
+    }
 };
 
-// Lấy thông tin cá nhân của người dùng đã đăng nhập
 export const getUserProfile = async () => {
-  try {
-    // Endpoint này cần được bảo vệ và trả về thông tin của user hiện tại
-    const response = await apiClient.get('/customers/me');
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi lấy thông tin người dùng:', error);
-    throw error;
-  }
+    try {
+        const response = await axiosInstance.get('/auth/profile'); // Hoặc /customers/me tuỳ backend
+        return response.data;
+    } catch (error) {
+        handleApiError(error, "Fetch profile failed");
+    }
 };
 
-// Cập nhật thông tin cá nhân
 export const updateUserProfile = async (userData) => {
-  try {
-    const response = await apiClient.put('/customers/me', userData);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi cập nhật thông tin người dùng:', error);
-    throw error;
-  }
+    try {
+        const response = await axiosInstance.put('/auth/profile', userData); // Hoặc /customers/me
+        return response.data;
+    } catch (error) {
+        handleApiError(error, "Update profile failed");
+    }
 };
 
-// Tạo một booking mới
-export const createBooking = async (bookingData) => {
-  try {
-    const response = await apiClient.post('/bookings', bookingData);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi tạo booking:', error);
-    throw error;
-  }
+export const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Có thể gọi API logout nếu backend cần invalidate session
 };
 
-// Lấy danh sách booking của người dùng hiện tại
-export const getBookingsByCurrentUser = async () => {
-  try {
-    // Endpoint này cần được bảo vệ và trả về booking của user đã xác thực
-    const response = await apiClient.get('/bookings/my-bookings');
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi lấy danh sách booking:', error);
-    throw error;
-  }
+// ============================================================
+// 2. ACCOUNT MANAGEMENT API
+// ============================================================
+export const getAccounts = async () => {
+    try {
+        const response = await axiosInstance.get("/accounts");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching accounts"); }
 };
 
-// --- CÁC HÀM API CHO THANH TOÁN ---
-
-// 1. Lấy chi tiết booking theo ID (dùng cho trang thanh toán)
-export const getBookingById = async (bookingId) => {
-  try {
-    const response = await apiClient.get(`/bookings/${bookingId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Lỗi khi lấy booking ID ${bookingId}:`, error);
-    throw error;
-  }
+export const getAccountRoles = async () => {
+    try {
+        const response = await axiosInstance.get("/account-roles"); // Check lại endpoint backend của bạn
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching roles"); }
 };
 
-// Function to create an Invoice
-export const createInvoice = async (invoiceData) => {
-  try {
-    const response = await apiClient.post('/invoices', invoiceData);
-    return response.data; // This should contain the InvoiceResponseDTO with invoiceId
-  } catch (error) {
-    console.error('Lỗi khi tạo hóa đơn:', error);
-    throw new Error(error.response?.data?.message || 'Không thể tạo hóa đơn.');
-  }
+export const addAccount = async (data) => {
+    try {
+        const response = await axiosInstance.post("/accounts", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding account"); }
 };
 
-// Function to trigger the cash payment request email flow
-export const requestCashPayment = async (invoiceId) => {
-  try {
-    const response = await apiClient.post(`/invoices/${invoiceId}/request-cash-payment`);
-    return response.data;
-  } catch (error) {
-    console.error(`Lỗi khi yêu cầu thanh toán tiền mặt cho hóa đơn ${invoiceId}:`, error);
-    throw new Error(error.response?.data?.message || 'Không thể gửi yêu cầu thanh toán tiền mặt.');
-  }
+export const updateAccount = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/accounts/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating account"); }
 };
 
-
-// 2. Tạo URL thanh toán VNPAY
-export const createVnPayPaymentUrl = async (paymentData) => {
-  try {
-    const response = await apiClient.post('/payments/vnpay/create-url', paymentData);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi tạo URL thanh toán VNPAY:', error);
-    throw new Error(error.response?.data?.message || 'Không thể tạo yêu cầu thanh toán VNPAY.');
-  }
+export const deleteAccount = async (id) => {
+    try {
+        const response = await axiosInstance.delete(`/accounts/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting account"); }
 };
 
-// 3. Xử lý các phương thức thanh toán khác (ví dụ: tại quầy, chuyển khoản)
-export const processPayment = async (paymentData) => {
-  try {
-    const response = await apiClient.post('/payment/process', paymentData);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi xử lý thanh toán:', error);
-    throw error;
-  }
-}
-
-// 4. Xác thực lại giao dịch VNPAY trả về
-export const verifyVnPayPayment = async (params) => {
-  try {
-    // Gửi tất cả các query params từ VNPAY về backend
-    const response = await apiClient.get('/payments/vnpay-return', { params });
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi xác thực thanh toán VNPAY:', error);
-    throw error;
-  }
-};
-
-export const getPromotions = async () => {
-  try {
-    const response = await apiClient.get('/promotions');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching promotions:', error);
-    throw error;
-  }
-};
-
-export const addPromotion = async (promotionData) => {
-  try {
-    const response = await apiClient.post('/promotions', promotionData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding promotion:', error);
-    throw error;
-  }
-};
-
-export const updatePromotion = async (id, promotionData) => {
-  try {
-    const response = await apiClient.put(`/promotions/${id}`, promotionData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating promotion:', error);
-    throw error;
-  }
-};
-
-export const deletePromotion = async (id) => {
-  try {
-    const response = await apiClient.delete(`/promotions/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting promotion:', error);
-    throw error;
-  }
-};
-
-export const getTours = async () => {
-  try {
-    const response = await apiClient.get('/tours');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching tours:', error);
-    throw error;
-  }
-};
-
-export const searchTours = async (keyword) => {
-  try {
-    const response = await apiClient.get('/tours/search', {
-      params: {
-        keyword: keyword
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error searching tours:', error);
-    throw error;
-  }
-};
-
-// New function to fetch invoices for the current user
-export const getInvoicesForCurrentUser = async () => {
-  try {
-    const response = await apiClient.get('/invoices/my-invoices');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching invoices for current user:', error);
-    throw error;
-  }
-};
-
-export const getTourById = async (id) => {
-  try {
-    const response = await apiClient.get(`/tours/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching tour with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const addTour = async (tourData) => {
-  try {
-    const response = await apiClient.post('/tours', tourData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding tour:', error);
-    throw error;
-  }
-};
-
-export const updateTour = async (id, tourData) => {
-  try {
-    const response = await apiClient.put(`/tours/${id}`, tourData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating tour:', error);
-    throw error;
-  }
-};
-
-export const deleteTour = async (id) => {
-  try {
-    const response = await apiClient.delete(`/tours/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting tour:', error);
-    throw error;
-  }
-};
-
+// ============================================================
+// 3. CUSTOMER MANAGEMENT API
+// ============================================================
 export const getCustomers = async () => {
-  try {
-    const response = await apiClient.get('/customers');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching customers:', error);
-    throw error;
-  }
+    try {
+        const response = await axiosInstance.get("/customers");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching customers"); }
 };
 
-export const addCustomer = async (customerData) => {
-  try {
-    const response = await apiClient.post('/customers', customerData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding customer:', error);
-    throw error;
-  }
+export const addCustomer = async (data) => {
+    try {
+        const response = await axiosInstance.post("/customers", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding customer"); }
 };
 
-export const updateCustomer = async (id, customerData) => {
-  try {
-    const response = await apiClient.put(`/customers/${id}`, customerData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating customer:', error);
-    throw error;
-  }
+export const updateCustomer = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/customers/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating customer"); }
 };
 
 export const deleteCustomer = async (id) => {
-  try {
-    const response = await apiClient.delete(`/customers/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting customer:', error);
-    throw error;
-  }
+    try {
+        const response = await axiosInstance.delete(`/customers/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting customer"); }
 };
 
-export const getTourGuides = async () => {
-  try {
-    const response = await apiClient.get('/tour-guides');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching tour guides:', error);
-    throw error;
-  }
+// ============================================================
+// 4. TOUR MANAGEMENT API
+// ============================================================
+export const getTours = async () => {
+    try {
+        const response = await axiosInstance.get("/tours");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching tours"); }
 };
 
-export const addTourGuide = async (tourGuideData) => {
-  try {
-    const response = await apiClient.post('/tour-guides', tourGuideData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding tour guide:', error);
-    throw error;
-  }
+export const getTourById = async (id) => {
+    try {
+        const response = await axiosInstance.get(`/tours/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching tour details"); }
 };
 
-export const updateTourGuide = async (id, tourGuideData) => {
-  try {
-    const response = await apiClient.put(`/tour-guides/${id}`, tourGuideData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating tour guide:', error);
-    throw error;
-  }
+export const searchTours = async (keyword) => {
+    try {
+        const response = await axiosInstance.get('/tours/search', { params: { keyword } });
+        return response.data;
+    } catch (error) { handleApiError(error, "Error searching tours"); }
 };
 
-export const deleteTourGuide = async (id) => {
-  try {
-    const response = await apiClient.delete(`/tour-guides/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting tour guide:', error);
-    throw error;
-  }
+export const addTour = async (data) => {
+    try {
+        const response = await axiosInstance.post("/tours", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding tour"); }
 };
 
-export const getTouristDestinations = async () => {
-  try {
-    const response = await apiClient.get('/tourist-destinations');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching tourist destinations:', error);
-    throw error;
-  }
+export const updateTour = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/tours/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating tour"); }
 };
 
-export const addTouristDestination = async (touristDestinationData) => {
-  try {
-    const response = await apiClient.post('/tourist-destinations', touristDestinationData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding tourist destination:', error);
-    throw error;
-  }
+export const deleteTour = async (id) => {
+    try {
+        const response = await axiosInstance.delete(`/tours/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting tour"); }
 };
 
-export const updateTouristDestination = async (id, touristDestinationData) => {
-  try {
-    const response = await apiClient.put(`/tourist-destinations/${id}`, touristDestinationData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating tourist destination:', error);
-    throw error;
-  }
+// ============================================================
+// 5. BOOKING & INVOICE API (Nghiệp vụ quan trọng)
+// ============================================================
+export const createBooking = async (bookingData) => {
+    try {
+        const response = await axiosInstance.post('/bookings', bookingData);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error creating booking"); }
 };
 
-export const deleteTouristDestination = async (id) => {
-  try {
-    const response = await apiClient.delete(`/tourist-destinations/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting tourist destination:', error);
-    throw error;
-  }
+export const getBookingsByCurrentUser = async () => {
+    try {
+        const response = await axiosInstance.get('/bookings/my-bookings');
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching user bookings"); }
 };
 
-// src/services/api.js
+export const getBookingById = async (bookingId) => {
+    try {
+        const response = await axiosInstance.get(`/bookings/${bookingId}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching booking"); }
+};
+
+// --- INVOICES ---
+export const getInvoices = async () => {
+    try {
+        const response = await axiosInstance.get("/invoices");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching invoices"); }
+};
+
+export const getInvoicesForCurrentUser = async () => {
+    try {
+        const response = await axiosInstance.get('/invoices/my-invoices');
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching user invoices"); }
+};
+
+export const createInvoice = async (invoiceData) => {
+    try {
+        const response = await axiosInstance.post('/invoices', invoiceData);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error creating invoice"); }
+};
+
+export const updateInvoice = async (id, invoiceData) => {
+    try {
+        const response = await axiosInstance.put(`/invoices/${id}`, invoiceData);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating invoice"); }
+};
+
+export const deleteInvoice = async (id) => {
+    try {
+        const response = await axiosInstance.delete(`/invoices/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting invoice"); }
+};
+
+export const requestCashPayment = async (invoiceId) => {
+    try {
+        const response = await axiosInstance.post(`/invoices/${invoiceId}/request-cash-payment`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error requesting cash payment"); }
+};
+
+// ============================================================
+// 6. PAYMENT GATEWAY (VNPAY)
+// ============================================================
+export const createVnPayPaymentUrl = async (paymentData) => {
+    try {
+        const response = await axiosInstance.post('/payments/vnpay/create-url', paymentData);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error creating VNPAY URL"); }
+};
+
+export const verifyVnPayPayment = async (params) => {
+    try {
+        const response = await axiosInstance.get('/payments/vnpay-return', { params });
+        return response.data;
+    } catch (error) { handleApiError(error, "Error verifying VNPAY"); }
+};
+
+export const processPayment = async (paymentData) => {
+    try {
+        const response = await axiosInstance.post('/payment/process', paymentData);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error processing payment"); }
+};
+
+// ============================================================
+// 7. PROMOTION API
+// ============================================================
+export const getPromotions = async () => {
+    try {
+        const response = await axiosInstance.get("/promotions");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching promotions"); }
+};
+
+export const addPromotion = async (data) => {
+    try {
+        const response = await axiosInstance.post("/promotions", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding promotion"); }
+};
+
+export const updatePromotion = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/promotions/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating promotion"); }
+};
+
+export const deletePromotion = async (id) => {
+    try {
+        const response = await axiosInstance.delete(`/promotions/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting promotion"); }
+};
 
 export const applyPromotion = async (promotionCode, tourId) => {
-  try {
-    // Backend yêu cầu: POST /api/promotions/apply?code=...&tourId=...
-    // Axios: tham số thứ 2 là Body (để null), tham số thứ 3 là Config (chứa params)
-    const response = await apiClient.post('/promotions/apply', null, {
-      params: {
-        code: promotionCode, // Backend @RequestParam String code
-        tourId: tourId       // Backend @RequestParam String tourId
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error applying promotion:', error);
-    throw error.response || error;
-  }
+    try {
+        const response = await axiosInstance.post('/promotions/apply', null, {
+            params: { code: promotionCode, tourId: tourId }
+        });
+        return response.data;
+    } catch (error) { handleApiError(error, "Error applying promotion"); }
 };
 
-// --- Thêm vào src/services/api.js ---
-
-// Lấy danh sách Khách sạn/Nơi ở
+// ============================================================
+// 8. OTHER ENTITIES (Accommodations, Guides, Destinations, Vehicles)
+// ============================================================
+// Accommodation
 export const getAccommodations = async () => {
-  try {
-    const response = await apiClient.get('/accommodations');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching accommodations:', error);
-    throw error;
-  }
+    try {
+        const response = await axiosInstance.get("/accommodations");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching accommodations"); }
 };
-
-// Lấy danh sách Phương tiện
-export const getTravelVehicles = async () => {
-  try {
-    const response = await apiClient.get('/travel-vehicles'); // Kiểm tra lại Controller backend xem endpoint là /vehicles hay /travel-vehicles nhé
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    throw error;
-  }
+export const addAccommodation = async (data) => {
+    try {
+        const response = await axiosInstance.post("/accommodations", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding accommodation"); }
 };
-
-// 2. Thêm mới Accommodation
-export const addAccommodation = async (accommodationData) => {
-    const response = await axios.post(`${API_BASE_URL}/accommodations`, accommodationData);
-    return response.data;
+export const updateAccommodation = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/accommodations/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating accommodation"); }
 };
-
-// 3. Cập nhật Accommodation
-export const updateAccommodation = async (id, accommodationData) => {
-    const response = await axios.put(`${API_BASE_URL}/accommodations/${id}`, accommodationData);
-    return response.data;
-};
-
-// 4. Xóa Accommodation
 export const deleteAccommodation = async (id) => {
-    const response = await axios.delete(`${API_BASE_URL}/accommodations/${id}`);
-    return response.data;
+    try {
+        const response = await axiosInstance.delete(`/accommodations/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting accommodation"); }
+};
+
+// Tourist Destinations
+export const getTouristDestinations = async () => {
+    try {
+        const response = await axiosInstance.get("/tourist-destinations");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching destinations"); }
+};
+export const addTouristDestination = async (data) => {
+    try {
+        const response = await axiosInstance.post("/tourist-destinations", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding destination"); }
+};
+export const updateTouristDestination = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/tourist-destinations/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating destination"); }
+};
+export const deleteTouristDestination = async (id) => {
+    try {
+        const response = await axiosInstance.delete(`/tourist-destinations/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting destination"); }
+};
+
+// Tour Guides
+export const getTourGuides = async () => {
+    try {
+        const response = await axiosInstance.get("/tour-guides");
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching guides"); }
+};
+export const addTourGuide = async (data) => {
+    try {
+        const response = await axiosInstance.post("/tour-guides", data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error adding guide"); }
+};
+export const updateTourGuide = async (id, data) => {
+    try {
+        const response = await axiosInstance.put(`/tour-guides/${id}`, data);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error updating guide"); }
+};
+export const deleteTourGuide = async (id) => {
+    try {
+        const response = await axiosInstance.delete(`/tour-guides/${id}`);
+        return response.data;
+    } catch (error) { handleApiError(error, "Error deleting guide"); }
+};
+
+// Travel Vehicles
+export const getTravelVehicles = async () => {
+    try {
+        const response = await axiosInstance.get('/travel-vehicles');
+        return response.data;
+    } catch (error) { handleApiError(error, "Error fetching vehicles"); }
 };

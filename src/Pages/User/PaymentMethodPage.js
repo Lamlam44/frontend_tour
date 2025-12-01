@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
 import styles from '../../Assets/CSS/PageCSS/BookingPage.module.css';
-import { requestCashPayment, createVnPayPaymentUrl } from '../../services/api';
+// 1. Bổ sung hàm updateInvoice vào import
+import { requestCashPayment, createVnPayPaymentUrl, updateInvoice } from '../../services/api';
 import InvoiceDisplay from '../../Components/InvoiceDisplay';
 
 const formatPrice = (price) => {
@@ -40,9 +41,37 @@ function PaymentMethodPage() {
 
         try {
             if (paymentMethod === 'CASH') {
+                // --- BƯỚC 1: Cập nhật Payment Method vào Database ---
+                
+                // Chuẩn bị payload (Cần điền đủ các trường bắt buộc của DTO để tránh lỗi 400)
+                const updatePayload = {
+                    tourId: invoice.tour?.tourId, // Bắt buộc (@NotBlank)
+                    numberOfPeople: invoice.numberOfPeople, // Bắt buộc (@NotNull)
+                    paymentMethod: 'CASH', // Cập nhật trường này
+                    
+                    // Các trường khác giữ nguyên hoặc gửi kèm để đảm bảo tính toàn vẹn
+                    customerName: invoice.customerName,
+                    customerPhone: invoice.customerPhone,
+                    customerEmail: invoice.customerEmail,
+                    status: invoice.status,
+                    discountAmount: invoice.discountAmount,
+                    taxAmount: invoice.taxAmount,
+                    serviceFee: invoice.serviceFee,
+                    totalAmount: invoice.totalAmount,
+                    // Nếu có account, gửi accountId
+                    accountId: invoice.account?.accountId,
+                    // Nếu có accommodation, gửi ID
+                    accommodationId: invoice.accommodation?.accommodationId || invoice.tour?.accommodation?.accommodationId
+                };
+
+                // Gọi API Update
+                await updateInvoice(invoice.invoiceId, updatePayload);
+
+                // --- BƯỚC 2: Gửi yêu cầu xác nhận qua Email (Logic cũ) ---
                 await requestCashPayment(invoice.invoiceId);
-                setSuccessMessage('Yêu cầu thanh toán tiền mặt đã được ghi nhận. Vui lòng kiểm tra email để xem chi tiết và hướng dẫn thanh toán.');
-                setTimeout(() => navigate('/'), 4000); // Redirect to homepage
+                
+                setSuccessMessage('Phương thức thanh toán Tiền mặt đã được cập nhật. Vui lòng kiểm tra email để xem hướng dẫn.');
+                setTimeout(() => navigate('/'), 4000); 
 
             } else if (paymentMethod === 'VNPAY') {
                 const vnpayUrl = await createVnPayPaymentUrl({
@@ -57,7 +86,7 @@ function PaymentMethodPage() {
             }
         } catch (error) {
             console.error(error);
-            setErrorMessage('Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại.');
+            setErrorMessage(error.message || 'Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
