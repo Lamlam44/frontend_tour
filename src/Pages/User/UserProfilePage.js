@@ -5,15 +5,18 @@ import { useWebSocket } from '../../context/WebSocketContext';
 import styles from '../../Assets/CSS/PageCSS/UserProfilePage.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { getInvoicesForCurrentUser } from '../../services/api';
+// 1. Import useToast từ Chakra UI
 import { useToast } from '@chakra-ui/react';
 
 const UserProfilePage = () => {
     const { user, updateUser, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    
+    // 2. Khởi tạo Toast (Sửa lỗi 'toast is not defined')
     const toast = useToast();
 
-    // 1. Lấy context WebSocket an toàn
     const webSocketContext = useWebSocket();
+    // Lấy các biến từ context an toàn
     const { subscribe, isConnected } = webSocketContext || {}; 
 
     const [isEditing, setIsEditing] = useState(false);
@@ -26,11 +29,14 @@ const UserProfilePage = () => {
         password: ''
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [notification, setNotification] = useState({ message: '', type: '' });
-    const [userInvoices, setUserInvoices] = useState([]);
-    const [showBookingHistory, setShowBookingHistory] = useState(false);
     
-    // Ref lưu trữ subscription để unsubscribe sau này
+    // State notification cũ (vẫn giữ để hiện thông báo lỗi form nếu cần)
+    const [notification, setNotification] = useState({ message: '', type: '' });
+    
+    const [userInvoices, setUserInvoices] = useState([]);
+    // Mặc định hiện lịch sử để dễ test
+    const [showBookingHistory, setShowBookingHistory] = useState(true);
+    
     const subscriptionRef = useRef(null);
 
     // Helper: Format Date an toàn
@@ -40,7 +46,6 @@ const UserProfilePage = () => {
         return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
     };
 
-    // Giá trị khởi tạo form
     const initialFormData = {
         customerName: user?.name || '',
         customerEmail: user?.email || '',
@@ -50,7 +55,7 @@ const UserProfilePage = () => {
         password: ''
     };
 
-    // Effect 1: Kiểm tra Auth và tải dữ liệu ban đầu
+    // Effect 1: Kiểm tra Auth và Tải dữ liệu hóa đơn ban đầu
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/login');
@@ -74,11 +79,37 @@ const UserProfilePage = () => {
     }, [user, isAuthenticated, navigate]);
 
     // ==================================================================
-    // Effect 2: WebSocket Subscription 
+    // Effect 2: WebSocket Subscription (LOGIC REALTIME HOÀN CHỈNH)
+    // ==================================================================
+    // ==================================================================
+    // DEBUG REALTIME EFFECT
     // ==================================================================
     useEffect(() => {
-        if (isConnected && user && subscribe) {
-            const topic = `/user/queue/payment-updates`; 
+        // 1. LOG KIỂM TRA DỮ LIỆU USER
+        console.log("--- DEBUG WEBSOCKET ---");
+        console.log("Is Connected:", isConnected);
+        console.log("User Object:", user);
+        
+        // Kiểm tra xem user có account không
+        if (!user) {
+            console.log("❌ User chưa đăng nhập hoặc chưa load xong.");
+            return;
+        }
+
+        // TÌM ACCOUNT ID (Thử nhiều cách để tránh null)
+        // Tùy vào API login trả về, nó có thể nằm ở user.account.accountId hoặc user.accountId
+        const accountId = user.account?.accountId || user.accountId || user.id;
+
+        if (!accountId) {
+            console.error("❌ LỖI NGHIÊM TRỌNG: Không tìm thấy Account ID trong đối tượng User!");
+            console.log("Cấu trúc User hiện tại:", JSON.stringify(user, null, 2));
+            return;
+        }
+
+        if (isConnected && subscribe) {
+            // Topic này phải khớp 100% với Backend
+            const topic = `/topic/invoices/${accountId}`; 
+            console.log("✅ Frontend đang đăng ký nghe tại kênh:", topic);
 
             if (subscriptionRef.current) {
                 if (typeof subscriptionRef.current.unsubscribe === 'function') {
@@ -87,16 +118,20 @@ const UserProfilePage = () => {
             }
 
             const newSubscription = subscribe(topic, (msgBody) => {
-                console.log("Realtime invoice update received:", msgBody);
+                console.log("🔥 NHẬN ĐƯỢC TIN NHẮN TỪ SERVER:", msgBody);
                 
-                if (!msgBody || !msgBody.invoice) return;
+                if (!msgBody || !msgBody.invoice) {
+                    console.warn("⚠️ Tin nhắn rỗng hoặc sai cấu trúc:", msgBody);
+                    return;
+                }
 
-                const updatedInvoiceData = msgBody.invoice;
+                const updatedInvoice = msgBody.invoice;
+                console.log("📦 Dữ liệu hóa đơn mới:", updatedInvoice);
 
-                // 3. THÔNG BÁO BẰNG TOAST (Thay thế setNotification)
+                // HIỆN TOAST
                 toast({
-                    title: `Cập nhật đơn hàng #${updatedInvoiceData.invoiceId}`,
-                    description: `Trạng thái mới: ${updatedInvoiceData.status}. ${msgBody.message || ''}`,
+                    title: `Cập nhật đơn hàng #${updatedInvoice.invoiceId}`,
+                    description: `Trạng thái mới: ${updatedInvoice.status}.`,
                     status: 'success',
                     duration: 5000,
                     isClosable: true,
@@ -104,31 +139,28 @@ const UserProfilePage = () => {
                     variant: 'solid'
                 });
 
-                // Cập nhật danh sách
+                // CẬP NHẬT STATE
                 setUserInvoices(prevInvoices => {
-                    if (!prevInvoices || prevInvoices.length === 0) return [updatedInvoiceData];
-                    return prevInvoices.map(inv => 
-                        inv.invoiceId === updatedInvoiceData.invoiceId 
-                            ? updatedInvoiceData 
-                            : inv
+                    console.log("Danh sách cũ:", prevInvoices);
+                    const newList = prevInvoices.map(inv => 
+                        inv.invoiceId === updatedInvoice.invoiceId ? updatedInvoice : inv
                     );
+                    console.log("Danh sách mới sau update:", newList);
+                    return newList;
                 });
             });
 
             subscriptionRef.current = newSubscription;
         }
-
+        
         return () => {
-            if (subscriptionRef.current) {
-                if (typeof subscriptionRef.current.unsubscribe === 'function') {
-                    subscriptionRef.current.unsubscribe();
-                }
-                subscriptionRef.current = null;
+            if (subscriptionRef.current?.unsubscribe) {
+                subscriptionRef.current.unsubscribe();
             }
         };
-    }, [isConnected, user, subscribe, toast]); // Thêm toast vào dependency
+    }, [isConnected, user, subscribe, toast]); 
 
-    // Các hàm xử lý Form
+    // --- Handlers Form ---
 
     const handleChange = (e) => {
         setFormData({
@@ -152,14 +184,10 @@ const UserProfilePage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
         if (!isEditing) return;
 
         const updateData = { ...formData };
-        // Nếu không nhập password thì xóa field này để không gửi lên server
-        if (!updateData.password) {
-            delete updateData.password;
-        }
+        if (!updateData.password) delete updateData.password;
 
         try {
             const result = await updateUser(updateData);
@@ -173,7 +201,6 @@ const UserProfilePage = () => {
             setNotification({ message: 'Lỗi kết nối server.', type: 'error' });
         }
 
-        // Tự động ẩn thông báo sau 3s
         setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     };
 
@@ -186,7 +213,6 @@ const UserProfilePage = () => {
         setShowPassword(!showPassword);
     };
 
-    // Kiểm tra an toàn trước khi render
     if (!user) {
         return <div style={{ textAlign: 'center', marginTop: '50px' }}>Đang tải thông tin...</div>;
     }
@@ -306,7 +332,13 @@ const UserProfilePage = () => {
                                             <td>{invoice.tour?.tourName || 'N/A'}</td>
                                             <td>{invoice.numberOfPeople}</td>
                                             <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(invoice.totalAmount)}</td>
-                                            <td>{invoice.status}</td>
+                                            <td style={{ 
+                                                color: invoice.status === 'PAID' ? 'green' : 'orange',
+                                                fontWeight: 'bold',
+                                                transition: 'all 0.3s ease' // Hiệu ứng chuyển màu mượt mà
+                                            }}>
+                                                {invoice.status}
+                                            </td>
                                             <td>{new Date(invoice.invoiceCreatedAt || invoice.invoiceDate).toLocaleDateString('vi-VN')}</td>
                                         </tr>
                                     ))}
