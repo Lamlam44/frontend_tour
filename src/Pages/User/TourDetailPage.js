@@ -127,8 +127,8 @@ function TourDetailPage() {
         <div className={styles.header}>
           <h1>{tourData.tourName}</h1>
           <div className={styles.metaInfo}>
-            <span className={`${styles.tagStatus} ${tourData.tourStatus === 'OPEN' ? styles.open : styles.closed}`}>
-                {tourData.tourStatus === 'OPEN' ? 'Đang nhận khách' : 'Đã đóng'}
+            <span className={`${styles.tagStatus} ${tourData.tourStatus === 'OPEN' || 'Available' ? styles.open : styles.closed}`}>
+                {tourData.tourStatus === 'OPEN' || 'Available' ? 'Đang nhận khách' : 'Đã đóng'}
             </span>
             <span>Mã tour: {tourData.tourId}</span>
           </div>
@@ -232,7 +232,7 @@ function TourDetailPage() {
               <button 
                 onClick={handleBooking}
                 className={styles.bookNowBtn}
-                disabled={tourData.tourRemainingSlots <= 0 || tourData.tourStatus !== 'OPEN'}
+                disabled={tourData.tourRemainingSlots <= 0 || (tourData.tourStatus !== 'OPEN' && tourData.tourStatus !== 'Available')}
               >
                 {tourData.tourRemainingSlots > 0 ? 'ĐẶT TOUR NGAY' : 'HẾT CHỖ'}
               </button>

@@ -401,3 +401,19 @@ export const getTravelVehicles = async () => {
         return response.data;
     } catch (error) { handleApiError(error, "Error fetching vehicles"); }
 };
+
+// ============================================================
+// 9. FILE UPLOAD API
+// ============================================================
+export const uploadImages = async (formData) => {
+    try {
+        const response = await axiosInstance.post('/files/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        handleApiError(error, "Error uploading images");
+    }
+};
