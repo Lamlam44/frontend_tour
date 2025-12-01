@@ -59,6 +59,11 @@ const TourManagement = () => {
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const cardBg = useColorModeValue("secondaryGray.300", "navy.800"); 
   const modalBg = "gray.800"; // Ép cứng dark mode cho modal giống yêu cầu cũ
+  // Các biến màu dùng trong JSX (gọi hook luôn ở top-level để không vi phạm rules-of-hooks)
+  const inputBg = useColorModeValue("white", "gray.700");
+  const inputColor = useColorModeValue("gray.800", "white");
+  const inputBorderColor = useColorModeValue("gray.300", "gray.600");
+  const searchLabelColor = useColorModeValue("gray.700", "white");
 
   // State cho dropdowns
   const [tourGuides, setTourGuides] = useState([]);
@@ -255,16 +260,16 @@ const TourManagement = () => {
             placeholder="Search by tour name, meeting point, or guide..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            bg={useColorModeValue("white", "gray.700")}
-            color={useColorModeValue("gray.800", "white")}
-            borderColor={useColorModeValue("gray.300", "gray.600")}
+            bg={inputBg}
+            color={inputColor}
+            borderColor={inputBorderColor}
             _placeholder={{ color: "gray.400" }}
             size="md"
           />
           
           {/* Search Field Filters */}
           <HStack spacing={2} flexWrap="wrap">
-            <Text fontSize="sm" color={useColorModeValue("gray.700", "white")} fontWeight="medium">Search in:</Text>
+            <Text fontSize="sm" color={searchLabelColor} fontWeight="medium">Search in:</Text>
             <Button
               size="sm"
               colorScheme={searchFields.name ? "blue" : "gray"}
