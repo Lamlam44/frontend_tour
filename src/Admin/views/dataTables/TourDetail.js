@@ -46,8 +46,8 @@ import {
     getAccommodations,
     getTravelVehicles,
     getTouristDestinations,
-    uploadImages, // Import the new upload service
 } from '../../../services/api';
+import axios from 'axios';
 
 export default function TourDetail(props) {
     const { tourData, onTourUpdate } = props;
@@ -237,11 +237,37 @@ export default function TourDetail(props) {
 
             let uploadedUrls = [];
             if (newImageFiles.length > 0) {
-                const formDataForUpload = new FormData();
-                newImageFiles.forEach(file => {
-                    formDataForUpload.append('files', file);
+                // Upload to Cloudinary
+                toast({
+                    title: "Uploading images to Cloudinary...",
+                    status: "info",
+                    duration: 2000,
+                    isClosable: true
                 });
-                uploadedUrls = await uploadImages(formDataForUpload);
+
+                const uploadPromises = newImageFiles.map(async (file) => {
+                    const formDataForUpload = new FormData();
+                    formDataForUpload.append('file', file);
+                    formDataForUpload.append('folder', 'tours');
+
+                    const response = await axios.post(
+                        'http://localhost:8080/api/images/upload',
+                        formDataForUpload,
+                        {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                            },
+                        }
+                    );
+
+                    if (response.data.success) {
+                        return response.data.imageUrl;
+                    } else {
+                        throw new Error(response.data.message || 'Upload failed');
+                    }
+                });
+
+                uploadedUrls = await Promise.all(uploadPromises);
             }
 
             const finalImageUrls = [...existingImageUrls, ...uploadedUrls];
@@ -373,7 +399,7 @@ export default function TourDetail(props) {
                                 _hover={{ bg: dropzoneBgHover }}
                                 onDrop={onDrop}
                                 onDragOver={onDragOver}
-                                onDragLeave={(e) => {}}
+                                onDragLeave={(e) => { }}
                                 onClick={() => inputRef.current.click()}
                             >
                                 <Center>
@@ -383,7 +409,7 @@ export default function TourDetail(props) {
                                     </VStack>
                                 </Center>
                             </Box>
-                            
+
                             {formData.tourImages.length > 0 && (
                                 <Grid templateColumns="repeat(auto-fill, minmax(120px, 1fr))" gap={4} mt={4}>
                                     {formData.tourImages.map((image, index) => (
