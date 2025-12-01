@@ -1,4 +1,4 @@
-import { Portal, Box } from '@chakra-ui/react';
+import { Portal, Box, useDisclosure } from '@chakra-ui/react';
 import Navbar from '../components/navbar/Navbar.js';
 import Sidebar from '../components/sidebar/AdminSidebar';
 import React, { useState } from 'react';
@@ -6,10 +6,11 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import routes from '../routes.js';
 
 export default function AdminLayout(props) {
-    
+
     const location = useLocation();
-    
-    
+    const { isOpen, onOpen, onClose } = useDisclosure();
+
+
 
     const getRoute = () => {
         return window.location.pathname !== '/admin/full-screen-maps';
@@ -38,7 +39,7 @@ export default function AdminLayout(props) {
 
     return (
         <Box>
-            <Sidebar routes={routes} />
+            <Sidebar routes={routes} isOpen={isOpen} onClose={onClose} />
             <Box
                 bg='navy.900' // Set the background color of the admin dashboard
                 float='right'
@@ -47,8 +48,8 @@ export default function AdminLayout(props) {
                 overflow='auto'
                 position='relative'
                 maxHeight='100%'
-                w={{ base: '100%', xl: 'calc( 100% - 300px )' }}
-                maxWidth={{ base: '100%', xl: 'calc( 100% - 300px )' }}
+                w='100%'
+                maxWidth='100%'
                 transition='all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)'
                 transitionDuration='.2s, .2s, .35s'
                 transitionProperty='top, bottom, width'
@@ -57,6 +58,7 @@ export default function AdminLayout(props) {
                     <Box>
                         <Navbar
                             brandText={getActiveRoute(routes)}
+                            onOpenSidebar={onOpen}
                         />
                     </Box>
                 </Portal>

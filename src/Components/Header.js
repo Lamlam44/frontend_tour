@@ -8,6 +8,9 @@ function Header() {
   const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
 
+  // Check if user is admin
+  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'admin';
+
   const handleLogout = () => {
     logout();
     navigate('/'); // Redirect to home page after logout
@@ -28,8 +31,8 @@ function Header() {
       </nav>
       <div className={styles.actions}>
         {isAuthenticated ? (
-          <div 
-            className={styles.profileContainer} 
+          <div
+            className={styles.profileContainer}
             onMouseEnter={() => setDropdownOpen(true)}
             onMouseLeave={() => setDropdownOpen(false)}
           >
@@ -40,6 +43,11 @@ function Header() {
             {isDropdownOpen && (
               <div className={styles.dropdownMenu}>
                 <Link to="/profile" className={styles.dropdownItem}>Hồ sơ</Link >
+                {isAdmin && (
+                  <Link to="/admin/dashboard" className={styles.dropdownItem}>
+                    Dashboard
+                  </Link>
+                )}
                 <button onClick={handleLogout} className={styles.dropdownItem}>
                   Đăng xuất
                 </button>

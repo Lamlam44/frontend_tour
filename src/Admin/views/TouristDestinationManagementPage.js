@@ -29,7 +29,6 @@ import {
   SimpleGrid,
   Icon,
 } from "@chakra-ui/react";
-import { FaMapMarkerAlt, FaMoneyBillWave, FaInfoCircle } from "react-icons/fa";
 import {
   getTouristDestinations,
   addTouristDestination,
@@ -100,12 +99,12 @@ const TouristDestinationManagementPage = () => {
 
   const validateForm = () => {
     if (!formData.destinationName || !formData.location) {
-        toast({ title: "Destination Name and Location are required.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Destination Name and Location are required.", status: "warning", duration: 3000 });
+      return false;
     }
     if (formData.entryFee && parseFloat(formData.entryFee) < 0) {
-        toast({ title: "Entry Fee cannot be negative.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Entry Fee cannot be negative.", status: "warning", duration: 3000 });
+      return false;
     }
     return true;
   };
@@ -121,18 +120,18 @@ const TouristDestinationManagementPage = () => {
         entryFee: formData.entryFee ? parseFloat(formData.entryFee) : 0,
       };
       await addTouristDestination(payload);
-      
+
       toast({ title: "Destination added successfully", status: "success", duration: 3000 });
       onClose();
       loadTouristDestinations();
       resetForm();
     } catch (err) {
       console.error("Lỗi thêm tourist destination", err);
-      toast({ 
-        title: "Error adding destination", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error adding destination",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -148,18 +147,18 @@ const TouristDestinationManagementPage = () => {
         entryFee: formData.entryFee ? parseFloat(formData.entryFee) : 0,
       };
       await updateTouristDestination(editId, payload);
-      
+
       toast({ title: "Destination updated successfully", status: "success", duration: 3000 });
       onClose();
       loadTouristDestinations();
       resetForm();
     } catch (err) {
       console.error("Lỗi update tourist destination", err);
-      toast({ 
-        title: "Error updating destination", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error updating destination",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -196,8 +195,8 @@ const TouristDestinationManagementPage = () => {
       <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
         <Flex justify='space-between' align='center' mb='20px'>
           <Heading size="sm">Destinations List</Heading>
-          <Button 
-            colorScheme='blue' 
+          <Button
+            colorScheme='blue'
             onClick={() => { resetForm(); onOpen(); }}
             size="md"
           >
@@ -209,7 +208,8 @@ const TouristDestinationManagementPage = () => {
           <Table variant='simple' colorScheme="whiteAlpha">
             <Thead>
               <Tr>
-                <Th color="gray.400">ID / Name</Th>
+                <Th color="gray.400">ID</Th>
+                <Th color="gray.400">Name</Th>
                 <Th color="gray.400">Location</Th>
                 <Th color="gray.400" isNumeric>Entry Fee</Th>
                 <Th color="gray.400">Description</Th>
@@ -220,39 +220,31 @@ const TouristDestinationManagementPage = () => {
               {touristDestinations.map((dest) => (
                 <Tr key={dest.destinationId} _hover={{ bg: hoverBg }}>
                   <Td>
-                    <Box>
-                        <Text fontSize="xs" color="gray.400">{dest.destinationId}</Text>
-                        <Text fontWeight="bold" fontSize="md" color="blue.300">{dest.destinationName}</Text>
-                    </Box>
-                  </Td>
-                  
-                  <Td>
-                    <HStack>
-                        <Icon as={FaMapMarkerAlt} color="red.400" />
-                        <Text fontSize="sm">{dest.location}</Text>
-                    </HStack>
-                  </Td>
-                  
-                  <Td isNumeric>
-                    <HStack justify="flex-end">
-                        <Icon as={FaMoneyBillWave} color="green.400" />
-                        <Text fontWeight="bold" color="green.300">
-                            {dest.entryFee > 0 
-                                ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dest.entryFee)
-                                : "Free"}
-                        </Text>
-                    </HStack>
+                    <Text fontSize="sm" color="gray.400">{dest.destinationId}</Text>
                   </Td>
 
                   <Td>
-                     <HStack align="start">
-                        <Icon as={FaInfoCircle} color="gray.500" mt={1} />
-                        <Text fontSize="sm" noOfLines={2} maxW="250px" color="gray.300">
-                            {dest.description || "No description provided."}
-                        </Text>
-                     </HStack>
+                    <Text fontWeight="bold" fontSize="md">{dest.destinationName}</Text>
                   </Td>
-                  
+
+                  <Td>
+                    <Text fontSize="sm">{dest.location}</Text>
+                  </Td>
+
+                  <Td isNumeric>
+                    <Text fontWeight="bold" color="green.300">
+                      {dest.entryFee > 0
+                        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dest.entryFee)
+                        : "Free"}
+                    </Text>
+                  </Td>
+
+                  <Td>
+                    <Text fontSize="sm" noOfLines={2} maxW="250px" color="gray.300">
+                      {dest.description || "No description provided."}
+                    </Text>
+                  </Td>
+
                   <Td>
                     <HStack>
                       <Button
@@ -288,54 +280,54 @@ const TouristDestinationManagementPage = () => {
 
           <ModalBody pb={6}>
             <SimpleGrid columns={1} spacing={4}>
-                
-                <FormControl isRequired>
-                    <FormLabel>Destination Name</FormLabel>
-                    <Input
-                      placeholder="e.g. Ha Long Bay"
-                      value={formData.destinationName}
-                      onChange={(e) => handleChange("destinationName", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
-                </FormControl>
 
-                <FormControl isRequired>
-                    <FormLabel>Location</FormLabel>
-                    <Input
-                      placeholder="e.g. Quang Ninh Province"
-                      value={formData.location}
-                      onChange={(e) => handleChange("location", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
-                </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Destination Name</FormLabel>
+                <Input
+                  placeholder="e.g. Ha Long Bay"
+                  value={formData.destinationName}
+                  onChange={(e) => handleChange("destinationName", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+              </FormControl>
 
-                <FormControl>
-                    <FormLabel>Entry Fee (VND)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0 for Free"
-                      value={formData.entryFee}
-                      onChange={(e) => handleChange("entryFee", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
-                    <Text fontSize="xs" color="gray.500" mt={1}>Leave blank or 0 if free.</Text>
-                </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Location</FormLabel>
+                <Input
+                  placeholder="e.g. Quang Ninh Province"
+                  value={formData.location}
+                  onChange={(e) => handleChange("location", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+              </FormControl>
 
-                <FormControl>
-                    <FormLabel>Description</FormLabel>
-                    <Textarea
-                      placeholder="Enter description here..."
-                      value={formData.description}
-                      onChange={(e) => handleChange("description", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                      rows={4}
-                      maxLength={2000}
-                    />
-                    <Text fontSize="xs" color="gray.500" mt={1} textAlign="right">
-                        {formData.description.length}/2000
-                    </Text>
-                </FormControl>
+              <FormControl>
+                <FormLabel>Entry Fee (VND)</FormLabel>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="0 for Free"
+                  value={formData.entryFee}
+                  onChange={(e) => handleChange("entryFee", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>Leave blank or 0 if free.</Text>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Description</FormLabel>
+                <Textarea
+                  placeholder="Enter description here..."
+                  value={formData.description}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                  rows={4}
+                  maxLength={2000}
+                />
+                <Text fontSize="xs" color="gray.500" mt={1} textAlign="right">
+                  {formData.description.length}/2000
+                </Text>
+              </FormControl>
 
             </SimpleGrid>
           </ModalBody>

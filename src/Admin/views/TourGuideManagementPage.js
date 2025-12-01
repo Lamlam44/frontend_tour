@@ -99,12 +99,12 @@ const TourGuideManagementPage = () => {
 
   const validateForm = () => {
     if (!formData.tourGuideName || !formData.tourGuideEmail || !formData.tourGuidePhone) {
-        toast({ title: "Name, Email and Phone are required.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Name, Email and Phone are required.", status: "warning", duration: 3000 });
+      return false;
     }
     if (parseInt(formData.tourGuideExperienceYears) < 0) {
-        toast({ title: "Experience years cannot be negative.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Experience years cannot be negative.", status: "warning", duration: 3000 });
+      return false;
     }
     return true;
   };
@@ -118,18 +118,18 @@ const TourGuideManagementPage = () => {
         tourGuideExperienceYears: parseInt(formData.tourGuideExperienceYears) || 0,
       };
       await addTourGuide(payload);
-      
+
       toast({ title: "Tour Guide added successfully", status: "success", duration: 3000 });
       onClose();
       loadTourGuides();
       resetForm();
     } catch (err) {
       console.error("Lỗi thêm tour guide", err);
-      toast({ 
-        title: "Error adding tour guide", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error adding tour guide",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -143,18 +143,18 @@ const TourGuideManagementPage = () => {
         tourGuideExperienceYears: parseInt(formData.tourGuideExperienceYears) || 0,
       };
       await updateTourGuide(editId, payload);
-      
+
       toast({ title: "Tour Guide updated successfully", status: "success", duration: 3000 });
       onClose();
       loadTourGuides();
       resetForm();
     } catch (err) {
       console.error("Lỗi update tour guide", err);
-      toast({ 
-        title: "Error updating tour guide", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error updating tour guide",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -191,8 +191,8 @@ const TourGuideManagementPage = () => {
       <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
         <Flex justify='space-between' align='center' mb='20px'>
           <Heading size="sm">Guide List</Heading>
-          <Button 
-            colorScheme='blue' 
+          <Button
+            colorScheme='blue'
             onClick={() => { resetForm(); onOpen(); }}
             size="md"
           >
@@ -204,8 +204,10 @@ const TourGuideManagementPage = () => {
           <Table variant='simple' colorScheme="whiteAlpha">
             <Thead>
               <Tr>
-                <Th color="gray.400">ID / Name</Th>
-                <Th color="gray.400">Contact Info</Th>
+                <Th color="gray.400">ID</Th>
+                <Th color="gray.400">Name</Th>
+                <Th color="gray.400">Email</Th>
+                <Th color="gray.400">Phone</Th>
                 <Th color="gray.400">Experience</Th>
                 <Th color="gray.400">Actions</Th>
               </Tr>
@@ -214,37 +216,25 @@ const TourGuideManagementPage = () => {
               {tourGuides.map((guide) => (
                 <Tr key={guide.tourGuideId} _hover={{ bg: hoverBg }}>
                   <Td>
-                    <Box>
-                        <Text fontSize="xs" color="gray.400">{guide.tourGuideId}</Text>
-                        <HStack mt={1}>
-                            <Icon as={FaUserTie} color="blue.300" />
-                            <Text fontWeight="bold" fontSize="md">{guide.tourGuideName}</Text>
-                        </HStack>
-                    </Box>
+                    <Text fontSize="sm" fontWeight="bold" color="blue.300">{guide.tourGuideId}</Text>
                   </Td>
-                  
+
                   <Td>
-                    <Box>
-                        <HStack mb={1}>
-                            <Icon as={FaEnvelope} color="yellow.400" w={3} h={3}/>
-                            <Text fontSize="sm">{guide.tourGuideEmail}</Text>
-                        </HStack>
-                        <HStack>
-                            <Icon as={FaPhone} color="green.400" w={3} h={3}/>
-                            <Text fontSize="sm">{guide.tourGuidePhone}</Text>
-                        </HStack>
-                    </Box>
+                    <Text fontWeight="bold" fontSize="md">{guide.tourGuideName}</Text>
                   </Td>
-                  
+
                   <Td>
-                    <Badge colorScheme="purple" px={2} py={1} borderRadius="md">
-                        <HStack spacing={1}>
-                            <Icon as={FaBriefcase} w={3} h={3} />
-                            <Text>{guide.tourGuideExperienceYears} Years</Text>
-                        </HStack>
-                    </Badge>
+                    <Text fontSize="sm">{guide.tourGuideEmail}</Text>
                   </Td>
-                  
+
+                  <Td>
+                    <Text fontSize="sm">{guide.tourGuidePhone}</Text>
+                  </Td>
+
+                  <Td>
+                    <Text fontSize="sm">{guide.tourGuideExperienceYears} Years</Text>
+                  </Td>
+
                   <Td>
                     <HStack>
                       <Button
@@ -280,50 +270,50 @@ const TourGuideManagementPage = () => {
 
           <ModalBody pb={6}>
             <SimpleGrid columns={1} spacing={4}>
-                
-                <FormControl isRequired>
-                    <FormLabel>Full Name</FormLabel>
-                    <Input
-                      placeholder="e.g. Nguyen Van A"
-                      value={formData.tourGuideName}
-                      onChange={(e) => handleChange("tourGuideName", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
-                </FormControl>
 
-                <SimpleGrid columns={2} spacing={4}>
-                    <FormControl isRequired>
-                        <FormLabel>Email</FormLabel>
-                        <Input
-                          type="email"
-                          placeholder="guide@example.com"
-                          value={formData.tourGuideEmail}
-                          onChange={(e) => handleChange("tourGuideEmail", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-                    <FormControl isRequired>
-                        <FormLabel>Phone</FormLabel>
-                        <Input
-                          placeholder="Phone number"
-                          value={formData.tourGuidePhone}
-                          onChange={(e) => handleChange("tourGuidePhone", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-                </SimpleGrid>
+              <FormControl isRequired>
+                <FormLabel>Full Name</FormLabel>
+                <Input
+                  placeholder="e.g. Nguyen Van A"
+                  value={formData.tourGuideName}
+                  onChange={(e) => handleChange("tourGuideName", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+              </FormControl>
 
+              <SimpleGrid columns={2} spacing={4}>
                 <FormControl isRequired>
-                    <FormLabel>Experience (Years)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="e.g. 5"
-                      value={formData.tourGuideExperienceYears}
-                      onChange={(e) => handleChange("tourGuideExperienceYears", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
+                  <FormLabel>Email</FormLabel>
+                  <Input
+                    type="email"
+                    placeholder="guide@example.com"
+                    value={formData.tourGuideEmail}
+                    onChange={(e) => handleChange("tourGuideEmail", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
                 </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Phone</FormLabel>
+                  <Input
+                    placeholder="Phone number"
+                    value={formData.tourGuidePhone}
+                    onChange={(e) => handleChange("tourGuidePhone", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
+                </FormControl>
+              </SimpleGrid>
+
+              <FormControl isRequired>
+                <FormLabel>Experience (Years)</FormLabel>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 5"
+                  value={formData.tourGuideExperienceYears}
+                  onChange={(e) => handleChange("tourGuideExperienceYears", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+              </FormControl>
 
             </SimpleGrid>
           </ModalBody>

@@ -4,16 +4,40 @@ import {
     Flex,
     Text,
     useColorModeValue,
+    IconButton,
+    Button,
+    HStack,
 } from "@chakra-ui/react";
+import { FaBars, FaHome, FaSignOutAlt, FaTachometerAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function Navbar(props) {
-    const { brandText } = props;
+    const { brandText, onOpenSidebar } = props;
+    const navigate = useNavigate();
+    const { logout, user } = useAuth();
 
     let mainText = useColorModeValue("navy.700", "white");
     let navbarBg = useColorModeValue(
         "rgba(244, 247, 254, 0.2)",
         "rgba(11,20,55,0.5)"
     );
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    const handleGoHome = () => {
+        navigate('/');
+    };
+
+    const handleGoDashboard = () => {
+        navigate('/admin/dashboard');
+    };
+
+    // Check if user is admin
+    const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'admin';
 
     return (
         <Box
@@ -51,19 +75,28 @@ export default function Navbar(props) {
                 base: "calc(100vw - 6%)",
                 md: "calc(100vw - 8%)",
                 lg: "calc(100vw - 6%)",
-                xl: "calc(100vw - 350px)",
-                "2xl": "calc(100vw - 365px)",
+                xl: "calc(100vw - 6%)",
+                "2xl": "calc(100vw - 6%)",
             }}
             zIndex='1000'>
             <Flex
                 w='100%'
-                flexDirection={{
-                    sm: "column",
-                    md: "row",
-                }}
-                alignItems={{ xl: "center" }}
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
                 mb='0px'>
-                <Box ms='auto' w={{ sm: "100%", md: "unset" }}>
+                <HStack spacing={2}>
+                    {/* Hamburger Menu Button - Visible on all displays */}
+                    <IconButton
+                        display="flex"
+                        icon={<FaBars />}
+                        onClick={onOpenSidebar}
+                        variant="ghost"
+                        color={mainText}
+                        fontSize="xl"
+                        aria-label="Open Menu"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                    />
                     <Text
                         color={mainText}
                         fontSize='xl'
@@ -71,7 +104,45 @@ export default function Navbar(props) {
                         lineHeight='100%'>
                         {brandText}
                     </Text>
-                </Box>
+                </HStack>
+
+                <HStack spacing={2}>
+                    {/* Home Button */}
+                    <IconButton
+                        icon={<FaHome />}
+                        onClick={handleGoHome}
+                        variant="ghost"
+                        color={mainText}
+                        fontSize="lg"
+                        aria-label="Go to Home"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                    />
+
+                    {/* Dashboard Button - Only for Admin */}
+                    {isAdmin && (
+                        <IconButton
+                            icon={<FaTachometerAlt />}
+                            onClick={handleGoDashboard}
+                            variant="ghost"
+                            color={mainText}
+                            fontSize="lg"
+                            aria-label="Go to Dashboard"
+                            _hover={{ bg: "whiteAlpha.200" }}
+                        />
+                    )}
+
+                    {/* Logout Button */}
+                    <Button
+                        leftIcon={<FaSignOutAlt />}
+                        onClick={handleLogout}
+                        variant="ghost"
+                        color={mainText}
+                        fontSize="sm"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                    >
+                        Logout
+                    </Button>
+                </HStack>
             </Flex>
         </Box>
     );

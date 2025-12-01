@@ -28,7 +28,7 @@ import {
   Select,
   Icon,
 } from "@chakra-ui/react";
-import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
+import { FaStar } from "react-icons/fa";
 import {
   getAccommodations,
   addAccommodation,
@@ -111,20 +111,20 @@ const AccommodationManagementPage = () => {
         rating: formData.rating ? parseFloat(formData.rating) : 0,
         pricePerNight: parseFloat(formData.pricePerNight),
       };
-      
+
       await addAccommodation(payload);
-      
+
       toast({ title: "Added successfully", status: "success", duration: 3000 });
       onClose();
       loadAccommodations();
       resetForm();
     } catch (err) {
       console.error("Error adding", err);
-      toast({ 
-        title: "Error adding accommodation", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error adding accommodation",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -136,9 +136,9 @@ const AccommodationManagementPage = () => {
         rating: formData.rating ? parseFloat(formData.rating) : 0,
         pricePerNight: parseFloat(formData.pricePerNight),
       };
-      
+
       await updateAccommodation(editId, payload);
-      
+
       toast({ title: "Updated successfully", status: "success", duration: 3000 });
       onClose();
       loadAccommodations();
@@ -182,8 +182,8 @@ const AccommodationManagementPage = () => {
       <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
         <Box display="flex" justifyContent="space-between" mb={6} alignItems="center">
           <Heading size="sm">Accommodation List</Heading>
-          <Button 
-            colorScheme="blue" 
+          <Button
+            colorScheme="blue"
             onClick={() => { resetForm(); onOpen(); }}
             size="md"
           >
@@ -196,7 +196,8 @@ const AccommodationManagementPage = () => {
             <Thead>
               <Tr>
                 <Th color="gray.400">ID</Th>
-                <Th color="gray.400">Name / Type</Th>
+                <Th color="gray.400">Name</Th>
+                <Th color="gray.400">Type</Th>
                 <Th color="gray.400">Location</Th>
                 <Th color="gray.400" isNumeric>Price / Night</Th>
                 <Th color="gray.400" isNumeric>Rating</Th>
@@ -206,35 +207,32 @@ const AccommodationManagementPage = () => {
             <Tbody>
               {accommodations.map((acc) => (
                 <Tr key={acc.accommodationId} _hover={{ bg: hoverBg }}>
-                  <Td fontSize="sm" color="gray.400">{acc.accommodationId}</Td>
-                  
                   <Td>
-                    <Box>
-                        <Text fontWeight="bold" fontSize="md">{acc.accommodationName}</Text>
-                        <Badge colorScheme="purple" fontSize="0.7em" mt={1}>
-                            {acc.accommodationType || "Unknown"}
-                        </Badge>
-                    </Box>
+                    <Text fontSize="sm" color="gray.400">{acc.accommodationId}</Text>
                   </Td>
-                  
+
                   <Td>
-                    <HStack>
-                        <Icon as={FaMapMarkerAlt} color="red.400" />
-                        <Text fontSize="sm">{acc.location}</Text>
-                    </HStack>
+                    <Text fontWeight="bold" fontSize="md">{acc.accommodationName}</Text>
                   </Td>
-                  
-                  <Td isNumeric fontWeight="bold" color="green.300">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(acc.pricePerNight)}
+
+                  <Td>
+                    <Text fontSize="sm">{acc.accommodationType || "Unknown"}</Text>
                   </Td>
-                  
+
+                  <Td>
+                    <Text fontSize="sm">{acc.location}</Text>
+                  </Td>
+
                   <Td isNumeric>
-                    <HStack justify="flex-end">
-                        <Text fontWeight="bold" color="yellow.400">{acc.rating}</Text>
-                        <Icon as={FaStar} color="yellow.400" />
-                    </HStack>
+                    <Text fontWeight="bold" color="green.300">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(acc.pricePerNight)}
+                    </Text>
                   </Td>
-                  
+
+                  <Td isNumeric>
+                    <Text fontWeight="bold" color="yellow.400">{acc.rating}</Text>
+                  </Td>
+
                   <Td>
                     <HStack>
                       <Button colorScheme="yellow" size="sm" onClick={() => openEdit(acc)}>Edit</Button>
@@ -257,76 +255,76 @@ const AccommodationManagementPage = () => {
 
           <ModalBody pb={6}>
             <SimpleGrid columns={1} spacing={4}>
-                {/* Name & Type */}
-                <SimpleGrid columns={2} spacing={4}>
-                    <FormControl isRequired>
-                        <FormLabel>Accommodation Name</FormLabel>
-                        <Input
-                          placeholder="e.g. Sunrise Hotel"
-                          value={formData.accommodationName}
-                          onChange={(e) => handleChange("accommodationName", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-
-                    <FormControl isRequired>
-                        <FormLabel>Type</FormLabel>
-                        {/* Dùng Select cho Type để chuẩn hóa dữ liệu */}
-                        <Select 
-                            placeholder="Select Type" 
-                            value={formData.accommodationType}
-                            onChange={(e) => handleChange("accommodationType", e.target.value)}
-                            bg={inputBg} borderColor={borderColor}
-                        >
-                            <option style={{backgroundColor: '#2D3748'}} value="Hotel">Hotel</option>
-                            <option style={{backgroundColor: '#2D3748'}} value="Resort">Resort</option>
-                            <option style={{backgroundColor: '#2D3748'}} value="Villa">Villa</option>
-                            <option style={{backgroundColor: '#2D3748'}} value="Homestay">Homestay</option>
-                            <option style={{backgroundColor: '#2D3748'}} value="Guesthouse">Guesthouse</option>
-                        </Select>
-                    </FormControl>
-                </SimpleGrid>
-
-                {/* Location */}
+              {/* Name & Type */}
+              <SimpleGrid columns={2} spacing={4}>
                 <FormControl isRequired>
-                    <FormLabel>Location</FormLabel>
-                    <Input
-                      placeholder="e.g. 123 Beach Road, Da Nang"
-                      value={formData.location}
-                      onChange={(e) => handleChange("location", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
+                  <FormLabel>Accommodation Name</FormLabel>
+                  <Input
+                    placeholder="e.g. Sunrise Hotel"
+                    value={formData.accommodationName}
+                    onChange={(e) => handleChange("accommodationName", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
                 </FormControl>
 
-                {/* Price & Rating */}
-                <SimpleGrid columns={2} spacing={4}>
-                    <FormControl isRequired>
-                        <FormLabel>Price Per Night (VND)</FormLabel>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 500000"
-                          value={formData.pricePerNight}
-                          onChange={(e) => handleChange("pricePerNight", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Type</FormLabel>
+                  {/* Dùng Select cho Type để chuẩn hóa dữ liệu */}
+                  <Select
+                    placeholder="Select Type"
+                    value={formData.accommodationType}
+                    onChange={(e) => handleChange("accommodationType", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  >
+                    <option style={{ backgroundColor: '#2D3748' }} value="Hotel">Hotel</option>
+                    <option style={{ backgroundColor: '#2D3748' }} value="Resort">Resort</option>
+                    <option style={{ backgroundColor: '#2D3748' }} value="Villa">Villa</option>
+                    <option style={{ backgroundColor: '#2D3748' }} value="Homestay">Homestay</option>
+                    <option style={{ backgroundColor: '#2D3748' }} value="Guesthouse">Guesthouse</option>
+                  </Select>
+                </FormControl>
+              </SimpleGrid>
 
-                    <FormControl>
-                        <FormLabel>Rating (0 - 5)</FormLabel>
-                        <HStack>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="5"
-                              value={formData.rating}
-                              onChange={(e) => handleChange("rating", e.target.value)}
-                              bg={inputBg} borderColor={borderColor}
-                            />
-                            <Icon as={FaStar} color="yellow.400" />
-                        </HStack>
-                    </FormControl>
-                </SimpleGrid>
+              {/* Location */}
+              <FormControl isRequired>
+                <FormLabel>Location</FormLabel>
+                <Input
+                  placeholder="e.g. 123 Beach Road, Da Nang"
+                  value={formData.location}
+                  onChange={(e) => handleChange("location", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+              </FormControl>
+
+              {/* Price & Rating */}
+              <SimpleGrid columns={2} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Price Per Night (VND)</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 500000"
+                    value={formData.pricePerNight}
+                    onChange={(e) => handleChange("pricePerNight", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Rating (0 - 5)</FormLabel>
+                  <HStack>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      value={formData.rating}
+                      onChange={(e) => handleChange("rating", e.target.value)}
+                      bg={inputBg} borderColor={borderColor}
+                    />
+                    <Icon as={FaStar} color="yellow.400" />
+                  </HStack>
+                </FormControl>
+              </SimpleGrid>
             </SimpleGrid>
           </ModalBody>
 
