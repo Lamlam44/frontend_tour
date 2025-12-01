@@ -30,7 +30,7 @@ import {
   Center
 } from "@chakra-ui/react";
 import { Select } from "chakra-react-select";
-import Card from "../components/card/Card"; 
+import Card from "../components/card/Card";
 // Đảm bảo đường dẫn import Card đúng với project của bạn
 
 import {
@@ -54,10 +54,10 @@ const TourManagement = () => {
   });
   const [isEdit, setIsEdit] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   // Màu sắc đồng bộ với TourDetail và Dark Mode
   const textColor = useColorModeValue("secondaryGray.900", "white");
-  const cardBg = useColorModeValue("secondaryGray.300", "navy.800"); 
+  const cardBg = useColorModeValue("secondaryGray.300", "navy.800");
   const modalBg = "gray.800"; // Ép cứng dark mode cho modal giống yêu cầu cũ
   // Các biến màu dùng trong JSX (gọi hook luôn ở top-level để không vi phạm rules-of-hooks)
   const inputBg = useColorModeValue("white", "gray.700");
@@ -93,11 +93,11 @@ const TourManagement = () => {
   const [loading, setLoading] = useState(false);
 
   // Memo options cho Select
-  const vehicleOptions = useMemo(() => 
+  const vehicleOptions = useMemo(() =>
     travelVehicles.map(v => ({ value: v.vehicleId, label: `${v.vehicleType} - Capacity: ${v.capacity}` })),
     [travelVehicles]
   );
-  const destinationOptions = useMemo(() => 
+  const destinationOptions = useMemo(() =>
     touristDestinations.map(d => ({ value: d.destinationId, label: `${d.destinationName} - ${d.location}` })),
     [touristDestinations]
   );
@@ -173,8 +173,8 @@ const TourManagement = () => {
         // Để an toàn và đơn giản theo yêu cầu: TourManagement KHÔNG can thiệp ảnh.
         // Cần lấy lại list ảnh cũ để gửi kèm nếu PUT request ghi đè toàn bộ.
         const currentTour = tours.find(t => t.tourId === editId);
-        if(currentTour && currentTour.tourImages) {
-            payload.tourImages = currentTour.tourImages.map(img => img.imageUrl);
+        if (currentTour && currentTour.tourImages) {
+          payload.tourImages = currentTour.tourImages.map(img => img.imageUrl);
         }
         await updateTour(editId, payload);
       } else {
@@ -194,12 +194,12 @@ const TourManagement = () => {
     setIsEdit(true);
     setEditId(tour.tourId);
 
-    const currentVehicles = vehicleOptions.filter(option => 
-        tour.travelVehicles?.some(v => v.vehicleId === option.value)
+    const currentVehicles = vehicleOptions.filter(option =>
+      tour.travelVehicles?.some(v => v.vehicleId === option.value)
     );
-    
+
     const currentDestinations = destinationOptions.filter(option =>
-        tour.touristDestinations?.some(d => d.destinationId === option.value)
+      tour.touristDestinations?.some(d => d.destinationId === option.value)
     );
 
     setSelectedVehicles(currentVehicles);
@@ -219,11 +219,11 @@ const TourManagement = () => {
 
     onOpen();
   };
-  
+
   const openAdd = () => {
-      setIsEdit(false);
-      resetForm();
-      onOpen();
+    setIsEdit(false);
+    resetForm();
+    onOpen();
   };
 
   const handleDelete = async (id) => {
@@ -238,7 +238,7 @@ const TourManagement = () => {
   };
 
   if (loading) {
-      return <Center h="50vh"><Spinner size="xl" color="blue.500" /></Center>;
+    return <Center h="50vh"><Spinner size="xl" color="blue.500" /></Center>;
   }
 
   return (
@@ -266,7 +266,7 @@ const TourManagement = () => {
             _placeholder={{ color: "gray.400" }}
             size="md"
           />
-          
+
           {/* Search Field Filters */}
           <HStack spacing={2} flexWrap="wrap">
             <Text fontSize="sm" color={searchLabelColor} fontWeight="medium">Search in:</Text>
@@ -274,7 +274,7 @@ const TourManagement = () => {
               size="sm"
               colorScheme={searchFields.name ? "blue" : "gray"}
               variant={searchFields.name ? "solid" : "outline"}
-              onClick={() => setSearchFields({...searchFields, name: !searchFields.name})}
+              onClick={() => setSearchFields({ ...searchFields, name: !searchFields.name })}
             >
               Tour Name
             </Button>
@@ -282,7 +282,7 @@ const TourManagement = () => {
               size="sm"
               colorScheme={searchFields.meetingPoint ? "blue" : "gray"}
               variant={searchFields.meetingPoint ? "solid" : "outline"}
-              onClick={() => setSearchFields({...searchFields, meetingPoint: !searchFields.meetingPoint})}
+              onClick={() => setSearchFields({ ...searchFields, meetingPoint: !searchFields.meetingPoint })}
             >
               Meeting Point
             </Button>
@@ -290,7 +290,7 @@ const TourManagement = () => {
               size="sm"
               colorScheme={searchFields.guide ? "blue" : "gray"}
               variant={searchFields.guide ? "solid" : "outline"}
-              onClick={() => setSearchFields({...searchFields, guide: !searchFields.guide})}
+              onClick={() => setSearchFields({ ...searchFields, guide: !searchFields.guide })}
             >
               Guide Name
             </Button>
@@ -324,7 +324,7 @@ const TourManagement = () => {
                   <Td fontWeight="bold">{tour.tourName}</Td>
                   <Td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tour.tourPrice)}</Td>
                   <Td>
-                     <Badge colorScheme={tour.tourStatus === 'Available' ? 'green' : 'red'}>
+                    <Badge colorScheme={tour.tourStatus === 'Available' ? 'green' : 'red'}>
                       {tour.tourStatus}
                     </Badge>
                   </Td>
@@ -351,97 +351,97 @@ const TourManagement = () => {
           <ModalCloseButton />
           <ModalBody pb={6}>
             <HStack spacing={4} mb={4}>
-                <FormControl isRequired>
-                    <FormLabel>Tour Name</FormLabel>
-                    <Input placeholder="Tour Name" value={formData.tourName} onChange={(e) => handleChange("tourName", e.target.value)} />
-                </FormControl>
-                <FormControl isRequired>
-                    <FormLabel>Price</FormLabel>
-                    <Input placeholder="Price" type="number" value={formData.tourPrice} onChange={(e) => handleChange("tourPrice", e.target.value)} />
-                </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Tour Name</FormLabel>
+                <Input placeholder="Tour Name" value={formData.tourName} onChange={(e) => handleChange("tourName", e.target.value)} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Price</FormLabel>
+                <Input placeholder="Price" type="number" value={formData.tourPrice} onChange={(e) => handleChange("tourPrice", e.target.value)} />
+              </FormControl>
             </HStack>
             <FormControl mb={4}>
-                <FormLabel>Description</FormLabel>
-                <Textarea placeholder="Tour Description" value={formData.tourDescription} onChange={(e) => handleChange("tourDescription", e.target.value)} />
+              <FormLabel>Description</FormLabel>
+              <Textarea placeholder="Tour Description" value={formData.tourDescription} onChange={(e) => handleChange("tourDescription", e.target.value)} />
             </FormControl>
-             <HStack spacing={4} mb={4}>
-                <FormControl isRequired>
-                    <FormLabel>Status</FormLabel>
-                    <ChakraSelect value={formData.tourStatus} onChange={(e) => handleChange("tourStatus", e.target.value)} bg="gray.700" borderColor="gray.600">
-                        <option style={{ backgroundColor: '#2D3748' }} value="Available">Available</option>
-                        <option style={{ backgroundColor: '#2D3748' }} value="Fully Booked">Fully Booked</option>
-                        <option style={{ backgroundColor: '#2D3748' }} value="Cancelled">Cancelled</option>
-                    </ChakraSelect>
-                </FormControl>
-                <FormControl isRequired>
-                    <FormLabel>Remaining Slots</FormLabel>
-                    <Input placeholder="Remaining Slots" type="number" value={formData.tourRemainingSlots} onChange={(e) => handleChange("tourRemainingSlots", e.target.value)} />
-                </FormControl>
+            <HStack spacing={4} mb={4}>
+              <FormControl isRequired>
+                <FormLabel>Status</FormLabel>
+                <ChakraSelect value={formData.tourStatus} onChange={(e) => handleChange("tourStatus", e.target.value)} bg="gray.700" borderColor="gray.600">
+                  <option style={{ backgroundColor: '#2D3748' }} value="Available">Available</option>
+                  <option style={{ backgroundColor: '#2D3748' }} value="Fully Booked">Fully Booked</option>
+                  <option style={{ backgroundColor: '#2D3748' }} value="Cancelled">Cancelled</option>
+                </ChakraSelect>
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Remaining Slots</FormLabel>
+                <Input placeholder="Remaining Slots" type="number" value={formData.tourRemainingSlots} onChange={(e) => handleChange("tourRemainingSlots", e.target.value)} />
+              </FormControl>
             </HStack>
-            
+
             {/* ĐÃ XÓA FORM CONTROL IMAGE TẠI ĐÂY */}
 
-             <HStack spacing={4} mb={4}>
-                <FormControl isRequired>
-                    <FormLabel>Start Date</FormLabel>
-                    <Input type="datetime-local" value={formData.tourStartDate} onChange={(e) => handleChange("tourStartDate", e.target.value)} />
-                </FormControl>
-                 <FormControl isRequired>
-                    <FormLabel>End Date</FormLabel>
-                    <Input type="datetime-local" value={formData.tourEndDate} onChange={(e) => handleChange("tourEndDate", e.target.value)} />
-                </FormControl>
+            <HStack spacing={4} mb={4}>
+              <FormControl isRequired>
+                <FormLabel>Start Date</FormLabel>
+                <Input type="datetime-local" value={formData.tourStartDate} onChange={(e) => handleChange("tourStartDate", e.target.value)} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>End Date</FormLabel>
+                <Input type="datetime-local" value={formData.tourEndDate} onChange={(e) => handleChange("tourEndDate", e.target.value)} />
+              </FormControl>
             </HStack>
-             <HStack spacing={4} mb={4}>
-                <FormControl>
-                    <FormLabel>Tour Guide</FormLabel>
-                    <ChakraSelect placeholder="Select Tour Guide" value={formData.tourGuideId} onChange={(e) => handleChange("tourGuideId", e.target.value)} bg="gray.700" borderColor="gray.600">
-                        {tourGuides.map((guide) => <option style={{ backgroundColor: '#2D3748' }} key={guide.tourGuideId} value={guide.tourGuideId}>{guide.tourGuideName}</option>)}
-                    </ChakraSelect>
-                </FormControl>
-                <FormControl>
-                    <FormLabel>Accommodation</FormLabel>
-                    <ChakraSelect placeholder="Select Accommodation" value={formData.accommodationId} onChange={(e) => handleChange("accommodationId", e.target.value)} bg="gray.700" borderColor="gray.600">
-                        {accommodations.map((acc) => <option style={{ backgroundColor: '#2D3748' }} key={acc.accommodationId} value={acc.accommodationId}>{acc.accommodationName}</option>)}
-                    </ChakraSelect>
-                </FormControl>
+            <HStack spacing={4} mb={4}>
+              <FormControl>
+                <FormLabel>Tour Guide</FormLabel>
+                <ChakraSelect placeholder="Select Tour Guide" value={formData.tourGuideId} onChange={(e) => handleChange("tourGuideId", e.target.value)} bg="gray.700" borderColor="gray.600">
+                  {tourGuides.map((guide) => <option style={{ backgroundColor: '#2D3748' }} key={guide.tourGuideId} value={guide.tourGuideId}>{guide.tourGuideName}</option>)}
+                </ChakraSelect>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Accommodation</FormLabel>
+                <ChakraSelect placeholder="Select Accommodation" value={formData.accommodationId} onChange={(e) => handleChange("accommodationId", e.target.value)} bg="gray.700" borderColor="gray.600">
+                  {accommodations.map((acc) => <option style={{ backgroundColor: '#2D3748' }} key={acc.accommodationId} value={acc.accommodationId}>{acc.accommodationName}</option>)}
+                </ChakraSelect>
+              </FormControl>
             </HStack>
             <FormControl mb={4}>
-                <FormLabel>Travel Vehicles</FormLabel>
-                <Select
-                    isMulti
-                    name="vehicles"
-                    options={vehicleOptions}
-                    placeholder="Select vehicles..."
-                    value={selectedVehicles}
-                    onChange={setSelectedVehicles}
-                    closeMenuOnSelect={false}
-                    chakraStyles={{
-                        control: (provided) => ({ ...provided, bg: "gray.700", borderColor: "gray.600" }),
-                        menu: (provided) => ({ ...provided, bg: "gray.800" }),
-                        option: (provided, state) => ({ ...provided, bg: state.isFocused ? "blue.500" : "transparent", color: "white" }),
-                        multiValue: (provided) => ({ ...provided, bg: "blue.600" }),
-                        multiValueLabel: (provided) => ({ ...provided, color: "white" }),
-                    }}
-                />
+              <FormLabel>Travel Vehicles</FormLabel>
+              <Select
+                isMulti
+                name="vehicles"
+                options={vehicleOptions}
+                placeholder="Select vehicles..."
+                value={selectedVehicles}
+                onChange={setSelectedVehicles}
+                closeMenuOnSelect={false}
+                chakraStyles={{
+                  control: (provided) => ({ ...provided, bg: "gray.700", borderColor: "gray.600" }),
+                  menu: (provided) => ({ ...provided, bg: "gray.800" }),
+                  option: (provided, state) => ({ ...provided, bg: state.isFocused ? "blue.500" : "transparent", color: "white" }),
+                  multiValue: (provided) => ({ ...provided, bg: "blue.600" }),
+                  multiValueLabel: (provided) => ({ ...provided, color: "white" }),
+                }}
+              />
             </FormControl>
-             <FormControl mb={4}>
-                <FormLabel>Tourist Destinations</FormLabel>
-                <Select
-                    isMulti
-                    name="destinations"
-                    options={destinationOptions}
-                    placeholder="Select destinations..."
-                    value={selectedDestinations}
-                    onChange={setSelectedDestinations}
-                    closeMenuOnSelect={false}
-                     chakraStyles={{
-                        control: (provided) => ({ ...provided, bg: "gray.700", borderColor: "gray.600" }),
-                        menu: (provided) => ({ ...provided, bg: "gray.800" }),
-                        option: (provided, state) => ({ ...provided, bg: state.isFocused ? "blue.500" : "transparent", color: "white" }),
-                        multiValue: (provided) => ({ ...provided, bg: "blue.600" }),
-                        multiValueLabel: (provided) => ({ ...provided, color: "white" }),
-                    }}
-                />
+            <FormControl mb={4}>
+              <FormLabel>Tourist Destinations</FormLabel>
+              <Select
+                isMulti
+                name="destinations"
+                options={destinationOptions}
+                placeholder="Select destinations..."
+                value={selectedDestinations}
+                onChange={setSelectedDestinations}
+                closeMenuOnSelect={false}
+                chakraStyles={{
+                  control: (provided) => ({ ...provided, bg: "gray.700", borderColor: "gray.600" }),
+                  menu: (provided) => ({ ...provided, bg: "gray.800" }),
+                  option: (provided, state) => ({ ...provided, bg: state.isFocused ? "blue.500" : "transparent", color: "white" }),
+                  multiValue: (provided) => ({ ...provided, bg: "blue.600" }),
+                  multiValueLabel: (provided) => ({ ...provided, color: "white" }),
+                }}
+              />
             </FormControl>
           </ModalBody>
           <ModalFooter bg="gray.800">
