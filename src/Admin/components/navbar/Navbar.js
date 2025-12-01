@@ -75,8 +75,8 @@ export default function Navbar(props) {
                 base: "calc(100vw - 6%)",
                 md: "calc(100vw - 8%)",
                 lg: "calc(100vw - 6%)",
-                xl: "calc(100vw - 6%)",
-                "2xl": "calc(100vw - 6%)",
+                xl: "calc(100vw - 350px)",
+                "2xl": "calc(100vw - 365px)",
             }}
             zIndex='1000'>
             <Flex
@@ -86,9 +86,9 @@ export default function Navbar(props) {
                 justifyContent="space-between"
                 mb='0px'>
                 <HStack spacing={2}>
-                    {/* Hamburger Menu Button - Visible on all displays */}
+                    {/* Hamburger Menu Button - Only visible on mobile */}
                     <IconButton
-                        display="flex"
+                        display={{ base: "flex", xl: "none" }}
                         icon={<FaBars />}
                         onClick={onOpenSidebar}
                         variant="ghost"
@@ -144,6 +144,6 @@ export default function Navbar(props) {
                     </Button>
                 </HStack>
             </Flex>
-        </Box>
+        </Box >
     );
 }

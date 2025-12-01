@@ -48,8 +48,8 @@ export default function AdminLayout(props) {
                 overflow='auto'
                 position='relative'
                 maxHeight='100%'
-                w='100%'
-                maxWidth='100%'
+                w={{ base: '100%', xl: 'calc( 100% - 300px )' }}
+                maxWidth={{ base: '100%', xl: 'calc( 100% - 300px )' }}
                 transition='all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)'
                 transitionDuration='.2s, .2s, .35s'
                 transitionProperty='top, bottom, width'

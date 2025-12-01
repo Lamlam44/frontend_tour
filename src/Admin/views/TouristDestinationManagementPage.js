@@ -39,6 +39,12 @@ import {
 const TouristDestinationManagementPage = () => {
   // --- STATE ---
   const [touristDestinations, setTouristDestinations] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    location: true,
+    description: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -204,6 +210,46 @@ const TouristDestinationManagementPage = () => {
           </Button>
         </Flex>
 
+        {/* Search Input */}
+        <Input
+          placeholder="Search by name, location, or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={inputBg}
+          borderColor={borderColor}
+          _placeholder={{ color: "gray.400" }}
+        />
+        
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.name ? "blue" : "gray"}
+            variant={searchFields.name ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, name: !searchFields.name})}
+          >
+            Name
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.location ? "blue" : "gray"}
+            variant={searchFields.location ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, location: !searchFields.location})}
+          >
+            Location
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.description ? "blue" : "gray"}
+            variant={searchFields.description ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, description: !searchFields.description})}
+          >
+            Description
+          </Button>
+        </HStack>
+
         <Box overflowX="auto">
           <Table variant='simple' colorScheme="whiteAlpha">
             <Thead>
@@ -217,7 +263,14 @@ const TouristDestinationManagementPage = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {touristDestinations.map((dest) => (
+              {touristDestinations.filter(dest => {
+                if (!searchTerm) return true;
+                return (
+                  (searchFields.name && dest.destinationName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (searchFields.location && dest.location?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (searchFields.description && dest.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+              }).map((dest) => (
                 <Tr key={dest.destinationId} _hover={{ bg: hoverBg }}>
                   <Td>
                     <Text fontSize="sm" color="gray.400">{dest.destinationId}</Text>

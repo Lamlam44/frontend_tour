@@ -32,6 +32,11 @@ import Card from '../../Admin/components/card/Card';
 
 const TravelVehicleManagementPage = () => {
   const [travelVehicles, setTravelVehicles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    type: true,
+    capacity: true
+  });
   const [isEdit, setIsEdit] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -149,6 +154,38 @@ const TravelVehicleManagementPage = () => {
             onOpen();
           }}>Add New Travel Vehicle</Button>
         </Flex>
+
+        {/* Search Input */}
+        <Input
+          placeholder="Search by vehicle type or capacity..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={useColorModeValue("white", "gray.700")}
+          _placeholder={{ color: "gray.400" }}
+        />
+        
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.type ? "blue" : "gray"}
+            variant={searchFields.type ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, type: !searchFields.type})}
+          >
+            Vehicle Type
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.capacity ? "blue" : "gray"}
+            variant={searchFields.capacity ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, capacity: !searchFields.capacity})}
+          >
+            Capacity
+          </Button>
+        </HStack>
+
         <Box mt='20px'>
           <Table variant='simple'>
             <Thead>
@@ -161,7 +198,13 @@ const TravelVehicleManagementPage = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {travelVehicles.map((travelVehicle) => (
+              {travelVehicles.filter(vehicle => {
+                if (!searchTerm) return true;
+                return (
+                  (searchFields.type && vehicle.vehicleType?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (searchFields.capacity && vehicle.capacity?.toString().includes(searchTerm))
+                );
+              }).map((travelVehicle) => (
                 <Tr key={travelVehicle.vehicleId}>
                   <Td color={textColor}>{travelVehicle.vehicleId}</Td>
                   <Td color={textColor}>{travelVehicle.vehicleType}</Td>

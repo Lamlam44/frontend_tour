@@ -52,6 +52,12 @@ import axios from "axios";
 
 const TourManagementPage = () => {
   const [tours, setTours] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    meetingPoint: true,
+    guide: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -343,6 +349,45 @@ const TourManagementPage = () => {
           </Button>
         </Box>
 
+        {/* Search Input */}
+        <Input
+          placeholder="Search by tour name, meeting point, or guide..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={useColorModeValue("white", "gray.700")}
+          _placeholder={{ color: "gray.400" }}
+        />
+        
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.name ? "blue" : "gray"}
+            variant={searchFields.name ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, name: !searchFields.name})}
+          >
+            Tour Name
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.meetingPoint ? "blue" : "gray"}
+            variant={searchFields.meetingPoint ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, meetingPoint: !searchFields.meetingPoint})}
+          >
+            Meeting Point
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.guide ? "blue" : "gray"}
+            variant={searchFields.guide ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, guide: !searchFields.guide})}
+          >
+            Guide Name
+          </Button>
+        </HStack>
+
         <Table variant="simple">
           <Thead>
             <Tr>
@@ -359,7 +404,14 @@ const TourManagementPage = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {tours.map((tour) => (
+            {tours.filter(tour => {
+              if (!searchTerm) return true;
+              return (
+                (searchFields.name && tour.tourName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (searchFields.meetingPoint && tour.tourMeetingPoint?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (searchFields.guide && tour.tourGuide?.tourGuideName?.toLowerCase().includes(searchTerm.toLowerCase()))
+              );
+            }).map((tour) => (
               <Tr key={tour.tourId}>
                 <Td>{tour.tourId}</Td>
                 <Td>{tour.tourName}</Td>

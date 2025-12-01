@@ -89,7 +89,22 @@ function Sidebar(props) {
 
     return (
         <>
-            {/* Drawer Sidebar - Opens on all screen sizes via hamburger button */}
+            {/* Desktop Sidebar - Fixed and always visible on large screens */}
+            <Box display={{ base: "none", xl: "block" }} w="100%" position='fixed' minH='100%'>
+                <Box
+                    bg={sidebarBg}
+                    transition='0.2s linear'
+                    w='300px'
+                    h='100vh'
+                    m={sidebarMargins}
+                    minH='100%'
+                    overflowX='hidden'
+                    boxShadow='14px 17px 40px 4px rgba(112, 144, 176, 0.08)'>
+                    {sidebarContent}
+                </Box>
+            </Box>
+
+            {/* Mobile Sidebar - Drawer for smaller screens */}
             <Drawer isOpen={isOpen} placement='left' onClose={onClose}>
                 <DrawerOverlay />
                 <DrawerContent bg={sidebarBg}>

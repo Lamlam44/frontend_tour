@@ -39,6 +39,12 @@ import {
 const AccommodationManagementPage = () => {
   // --- STATE ---
   const [accommodations, setAccommodations] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    location: true,
+    type: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -175,6 +181,16 @@ const AccommodationManagementPage = () => {
   };
 
   // --- RENDER ---
+  // Filter accommodations based on search term and selected fields
+  const filteredAccommodations = accommodations.filter(acc => {
+    if (!searchTerm) return true;
+    return (
+      (searchFields.name && acc.accommodationName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.location && acc.location?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.type && acc.accommodationType?.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+
   return (
     <Box p={6} bg={bgColor} color="white" borderRadius="2xl" minH="100vh">
       <Heading size="md" mb={6}>Accommodation Management</Heading>
@@ -191,6 +207,46 @@ const AccommodationManagementPage = () => {
           </Button>
         </Box>
 
+        {/* Search Input */}
+        <Input
+          placeholder="Search by name, location, or type..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={inputBg}
+          borderColor={borderColor}
+          _placeholder={{ color: "gray.400" }}
+        />
+
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.name ? "blue" : "gray"}
+            variant={searchFields.name ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, name: !searchFields.name })}
+          >
+            Name
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.location ? "blue" : "gray"}
+            variant={searchFields.location ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, location: !searchFields.location })}
+          >
+            Location
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.type ? "blue" : "gray"}
+            variant={searchFields.type ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, type: !searchFields.type })}
+          >
+            Type
+          </Button>
+        </HStack>
+
         <Box overflowX="auto">
           <Table variant="simple" colorScheme="whiteAlpha">
             <Thead>
@@ -205,7 +261,7 @@ const AccommodationManagementPage = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {accommodations.map((acc) => (
+              {filteredAccommodations.map((acc) => (
                 <Tr key={acc.accommodationId} _hover={{ bg: hoverBg }}>
                   <Td>
                     <Text fontSize="sm" color="gray.400">{acc.accommodationId}</Text>

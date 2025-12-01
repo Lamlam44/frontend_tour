@@ -39,6 +39,13 @@ import {
 const CustomerManagementPage = () => {
   // --- STATE ---
   const [customers, setCustomers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    email: true,
+    phone: true,
+    address: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -179,6 +186,17 @@ const CustomerManagementPage = () => {
   };
 
   // --- RENDER ---
+  // Filter customers based on search term and selected fields
+  const filteredCustomers = customers.filter(customer => {
+    if (!searchTerm) return true;
+    return (
+      (searchFields.name && customer.customerName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.email && customer.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.phone && customer.customerPhone?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.address && customer.customerAddress?.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+
   return (
     <Box p={6} bg={bgColor} color="white" borderRadius="2xl" minH="100vh">
       <Heading size="md" mb={6}>Customer Management</Heading>
@@ -195,6 +213,54 @@ const CustomerManagementPage = () => {
           </Button>
         </Flex>
 
+        {/* Search Input */}
+        <Input
+          placeholder="Search by name, email, phone, or address..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={inputBg}
+          borderColor={borderColor}
+          _placeholder={{ color: "gray.400" }}
+        />
+
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.name ? "blue" : "gray"}
+            variant={searchFields.name ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, name: !searchFields.name })}
+          >
+            Name
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.email ? "blue" : "gray"}
+            variant={searchFields.email ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, email: !searchFields.email })}
+          >
+            Email
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.phone ? "blue" : "gray"}
+            variant={searchFields.phone ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, phone: !searchFields.phone })}
+          >
+            Phone
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.address ? "blue" : "gray"}
+            variant={searchFields.address ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, address: !searchFields.address })}
+          >
+            Address
+          </Button>
+        </HStack>
+
         <Box overflowX="auto">
           <Table variant='simple' colorScheme="whiteAlpha">
             <Thead>
@@ -208,7 +274,7 @@ const CustomerManagementPage = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {customers.map((customer) => (
+              {filteredCustomers.map((customer) => (
                 <Tr key={customer.customerId} _hover={{ bg: hoverBg }}>
                   <Td>
                     <Text fontSize="sm" fontWeight="bold" color="blue.300">{customer.customerId}</Text>

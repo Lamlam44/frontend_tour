@@ -361,8 +361,70 @@ export default function TourDetail(props) {
                                 <Text color={textColorSecondary} fontSize="sm" lineHeight="1.6">{tour.tourDescription}</Text>
                                 <Divider />
                                 <VStack spacing="12px" align="stretch">
-                                    <HStack justifyContent="space-between"><Text color={textColorSecondary} fontSize="sm" fontWeight="600">Price:</Text><Text color={textColor} fontSize="lg" fontWeight="700">{tour.tourPrice ? formatPrice(tour.tourPrice) : tour.price}</Text></HStack>
-                                    <HStack justifyContent="space-between"><Text color={textColorSecondary} fontSize="sm" fontWeight="600">Schedule:</Text><Text color={textColor} fontSize="sm" fontWeight="700">{formatDate(tour.tourStartDate)} - {formatDate(tour.tourEndDate)}</Text></HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Price:</Text>
+                                        <Text color={textColor} fontSize="lg" fontWeight="700">{tour.tourPrice ? formatPrice(tour.tourPrice) : tour.price}</Text>
+                                    </HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Start Date:</Text>
+                                        <Text color={textColor} fontSize="sm">{formatDate(tour.tourStartDate)}</Text>
+                                    </HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">End Date:</Text>
+                                        <Text color={textColor} fontSize="sm">{formatDate(tour.tourEndDate)}</Text>
+                                    </HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Remaining Slots:</Text>
+                                        <Badge colorScheme={tour.tourRemainingSlots > 5 ? "green" : "orange"} fontSize="md">{tour.tourRemainingSlots} slots</Badge>
+                                    </HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Meeting Point:</Text>
+                                        <Text color={textColor} fontSize="sm" textAlign="right" maxW="60%">{tour.tourMeetingPoint || "N/A"}</Text>
+                                    </HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Tour Guide:</Text>
+                                        <Text color={textColor} fontSize="sm">{tour.tourGuide?.tourGuideName || "N/A"}</Text>
+                                    </HStack>
+                                    <HStack justifyContent="space-between">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Accommodation:</Text>
+                                        <Text color={textColor} fontSize="sm" textAlign="right" maxW="60%">{tour.accommodation?.accommodationName || "N/A"}</Text>
+                                    </HStack>
+                                    <VStack align="stretch" spacing="8px">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Travel Vehicles:</Text>
+                                        <Box pl="10px">
+                                            {tour.travelVehicles && tour.travelVehicles.length > 0 ? (
+                                                tour.travelVehicles.map((vehicle, idx) => (
+                                                    <HStack key={idx} spacing={2}>
+                                                        <Text color={textColor} fontSize="xs">•</Text>
+                                                        <Text color={textColor} fontSize="sm">{vehicle.vehicleType} (Capacity: {vehicle.capacity})</Text>
+                                                    </HStack>
+                                                ))
+                                            ) : (
+                                                <Text color={textColor} fontSize="sm">N/A</Text>
+                                            )}
+                                        </Box>
+                                    </VStack>
+                                    <VStack align="stretch" spacing="8px">
+                                        <Text color={textColorSecondary} fontSize="sm" fontWeight="600">Tourist Destinations:</Text>
+                                        <Box pl="10px">
+                                            {tour.touristDestinations && tour.touristDestinations.length > 0 ? (
+                                                tour.touristDestinations.map((dest, idx) => (
+                                                    <HStack key={idx} spacing={2} align="flex-start">
+                                                        <Text color={textColor} fontSize="xs">•</Text>
+                                                        <VStack align="flex-start" spacing={0}>
+                                                            <Text color={textColor} fontSize="sm" fontWeight="600">{dest.destinationName}</Text>
+                                                            <Text color={textColorSecondary} fontSize="xs">{dest.location}</Text>
+                                                            {dest.entryFee > 0 && (
+                                                                <Text color="green.300" fontSize="xs">Entry Fee: {formatPrice(dest.entryFee)}</Text>
+                                                            )}
+                                                        </VStack>
+                                                    </HStack>
+                                                ))
+                                            ) : (
+                                                <Text color={textColor} fontSize="sm">N/A</Text>
+                                            )}
+                                        </Box>
+                                    </VStack>
                                 </VStack>
                             </VStack>
                         </Box>

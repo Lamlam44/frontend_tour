@@ -46,6 +46,12 @@ import {
 
 const TourManagement = () => {
   const [tours, setTours] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    meetingPoint: true,
+    guide: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   
@@ -234,13 +240,56 @@ const TourManagement = () => {
     <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
       {/* Sử dụng Card và bg đồng bộ */}
       <Card bg={cardBg} mb="20px">
-        <Flex justify='space-between' align='center' mb='20px'>
-           <Text fontSize='xl' fontWeight='bold' color={textColor}>
-            Tour Management
-          </Text>
-          <Button colorScheme="blue" onClick={openAdd}>
-            Add New Tour
-          </Button>
+        <Flex direction="column" mb={4} gap={3}>
+          <Flex justify='space-between' align='center'>
+            <Text fontSize='xl' fontWeight='bold' color={textColor}>
+              Tour Management
+            </Text>
+            <Button colorScheme="blue" onClick={openAdd}>
+              Add New Tour
+            </Button>
+          </Flex>
+
+          {/* Search Input */}
+          <Input
+            placeholder="Search by tour name, meeting point, or guide..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            bg={useColorModeValue("white", "gray.700")}
+            color={useColorModeValue("gray.800", "white")}
+            borderColor={useColorModeValue("gray.300", "gray.600")}
+            _placeholder={{ color: "gray.400" }}
+            size="md"
+          />
+          
+          {/* Search Field Filters */}
+          <HStack spacing={2} flexWrap="wrap">
+            <Text fontSize="sm" color={useColorModeValue("gray.700", "white")} fontWeight="medium">Search in:</Text>
+            <Button
+              size="sm"
+              colorScheme={searchFields.name ? "blue" : "gray"}
+              variant={searchFields.name ? "solid" : "outline"}
+              onClick={() => setSearchFields({...searchFields, name: !searchFields.name})}
+            >
+              Tour Name
+            </Button>
+            <Button
+              size="sm"
+              colorScheme={searchFields.meetingPoint ? "blue" : "gray"}
+              variant={searchFields.meetingPoint ? "solid" : "outline"}
+              onClick={() => setSearchFields({...searchFields, meetingPoint: !searchFields.meetingPoint})}
+            >
+              Meeting Point
+            </Button>
+            <Button
+              size="sm"
+              colorScheme={searchFields.guide ? "blue" : "gray"}
+              variant={searchFields.guide ? "solid" : "outline"}
+              onClick={() => setSearchFields({...searchFields, guide: !searchFields.guide})}
+            >
+              Guide Name
+            </Button>
+          </HStack>
         </Flex>
 
         <Box overflowX="auto">
@@ -257,7 +306,14 @@ const TourManagement = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {tours.map((tour) => (
+              {tours.filter(tour => {
+                if (!searchTerm) return true;
+                return (
+                  (searchFields.name && tour.tourName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (searchFields.meetingPoint && tour.tourMeetingPoint?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (searchFields.guide && tour.tourGuide?.tourGuideName?.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+              }).map((tour) => (
                 <Tr key={tour.tourId}>
                   <Td>{tour.tourId}</Td>
                   <Td fontWeight="bold">{tour.tourName}</Td>

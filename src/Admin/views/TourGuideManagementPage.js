@@ -39,6 +39,12 @@ import {
 const TourGuideManagementPage = () => {
   // --- STATE ---
   const [tourGuides, setTourGuides] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    email: true,
+    phone: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -184,6 +190,16 @@ const TourGuideManagementPage = () => {
   };
 
   // --- RENDER ---
+  // Filter tour guides based on search term and selected fields
+  const filteredTourGuides = tourGuides.filter(guide => {
+    if (!searchTerm) return true;
+    return (
+      (searchFields.name && guide.tourGuideName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.email && guide.tourGuideEmail?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.phone && guide.tourGuidePhone?.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+
   return (
     <Box p={6} bg={bgColor} color="white" borderRadius="2xl" minH="100vh">
       <Heading size="md" mb={6}>Tour Guide Management</Heading>
@@ -200,6 +216,46 @@ const TourGuideManagementPage = () => {
           </Button>
         </Flex>
 
+        {/* Search Input */}
+        <Input
+          placeholder="Search by name, email, or phone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={inputBg}
+          borderColor={borderColor}
+          _placeholder={{ color: "gray.400" }}
+        />
+
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.name ? "blue" : "gray"}
+            variant={searchFields.name ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, name: !searchFields.name })}
+          >
+            Name
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.email ? "blue" : "gray"}
+            variant={searchFields.email ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, email: !searchFields.email })}
+          >
+            Email
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.phone ? "blue" : "gray"}
+            variant={searchFields.phone ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, phone: !searchFields.phone })}
+          >
+            Phone
+          </Button>
+        </HStack>
+
         <Box overflowX="auto">
           <Table variant='simple' colorScheme="whiteAlpha">
             <Thead>
@@ -213,7 +269,7 @@ const TourGuideManagementPage = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {tourGuides.map((guide) => (
+              {filteredTourGuides.map((guide) => (
                 <Tr key={guide.tourGuideId} _hover={{ bg: hoverBg }}>
                   <Td>
                     <Text fontSize="sm" fontWeight="bold" color="blue.300">{guide.tourGuideId}</Text>
