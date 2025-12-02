@@ -39,6 +39,13 @@ import {
 const CustomerManagementPage = () => {
   // --- STATE ---
   const [customers, setCustomers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    name: true,
+    email: true,
+    phone: true,
+    address: true
+  });
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -104,8 +111,8 @@ const CustomerManagementPage = () => {
 
   const validateForm = () => {
     if (!formData.customerName || !formData.customerEmail || !formData.customerPhone) {
-        toast({ title: "Name, Email, and Phone are required.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Name, Email, and Phone are required.", status: "warning", duration: 3000 });
+      return false;
     }
     return true;
   };
@@ -121,11 +128,11 @@ const CustomerManagementPage = () => {
       resetForm();
     } catch (err) {
       console.error("Lỗi thêm customer", err);
-      toast({ 
-        title: "Error adding customer", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error adding customer",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -141,11 +148,11 @@ const CustomerManagementPage = () => {
       resetForm();
     } catch (err) {
       console.error("Lỗi update customer", err);
-      toast({ 
-        title: "Error updating customer", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error updating customer",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -167,18 +174,29 @@ const CustomerManagementPage = () => {
     setEditId(customer.customerId);
 
     setFormData({
-        customerName: customer.customerName || "",
-        customerEmail: customer.customerEmail || "",
-        customerPhone: customer.customerPhone || "",
-        customerAddress: customer.customerAddress || "",
-        customerDateOfBirth: customer.customerDateOfBirth || "",
-        accountId: customer.account?.accountId || "",
+      customerName: customer.customerName || "",
+      customerEmail: customer.customerEmail || "",
+      customerPhone: customer.customerPhone || "",
+      customerAddress: customer.customerAddress || "",
+      customerDateOfBirth: customer.customerDateOfBirth || "",
+      accountId: customer.account?.accountId || "",
     });
 
     onOpen();
   };
 
   // --- RENDER ---
+  // Filter customers based on search term and selected fields
+  const filteredCustomers = customers.filter(customer => {
+    if (!searchTerm) return true;
+    return (
+      (searchFields.name && customer.customerName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.email && customer.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.phone && customer.customerPhone?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (searchFields.address && customer.customerAddress?.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+
   return (
     <Box p={6} bg={bgColor} color="white" borderRadius="2xl" minH="100vh">
       <Heading size="md" mb={6}>Customer Management</Heading>
@@ -186,8 +204,8 @@ const CustomerManagementPage = () => {
       <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
         <Flex justify='space-between' align='center' mb='20px'>
           <Heading size="sm">Customer List</Heading>
-          <Button 
-            colorScheme='blue' 
+          <Button
+            colorScheme='blue'
             onClick={() => { resetForm(); onOpen(); }}
             size="md"
           >
@@ -195,68 +213,89 @@ const CustomerManagementPage = () => {
           </Button>
         </Flex>
 
+        {/* Search Input */}
+        <Input
+          placeholder="Search by name, email, phone, or address..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={inputBg}
+          borderColor={borderColor}
+          _placeholder={{ color: "gray.400" }}
+        />
+
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.name ? "blue" : "gray"}
+            variant={searchFields.name ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, name: !searchFields.name })}
+          >
+            Name
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.email ? "blue" : "gray"}
+            variant={searchFields.email ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, email: !searchFields.email })}
+          >
+            Email
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.phone ? "blue" : "gray"}
+            variant={searchFields.phone ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, phone: !searchFields.phone })}
+          >
+            Phone
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.address ? "blue" : "gray"}
+            variant={searchFields.address ? "solid" : "outline"}
+            onClick={() => setSearchFields({ ...searchFields, address: !searchFields.address })}
+          >
+            Address
+          </Button>
+        </HStack>
+
         <Box overflowX="auto">
           <Table variant='simple' colorScheme="whiteAlpha">
             <Thead>
               <Tr>
-                <Th color="gray.400">ID / Account</Th>
-                <Th color="gray.400">Customer Info</Th>
-                <Th color="gray.400">Contact</Th>
+                <Th color="gray.400">ID</Th>
+                <Th color="gray.400">Name</Th>
+                <Th color="gray.400">Email</Th>
+                <Th color="gray.400">Phone</Th>
                 <Th color="gray.400">Address</Th>
                 <Th color="gray.400">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {customers.map((customer) => (
+              {filteredCustomers.map((customer) => (
                 <Tr key={customer.customerId} _hover={{ bg: hoverBg }}>
                   <Td>
-                    <Box>
-                        <Text fontSize="sm" fontWeight="bold" color="blue.300">{customer.customerId}</Text>
-                        {customer.account ? (
-                          <Badge colorScheme="green" mt={1} borderRadius="full" px={2}>
-                            Acc: {customer.account.username}
-                          </Badge>
-                        ) : (
-                          <Badge colorScheme="gray" mt={1} borderRadius="full" px={2}>
-                            No Account
-                          </Badge>
-                        )}
-                    </Box>
+                    <Text fontSize="sm" fontWeight="bold" color="blue.300">{customer.customerId}</Text>
                   </Td>
-                  
+
                   <Td>
-                    <HStack mb={1}>
-                        <Icon as={FaUser} color="gray.400" w={3} h={3} />
-                        <Text fontWeight="bold">{customer.customerName}</Text>
-                    </HStack>
-                    <HStack>
-                        <Icon as={FaBirthdayCake} color="pink.400" w={3} h={3} />
-                        <Text fontSize="sm" color="gray.300">
-                            {customer.customerDateOfBirth ? new Date(customer.customerDateOfBirth).toLocaleDateString('vi-VN') : "N/A"}
-                        </Text>
-                    </HStack>
+                    <Text fontWeight="bold">{customer.customerName}</Text>
                   </Td>
-                  
+
                   <Td>
-                    <Box>
-                        <HStack mb={1}>
-                            <Icon as={FaEnvelope} color="yellow.400" w={3} h={3}/>
-                            <Text fontSize="sm">{customer.customerEmail}</Text>
-                        </HStack>
-                        <HStack>
-                            <Icon as={FaPhone} color="green.400" w={3} h={3}/>
-                            <Text fontSize="sm">{customer.customerPhone}</Text>
-                        </HStack>
-                    </Box>
+                    <Text fontSize="sm">{customer.customerEmail}</Text>
                   </Td>
-                  
+
                   <Td>
-                    <HStack>
-                        <Icon as={FaMapMarkerAlt} color="red.400" />
-                        <Text fontSize="sm" noOfLines={2} maxW="200px">{customer.customerAddress}</Text>
-                    </HStack>
+                    <Text fontSize="sm">{customer.customerPhone}</Text>
                   </Td>
-                  
+
+                  <Td>
+                    <Text fontSize="sm" noOfLines={2} maxW="200px">{customer.customerAddress}</Text>
+                  </Td>
+
                   <Td>
                     <HStack>
                       <Button
@@ -292,76 +331,76 @@ const CustomerManagementPage = () => {
 
           <ModalBody pb={6}>
             <SimpleGrid columns={1} spacing={4}>
-                
-                {/* Name & Phone */}
-                <SimpleGrid columns={2} spacing={4}>
-                    <FormControl isRequired>
-                        <FormLabel>Customer Name</FormLabel>
-                        <Input
-                          placeholder="Full Name"
-                          value={formData.customerName}
-                          onChange={(e) => handleChange("customerName", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-                    <FormControl isRequired>
-                        <FormLabel>Phone Number</FormLabel>
-                        <Input
-                          placeholder="Phone"
-                          value={formData.customerPhone}
-                          onChange={(e) => handleChange("customerPhone", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-                </SimpleGrid>
 
-                {/* Email & DOB */}
-                <SimpleGrid columns={2} spacing={4}>
-                    <FormControl isRequired>
-                        <FormLabel>Email</FormLabel>
-                        <Input
-                          type="email"
-                          placeholder="Email Address"
-                          value={formData.customerEmail}
-                          onChange={(e) => handleChange("customerEmail", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-                    <FormControl isRequired>
-                        <FormLabel>Date of Birth</FormLabel>
-                        <Input
-                          type="date"
-                          value={formData.customerDateOfBirth}
-                          onChange={(e) => handleChange("customerDateOfBirth", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                    </FormControl>
-                </SimpleGrid>
-
-                {/* Address */}
+              {/* Name & Phone */}
+              <SimpleGrid columns={2} spacing={4}>
                 <FormControl isRequired>
-                    <FormLabel>Address</FormLabel>
-                    <Input
-                      placeholder="Full Address"
-                      value={formData.customerAddress}
-                      onChange={(e) => handleChange("customerAddress", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
+                  <FormLabel>Customer Name</FormLabel>
+                  <Input
+                    placeholder="Full Name"
+                    value={formData.customerName}
+                    onChange={(e) => handleChange("customerName", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
                 </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Phone Number</FormLabel>
+                  <Input
+                    placeholder="Phone"
+                    value={formData.customerPhone}
+                    onChange={(e) => handleChange("customerPhone", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
+                </FormControl>
+              </SimpleGrid>
 
-                {/* Account ID (Optional) */}
-                <FormControl>
-                    <FormLabel>Linked Account ID (Optional)</FormLabel>
-                    <Input
-                      placeholder="Enter Account ID to link"
-                      value={formData.accountId}
-                      onChange={(e) => handleChange("accountId", e.target.value)}
-                      bg={inputBg} borderColor={borderColor}
-                    />
-                    <Text fontSize="xs" color="gray.500" mt={1}>
-                        Leave empty if this customer has no login account.
-                    </Text>
+              {/* Email & DOB */}
+              <SimpleGrid columns={2} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Email</FormLabel>
+                  <Input
+                    type="email"
+                    placeholder="Email Address"
+                    value={formData.customerEmail}
+                    onChange={(e) => handleChange("customerEmail", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
                 </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Date of Birth</FormLabel>
+                  <Input
+                    type="date"
+                    value={formData.customerDateOfBirth}
+                    onChange={(e) => handleChange("customerDateOfBirth", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
+                </FormControl>
+              </SimpleGrid>
+
+              {/* Address */}
+              <FormControl isRequired>
+                <FormLabel>Address</FormLabel>
+                <Input
+                  placeholder="Full Address"
+                  value={formData.customerAddress}
+                  onChange={(e) => handleChange("customerAddress", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+              </FormControl>
+
+              {/* Account ID (Optional) */}
+              <FormControl>
+                <FormLabel>Linked Account ID (Optional)</FormLabel>
+                <Input
+                  placeholder="Enter Account ID to link"
+                  value={formData.accountId}
+                  onChange={(e) => handleChange("accountId", e.target.value)}
+                  bg={inputBg} borderColor={borderColor}
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Leave empty if this customer has no login account.
+                </Text>
+              </FormControl>
 
             </SimpleGrid>
           </ModalBody>

@@ -59,3 +59,17 @@ export const bookTour = async (tourId, bookingData) => {
         throw error.response?.data || error.message;
     }
 };
+
+// Upload images
+export const uploadImages = async (formData) => {
+    try {
+        const response = await axiosInstance.post('/files/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};

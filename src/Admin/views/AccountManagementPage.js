@@ -39,17 +39,22 @@ import {
   addAccount,
   updateAccount,
   deleteAccount,
-  getCustomers, 
+  getCustomers,
   deleteCustomer
 } from "../../services/api";
 
 const AccountManagementPage = () => {
   // --- STATE ---
   const [accounts, setAccounts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFields, setSearchFields] = useState({
+    username: true,
+    email: true
+  });
   const [roles, setRoles] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
-  
+
   // Password Visibility
   const [showPassword, setShowPassword] = useState(false);
 
@@ -74,12 +79,12 @@ const AccountManagementPage = () => {
   // --- API CALLS ---
   const loadData = async () => {
     try {
-        const [accountsData, rolesData] = await Promise.all([
-            getAccounts(),
-            getAccountRoles()
-        ]);
-        setAccounts(accountsData);
-        setRoles(rolesData);
+      const [accountsData, rolesData] = await Promise.all([
+        getAccounts(),
+        getAccountRoles()
+      ]);
+      setAccounts(accountsData);
+      setRoles(rolesData);
     } catch (err) {
       console.error("Error loading data", err);
       toast({
@@ -115,17 +120,17 @@ const AccountManagementPage = () => {
 
   const validateForm = () => {
     if (!formData.username || !formData.roleId) {
-        toast({ title: "Username and Role are required.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Username and Role are required.", status: "warning", duration: 3000 });
+      return false;
     }
     // Validate password logic
     if (!isEdit && !formData.password) {
-        toast({ title: "Password is required for new accounts.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Password is required for new accounts.", status: "warning", duration: 3000 });
+      return false;
     }
     if (formData.password && formData.password.length < 6) {
-        toast({ title: "Password must be at least 6 characters.", status: "warning", duration: 3000 });
-        return false;
+      toast({ title: "Password must be at least 6 characters.", status: "warning", duration: 3000 });
+      return false;
     }
     return true;
   };
@@ -141,11 +146,11 @@ const AccountManagementPage = () => {
       resetForm();
     } catch (err) {
       console.error("Error adding account", err);
-      toast({ 
-        title: "Error adding account", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error adding account",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -158,13 +163,13 @@ const AccountManagementPage = () => {
       // Nếu user không nhập password mới, form sẽ gửi chuỗi rỗng và gây lỗi 400.
       // Do không được sửa Backend, nếu user để trống, ta sẽ cảnh báo họ.
       if (!formData.password) {
-          toast({ 
-            title: "Backend Constraint", 
-            description: "Password is required for update due to system security policy.", 
-            status: "warning", 
-            duration: 5000 
-          });
-          return;
+        toast({
+          title: "Backend Constraint",
+          description: "Password is required for update due to system security policy.",
+          status: "warning",
+          duration: 5000
+        });
+        return;
       }
 
       await updateAccount(editId, formData);
@@ -174,11 +179,11 @@ const AccountManagementPage = () => {
       resetForm();
     } catch (err) {
       console.error("Error updating account", err);
-      toast({ 
-        title: "Error updating account", 
-        description: err.response?.data?.message || err.message, 
-        status: "error", 
-        duration: 5000 
+      toast({
+        title: "Error updating account",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 5000
       });
     }
   };
@@ -187,24 +192,24 @@ const AccountManagementPage = () => {
     if (!window.confirm("Are you sure? This will also delete any linked Customer data.")) return;
 
     try {
-        // 1. Tìm và xóa Customer liên kết trước (Logic từ code cũ của bạn)
-        try {
-            const customers = await getCustomers();
-            const associatedCustomer = customers.find(c => c.account?.accountId === accountId);
-            
-            if (associatedCustomer) {
-                await deleteCustomer(associatedCustomer.customerId);
-                console.log("Deleted associated customer:", associatedCustomer.customerId);
-            }
-        } catch (custErr) {
-            console.warn("Could not check/delete associated customer", custErr);
-            // Vẫn tiếp tục xóa account
-        }
+      // 1. Tìm và xóa Customer liên kết trước (Logic từ code cũ của bạn)
+      try {
+        const customers = await getCustomers();
+        const associatedCustomer = customers.find(c => c.account?.accountId === accountId);
 
-        // 2. Xóa Account
-        await deleteAccount(accountId);
-        toast({ title: "Account deleted successfully", status: "success", duration: 3000 });
-        loadData();
+        if (associatedCustomer) {
+          await deleteCustomer(associatedCustomer.customerId);
+          console.log("Deleted associated customer:", associatedCustomer.customerId);
+        }
+      } catch (custErr) {
+        console.warn("Could not check/delete associated customer", custErr);
+        // Vẫn tiếp tục xóa account
+      }
+
+      // 2. Xóa Account
+      await deleteAccount(accountId);
+      toast({ title: "Account deleted successfully", status: "success", duration: 3000 });
+      loadData();
     } catch (err) {
       console.error("Error deleting account", err);
       toast({ title: "Cannot delete account", status: "error", duration: 3000 });
@@ -231,14 +236,46 @@ const AccountManagementPage = () => {
       <Box bg={cardBg} p={6} borderRadius="2xl" boxShadow="lg">
         <Flex justify='space-between' align='center' mb='20px'>
           <Heading size="sm">System Accounts</Heading>
-          <Button 
-            colorScheme='blue' 
+          <Button
+            colorScheme='blue'
             onClick={() => { resetForm(); onOpen(); }}
             size="md"
           >
             Add New Account
           </Button>
         </Flex>
+
+        {/* Search Input */}
+        <Input
+          placeholder="Search by username or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          mb={2}
+          bg={inputBg}
+          borderColor={borderColor}
+          _placeholder={{ color: "gray.400" }}
+        />
+        
+        {/* Search Field Filters */}
+        <HStack spacing={2} mb={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.400">Search in:</Text>
+          <Button
+            size="sm"
+            colorScheme={searchFields.username ? "blue" : "gray"}
+            variant={searchFields.username ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, username: !searchFields.username})}
+          >
+            Username
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={searchFields.email ? "blue" : "gray"}
+            variant={searchFields.email ? "solid" : "outline"}
+            onClick={() => setSearchFields({...searchFields, email: !searchFields.email})}
+          >
+            Email
+          </Button>
+        </HStack>
 
         <Box overflowX="auto">
           <Table variant='simple' colorScheme="whiteAlpha">
@@ -252,43 +289,49 @@ const AccountManagementPage = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {accounts.map((acc) => (
+              {accounts.filter(acc => {
+                if (!searchTerm) return true;
+                return (
+                  (searchFields.username && acc.username?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (searchFields.email && acc.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+              }).map((acc) => (
                 <Tr key={acc.accountId} _hover={{ bg: hoverBg }}>
                   <Td>
                     <Box>
-                        <Text fontSize="xs" color="gray.500">{acc.accountId}</Text>
-                        <HStack mt={1}>
-                            <Icon as={FaUser} color="blue.300" />
-                            <Text fontWeight="bold" fontSize="md">{acc.username}</Text>
-                        </HStack>
+                      <Text fontSize="xs" color="gray.500">{acc.accountId}</Text>
+                      <HStack mt={1}>
+                        <Icon as={FaUser} color="blue.300" />
+                        <Text fontWeight="bold" fontSize="md">{acc.username}</Text>
+                      </HStack>
                     </Box>
                   </Td>
-                  
+
                   <Td>
-                    <Badge 
-                        colorScheme={acc.role?.roleName === 'ROLE_ADMIN' ? 'red' : 'green'}
-                        variant="subtle"
-                        px={2} py={1} borderRadius="md"
+                    <Badge
+                      colorScheme={acc.role?.roleName === 'ROLE_ADMIN' ? 'red' : 'green'}
+                      variant="subtle"
+                      px={2} py={1} borderRadius="md"
                     >
-                        <HStack spacing={1}>
-                            <Icon as={FaUserTag} />
-                            <Text>{acc.role?.roleName || 'N/A'}</Text>
-                        </HStack>
+                      <HStack spacing={1}>
+                        <Icon as={FaUserTag} />
+                        <Text>{acc.role?.roleName || 'N/A'}</Text>
+                      </HStack>
                     </Badge>
                   </Td>
-                  
+
                   <Td>
                     {acc.status ? (
-                        <Badge colorScheme="green" borderRadius="full" px={2}><Icon as={FaCheckCircle} mr={1}/> Active</Badge>
+                      <Badge colorScheme="green" borderRadius="full" px={2}><Icon as={FaCheckCircle} mr={1} /> Active</Badge>
                     ) : (
-                        <Badge colorScheme="red" borderRadius="full" px={2}><Icon as={FaTimesCircle} mr={1}/> Inactive</Badge>
+                      <Badge colorScheme="red" borderRadius="full" px={2}><Icon as={FaTimesCircle} mr={1} /> Inactive</Badge>
                     )}
                   </Td>
 
                   <Td fontSize="sm" color="gray.300">
                     {new Date(acc.accountCreatedAt).toLocaleDateString('vi-VN')}
                   </Td>
-                  
+
                   <Td>
                     <HStack>
                       <Button colorScheme="yellow" size="sm" onClick={() => openEdit(acc)}>Edit</Button>
@@ -311,72 +354,72 @@ const AccountManagementPage = () => {
 
           <ModalBody pb={6}>
             <SimpleGrid columns={1} spacing={4}>
-                
+
+              <FormControl isRequired>
+                <FormLabel>Username</FormLabel>
+                <InputGroup>
+                  <Input
+                    placeholder="e.g. admin_user"
+                    value={formData.username}
+                    onChange={(e) => handleChange("username", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                    isReadOnly={isEdit} // Thường không cho sửa username
+                    _readOnly={{ opacity: 0.6, cursor: 'not-allowed' }}
+                  />
+                  <InputRightElement children={<Icon as={FaUser} color="gray.500" />} />
+                </InputGroup>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>
+                  Password {isEdit && <Text as="span" fontSize="xs" color="yellow.300">(Required for update)</Text>}
+                </FormLabel>
+                <InputGroup>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder={isEdit ? "Enter new password" : "Enter password"}
+                    value={formData.password}
+                    onChange={(e) => handleChange("password", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  />
+                  <InputRightElement width="4.5rem">
+                    <Button h="1.75rem" size="sm" onClick={() => setShowPassword(!showPassword)} bg="transparent">
+                      {showPassword ? <FaEyeSlash color="white" /> : <FaEye color="white" />}
+                    </Button>
+                  </InputRightElement>
+                </InputGroup>
+              </FormControl>
+
+              <SimpleGrid columns={2} spacing={4}>
                 <FormControl isRequired>
-                    <FormLabel>Username</FormLabel>
-                    <InputGroup>
-                        <Input
-                          placeholder="e.g. admin_user"
-                          value={formData.username}
-                          onChange={(e) => handleChange("username", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                          isReadOnly={isEdit} // Thường không cho sửa username
-                          _readOnly={{ opacity: 0.6, cursor: 'not-allowed' }}
-                        />
-                        <InputRightElement children={<Icon as={FaUser} color="gray.500" />} />
-                    </InputGroup>
+                  <FormLabel>Role</FormLabel>
+                  <Select
+                    placeholder="Select Role"
+                    value={formData.roleId}
+                    onChange={(e) => handleChange("roleId", e.target.value)}
+                    bg={inputBg} borderColor={borderColor}
+                  >
+                    {roles.map((role) => (
+                      <option style={{ backgroundColor: '#2D3748' }} key={role.accountRoleId} value={role.accountRoleId}>
+                        {role.roleName}
+                      </option>
+                    ))}
+                  </Select>
                 </FormControl>
 
-                <FormControl isRequired>
-                    <FormLabel>
-                        Password {isEdit && <Text as="span" fontSize="xs" color="yellow.300">(Required for update)</Text>}
-                    </FormLabel>
-                    <InputGroup>
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder={isEdit ? "Enter new password" : "Enter password"}
-                          value={formData.password}
-                          onChange={(e) => handleChange("password", e.target.value)}
-                          bg={inputBg} borderColor={borderColor}
-                        />
-                        <InputRightElement width="4.5rem">
-                            <Button h="1.75rem" size="sm" onClick={() => setShowPassword(!showPassword)} bg="transparent">
-                                {showPassword ? <FaEyeSlash color="white"/> : <FaEye color="white"/>}
-                            </Button>
-                        </InputRightElement>
-                    </InputGroup>
+                <FormControl display="flex" alignItems="center">
+                  <FormLabel mb="0">
+                    Status: <Badge ml={2} colorScheme={formData.status ? "green" : "red"}>{formData.status ? "Active" : "Inactive"}</Badge>
+                  </FormLabel>
+                  <Switch
+                    id="status-switch"
+                    isChecked={formData.status}
+                    onChange={(e) => handleChange("status", e.target.checked)}
+                    colorScheme="green"
+                    ml="auto"
+                  />
                 </FormControl>
-
-                <SimpleGrid columns={2} spacing={4}>
-                    <FormControl isRequired>
-                        <FormLabel>Role</FormLabel>
-                        <Select
-                            placeholder="Select Role"
-                            value={formData.roleId}
-                            onChange={(e) => handleChange("roleId", e.target.value)}
-                            bg={inputBg} borderColor={borderColor}
-                        >
-                            {roles.map((role) => (
-                                <option style={{backgroundColor: '#2D3748'}} key={role.accountRoleId} value={role.accountRoleId}>
-                                    {role.roleName}
-                                </option>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <FormControl display="flex" alignItems="center">
-                        <FormLabel mb="0">
-                            Status: <Badge ml={2} colorScheme={formData.status ? "green" : "red"}>{formData.status ? "Active" : "Inactive"}</Badge>
-                        </FormLabel>
-                        <Switch 
-                            id="status-switch" 
-                            isChecked={formData.status} 
-                            onChange={(e) => handleChange("status", e.target.checked)}
-                            colorScheme="green"
-                            ml="auto"
-                        />
-                    </FormControl>
-                </SimpleGrid>
+              </SimpleGrid>
 
             </SimpleGrid>
           </ModalBody>
